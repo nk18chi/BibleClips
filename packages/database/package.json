@@ -11,7 +11,7 @@
   },
   "scripts": {
     "type-check": "tsc --noEmit",
-    "lint": "eslint src/",
+    "lint": "eslint \"src/**/*.ts\"",
     "db:types": "supabase gen types typescript --project-id $SUPABASE_PROJECT_ID > src/types.generated.ts"
   },
   "dependencies": {
@@ -19,6 +19,7 @@
   },
   "devDependencies": {
     "@bibleclips/config": "workspace:*",
+    "@types/node": "^20.0.0",
     "supabase": "^1.167.0",
     "typescript": "^5.4.0"
   }
