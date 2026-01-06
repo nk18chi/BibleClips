@@ -25,7 +25,7 @@ type Clip = {
     categories: {
       slug: string;
       name_en: string;
-    };
+    } | null;
   }[];
 };
 
@@ -114,13 +114,15 @@ export function ReelViewer({ clips, initialIndex = 0 }: ReelViewerProps) {
         <h3 className="text-white font-medium mb-1">{currentClip.title}</h3>
         <div className="flex flex-wrap gap-2">
           {currentClip.clip_categories?.map((cc) => (
-            <Link
-              key={cc.categories.slug}
-              href={`/category/${cc.categories.slug}`}
-              className="text-blue-400 text-sm"
-            >
-              #{cc.categories.name_en.toLowerCase()}
-            </Link>
+            cc.categories && (
+              <Link
+                key={cc.categories.slug}
+                href={`/category/${cc.categories.slug}`}
+                className="text-blue-400 text-sm"
+              >
+                #{cc.categories.name_en.toLowerCase()}
+              </Link>
+            )
           ))}
         </div>
       </div>

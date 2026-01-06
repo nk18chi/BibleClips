@@ -41,6 +41,7 @@ async function getUserClips(userId: string): Promise<Clip[]> {
 function formatVerseRef(verses: Clip['clip_verses']): string {
   if (!verses || verses.length === 0) return '';
   const v = verses[0];
+  if (!v || !v.book || v.chapter === undefined || v.verse_start === undefined) return '';
   const verseRange = v.verse_end ? `${v.verse_start}-${v.verse_end}` : `${v.verse_start}`;
   return `${v.book} ${v.chapter}:${verseRange}`;
 }

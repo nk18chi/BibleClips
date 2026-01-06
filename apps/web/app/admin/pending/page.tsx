@@ -14,7 +14,7 @@ type PendingClip = {
   submitted_by: string;
   users: {
     display_name: string | null;
-  };
+  }[];
   clip_verses: {
     book: string;
     chapter: number;
@@ -24,7 +24,7 @@ type PendingClip = {
   clip_categories: {
     categories: {
       name_en: string;
-    };
+    }[];
   }[];
 };
 
@@ -66,6 +66,7 @@ async function isAdmin(userId: string): Promise<boolean> {
 function formatVerseRef(verses: PendingClip['clip_verses']): string {
   if (!verses || verses.length === 0) return 'No verse';
   const v = verses[0];
+  if (!v) return 'No verse';
   const verseRange = v.verse_end ? `${v.verse_start}-${v.verse_end}` : `${v.verse_start}`;
   return `${v.book} ${v.chapter}:${verseRange}`;
 }
@@ -134,17 +135,19 @@ export default async function AdminPendingPage() {
 
                     <div className="flex flex-wrap gap-1 mt-2">
                       {clip.clip_categories?.map((cc, i) => (
-                        <span
-                          key={i}
-                          className="px-2 py-0.5 bg-gray-100 text-gray-600 text-xs rounded"
-                        >
-                          {cc.categories.name_en}
-                        </span>
+                        cc.categories?.[0] && (
+                          <span
+                            key={i}
+                            className="px-2 py-0.5 bg-gray-100 text-gray-600 text-xs rounded"
+                          >
+                            {cc.categories[0].name_en}
+                          </span>
+                        )
                       ))}
                     </div>
 
                     <div className="mt-3 text-xs text-gray-500">
-                      Submitted by: {clip.users?.display_name || 'Unknown'} • {new Date(clip.created_at).toLocaleDateString()}
+                      Submitted by: {clip.users?.[0]?.display_name || 'Unknown'} • {new Date(clip.created_at).toLocaleDateString()}
                     </div>
 
                     <div className="mt-3 flex gap-2">

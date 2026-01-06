@@ -6,6 +6,28 @@ type Props = {
   params: { id: string };
 };
 
+type Clip = {
+  id: string;
+  title: string;
+  youtube_video_id: string;
+  start_time: number;
+  end_time: number;
+  vote_count: number;
+  clip_verses: {
+    book: string;
+    book_ja: string;
+    chapter: number;
+    verse_start: number;
+    verse_end: number | null;
+  }[];
+  clip_categories: {
+    categories: {
+      slug: string;
+      name_en: string;
+    } | null;
+  }[];
+};
+
 async function getClip(id: string, userId?: string) {
   const supabase = createServerClient();
 
@@ -27,7 +49,9 @@ async function getClip(id: string, userId?: string) {
     .eq('status', 'APPROVED')
     .single();
 
-  if (!clip) return null;
+  const typedClip = clip as Clip | null;
+
+  if (!typedClip) return null;
 
   if (userId) {
     const { data: vote } = await supabase
@@ -37,10 +61,10 @@ async function getClip(id: string, userId?: string) {
       .eq('clip_id', id)
       .single();
 
-    return { ...clip, has_voted: !!vote };
+    return { ...typedClip, has_voted: !!vote };
   }
 
-  return { ...clip, has_voted: false };
+  return { ...typedClip, has_voted: false };
 }
 
 export default async function ClipPage({ params }: Props) {

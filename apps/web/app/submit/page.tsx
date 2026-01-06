@@ -49,7 +49,7 @@ function parseYouTubeUrl(url: string): string | null {
 
   for (const pattern of patterns) {
     const match = url.match(pattern);
-    if (match) return match[1];
+    if (match && match[1]) return match[1];
   }
   return null;
 }
@@ -58,8 +58,12 @@ function parseTime(time: string): number {
   // Parse "1:30" or "90" to seconds
   if (time.includes(':')) {
     const parts = time.split(':').map(Number);
-    if (parts.length === 2) return parts[0] * 60 + parts[1];
-    if (parts.length === 3) return parts[0] * 3600 + parts[1] * 60 + parts[2];
+    if (parts.length === 2 && parts[0] !== undefined && parts[1] !== undefined) {
+      return parts[0] * 60 + parts[1];
+    }
+    if (parts.length === 3 && parts[0] !== undefined && parts[1] !== undefined && parts[2] !== undefined) {
+      return parts[0] * 3600 + parts[1] * 60 + parts[2];
+    }
   }
   return parseInt(time) || 0;
 }

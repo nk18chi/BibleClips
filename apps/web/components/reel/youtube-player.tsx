@@ -9,16 +9,29 @@ type YouTubePlayerProps = {
   onEnded?: () => void;
 };
 
+interface YTPlayer {
+  destroy: () => void;
+  getCurrentTime: () => number;
+  pauseVideo: () => void;
+}
+
+interface YTPlayerEvent {
+  data: number;
+}
+
 declare global {
   interface Window {
-    YT: typeof YT;
+    YT: {
+      Player: new (element: HTMLElement, options: object) => YTPlayer;
+      PlayerState: { ENDED: number };
+    };
     onYouTubeIframeAPIReady: () => void;
   }
 }
 
 export function YouTubePlayer({ videoId, startTime, endTime, onEnded }: YouTubePlayerProps) {
   const containerRef = useRef<HTMLDivElement>(null);
-  const playerRef = useRef<YT.Player | null>(null);
+  const playerRef = useRef<YTPlayer | null>(null);
   const checkIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
@@ -27,7 +40,9 @@ export function YouTubePlayer({ videoId, startTime, endTime, onEnded }: YouTubeP
       const tag = document.createElement('script');
       tag.src = 'https://www.youtube.com/iframe_api';
       const firstScriptTag = document.getElementsByTagName('script')[0];
-      firstScriptTag.parentNode?.insertBefore(tag, firstScriptTag);
+      if (firstScriptTag && firstScriptTag.parentNode) {
+        firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
+      }
     }
 
     const initPlayer = () => {
@@ -45,7 +60,7 @@ export function YouTubePlayer({ videoId, startTime, endTime, onEnded }: YouTubeP
           playsinline: 1,
         },
         events: {
-          onStateChange: (event) => {
+          onStateChange: (event: YTPlayerEvent) => {
             if (event.data === window.YT.PlayerState.ENDED) {
               onEnded?.();
             }

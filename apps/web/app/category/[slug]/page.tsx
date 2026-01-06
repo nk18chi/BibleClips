@@ -6,6 +6,28 @@ type Props = {
   params: { slug: string };
 };
 
+type ClipFromDb = {
+  id: string;
+  title: string;
+  youtube_video_id: string;
+  start_time: number;
+  end_time: number;
+  vote_count: number;
+  clip_verses: {
+    book: string;
+    book_ja: string;
+    chapter: number;
+    verse_start: number;
+    verse_end: number | null;
+  }[];
+  clip_categories: {
+    categories: {
+      slug: string;
+      name_en: string;
+    } | null;
+  }[];
+};
+
 async function getClipsForCategory(slug: string, userId?: string) {
   const supabase = createServerClient();
 
@@ -27,25 +49,27 @@ async function getClipsForCategory(slug: string, userId?: string) {
     .eq('clip_categories.categories.slug', slug)
     .order('vote_count', { ascending: false });
 
-  if (userId && clips) {
+  const typedClips = clips as ClipFromDb[] | null;
+
+  if (userId && typedClips) {
     const { data: votes } = await supabase
       .from('votes')
       .select('clip_id')
       .eq('user_id', userId)
       .in(
         'clip_id',
-        clips.map((c) => c.id)
+        typedClips.map((c) => c.id)
       );
 
     const votedClipIds = new Set(votes?.map((v) => v.clip_id) || []);
 
-    return clips.map((clip) => ({
+    return typedClips.map((clip) => ({
       ...clip,
       has_voted: votedClipIds.has(clip.id),
     }));
   }
 
-  return clips?.map((clip) => ({ ...clip, has_voted: false })) || [];
+  return typedClips?.map((clip) => ({ ...clip, has_voted: false })) || [];
 }
 
 export default async function CategoryPage({ params }: Props) {
