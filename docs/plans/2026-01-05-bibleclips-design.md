@@ -210,4 +210,20 @@ User finds a powerful sermon segment, submits clip with verse and category. Admi
 |---------|---------|
 | YouTube IFrame API | Embed video player |
 | YouTube Data API | Fetch metadata, captions |
-| Bible API | Fetch verse text |
+| wldeh/bible-api (jsDelivr CDN) | Fetch verse text (no API key) |
+
+### Bible API Details
+
+Using [wldeh/bible-api](https://github.com/wldeh/bible-api) via jsDelivr CDN:
+- No API key required
+- MIT License
+- Supports English (KJV, WEB, ASV) and Japanese (口語訳)
+
+```typescript
+// URL pattern
+https://cdn.jsdelivr.net/gh/wldeh/bible-api/bibles/{version}/books/{book}/chapters/{chapter}/verses/{verse}.json
+
+// Versions
+// English: en-kjv, en-web, en-asv
+// Japanese: ja-kougo
+```

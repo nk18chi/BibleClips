@@ -101,7 +101,7 @@ Using Supabase PostgreSQL. Key tables:
 |---------|---------|
 | YouTube IFrame API | Embed video player with start/end time |
 | YouTube Data API | Fetch video metadata, captions |
-| Bible API | Fetch verse text |
+| wldeh/bible-api (CDN) | Fetch verse text (no API key, MIT license) |
 
 ## Conventions
 

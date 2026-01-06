@@ -31,10 +31,11 @@ Environment variables are stored in `.env.local` files (not committed to git).
 
 ### Bible API
 
+Using wldeh/bible-api via jsDelivr CDN - **no API key required**.
+
 | Variable | Description | Example |
 |----------|-------------|---------|
-| `BIBLE_API_KEY` | Bible API key (if required) | `xxx` |
-| `BIBLE_API_URL` | Bible API base URL | `https://api.scripture.api.bible` |
+| `NEXT_PUBLIC_BIBLE_API_URL` | Bible API CDN base URL | `https://cdn.jsdelivr.net/gh/wldeh/bible-api/bibles` |
 
 ### Monitoring (Phase 2)
 
@@ -139,9 +140,8 @@ NEXT_PUBLIC_YOUTUBE_API_KEY=
 NEXT_PUBLIC_APP_URL=http://localhost:3000
 NEXT_PUBLIC_APP_NAME=BibleClips
 
-# Bible API (optional)
-BIBLE_API_KEY=
-BIBLE_API_URL=
+# Bible API (no key required - using jsDelivr CDN)
+NEXT_PUBLIC_BIBLE_API_URL=https://cdn.jsdelivr.net/gh/wldeh/bible-api/bibles
 
 # Monitoring (optional)
 SENTRY_DSN=

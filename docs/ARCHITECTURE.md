@@ -178,10 +178,21 @@ CREATE INDEX idx_categories_slug ON categories(slug);
 - Fetch auto-generated captions
 - Rate limited: cache responses
 
-### Bible API
+### Bible API (wldeh/bible-api via jsDelivr CDN)
 - Fetch verse text by reference
-- Multiple translations support
-- Cache responses per verse
+- No API key required
+- Multiple translations: English (KJV, WEB, ASV) + Japanese (口語訳)
+- CDN-hosted, fast and reliable
+- Cache responses in Supabase for offline/faster access
+
+```typescript
+// URL pattern
+const url = `https://cdn.jsdelivr.net/gh/wldeh/bible-api/bibles/${version}/books/${book}/chapters/${chapter}/verses/${verse}.json`;
+
+// Examples
+// English: en-kjv, en-web, en-asv
+// Japanese: ja-kougo
+```
 
 ## Caching Strategy
 
