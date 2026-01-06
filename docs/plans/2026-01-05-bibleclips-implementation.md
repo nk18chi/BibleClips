@@ -342,24 +342,95 @@ Run: `git add . && git commit -m "chore: add shared config package"`
 ```typescript
 import { z } from "zod";
 
-// Bible book names (English)
-export const bibleBooks = [
-  "Genesis", "Exodus", "Leviticus", "Numbers", "Deuteronomy",
-  "Joshua", "Judges", "Ruth", "1 Samuel", "2 Samuel",
-  "1 Kings", "2 Kings", "1 Chronicles", "2 Chronicles",
-  "Ezra", "Nehemiah", "Esther", "Job", "Psalms", "Proverbs",
-  "Ecclesiastes", "Song of Solomon", "Isaiah", "Jeremiah",
-  "Lamentations", "Ezekiel", "Daniel", "Hosea", "Joel",
-  "Amos", "Obadiah", "Jonah", "Micah", "Nahum", "Habakkuk",
-  "Zephaniah", "Haggai", "Zechariah", "Malachi",
-  "Matthew", "Mark", "Luke", "John", "Acts",
-  "Romans", "1 Corinthians", "2 Corinthians", "Galatians",
-  "Ephesians", "Philippians", "Colossians",
-  "1 Thessalonians", "2 Thessalonians",
-  "1 Timothy", "2 Timothy", "Titus", "Philemon",
-  "Hebrews", "James", "1 Peter", "2 Peter",
-  "1 John", "2 John", "3 John", "Jude", "Revelation",
-] as const;
+// Bible book enum with English and Japanese names
+export const BibleBook = {
+  // Old Testament
+  GENESIS: { en: "Genesis", ja: "創世記" },
+  EXODUS: { en: "Exodus", ja: "出エジプト記" },
+  LEVITICUS: { en: "Leviticus", ja: "レビ記" },
+  NUMBERS: { en: "Numbers", ja: "民数記" },
+  DEUTERONOMY: { en: "Deuteronomy", ja: "申命記" },
+  JOSHUA: { en: "Joshua", ja: "ヨシュア記" },
+  JUDGES: { en: "Judges", ja: "士師記" },
+  RUTH: { en: "Ruth", ja: "ルツ記" },
+  FIRST_SAMUEL: { en: "1 Samuel", ja: "サムエル記上" },
+  SECOND_SAMUEL: { en: "2 Samuel", ja: "サムエル記下" },
+  FIRST_KINGS: { en: "1 Kings", ja: "列王記上" },
+  SECOND_KINGS: { en: "2 Kings", ja: "列王記下" },
+  FIRST_CHRONICLES: { en: "1 Chronicles", ja: "歴代誌上" },
+  SECOND_CHRONICLES: { en: "2 Chronicles", ja: "歴代誌下" },
+  EZRA: { en: "Ezra", ja: "エズラ記" },
+  NEHEMIAH: { en: "Nehemiah", ja: "ネヘミヤ記" },
+  ESTHER: { en: "Esther", ja: "エステル記" },
+  JOB: { en: "Job", ja: "ヨブ記" },
+  PSALMS: { en: "Psalms", ja: "詩篇" },
+  PROVERBS: { en: "Proverbs", ja: "箴言" },
+  ECCLESIASTES: { en: "Ecclesiastes", ja: "伝道者の書" },
+  SONG_OF_SOLOMON: { en: "Song of Solomon", ja: "雅歌" },
+  ISAIAH: { en: "Isaiah", ja: "イザヤ書" },
+  JEREMIAH: { en: "Jeremiah", ja: "エレミヤ書" },
+  LAMENTATIONS: { en: "Lamentations", ja: "哀歌" },
+  EZEKIEL: { en: "Ezekiel", ja: "エゼキエル書" },
+  DANIEL: { en: "Daniel", ja: "ダニエル書" },
+  HOSEA: { en: "Hosea", ja: "ホセア書" },
+  JOEL: { en: "Joel", ja: "ヨエル書" },
+  AMOS: { en: "Amos", ja: "アモス書" },
+  OBADIAH: { en: "Obadiah", ja: "オバデヤ書" },
+  JONAH: { en: "Jonah", ja: "ヨナ書" },
+  MICAH: { en: "Micah", ja: "ミカ書" },
+  NAHUM: { en: "Nahum", ja: "ナホム書" },
+  HABAKKUK: { en: "Habakkuk", ja: "ハバクク書" },
+  ZEPHANIAH: { en: "Zephaniah", ja: "ゼパニヤ書" },
+  HAGGAI: { en: "Haggai", ja: "ハガイ書" },
+  ZECHARIAH: { en: "Zechariah", ja: "ゼカリヤ書" },
+  MALACHI: { en: "Malachi", ja: "マラキ書" },
+  // New Testament
+  MATTHEW: { en: "Matthew", ja: "マタイの福音書" },
+  MARK: { en: "Mark", ja: "マルコの福音書" },
+  LUKE: { en: "Luke", ja: "ルカの福音書" },
+  JOHN: { en: "John", ja: "ヨハネの福音書" },
+  ACTS: { en: "Acts", ja: "使徒の働き" },
+  ROMANS: { en: "Romans", ja: "ローマ人への手紙" },
+  FIRST_CORINTHIANS: { en: "1 Corinthians", ja: "コリント人への手紙第一" },
+  SECOND_CORINTHIANS: { en: "2 Corinthians", ja: "コリント人への手紙第二" },
+  GALATIANS: { en: "Galatians", ja: "ガラテヤ人への手紙" },
+  EPHESIANS: { en: "Ephesians", ja: "エペソ人への手紙" },
+  PHILIPPIANS: { en: "Philippians", ja: "ピリピ人への手紙" },
+  COLOSSIANS: { en: "Colossians", ja: "コロサイ人への手紙" },
+  FIRST_THESSALONIANS: { en: "1 Thessalonians", ja: "テサロニケ人への手紙第一" },
+  SECOND_THESSALONIANS: { en: "2 Thessalonians", ja: "テサロニケ人への手紙第二" },
+  FIRST_TIMOTHY: { en: "1 Timothy", ja: "テモテへの手紙第一" },
+  SECOND_TIMOTHY: { en: "2 Timothy", ja: "テモテへの手紙第二" },
+  TITUS: { en: "Titus", ja: "テトスへの手紙" },
+  PHILEMON: { en: "Philemon", ja: "ピレモンへの手紙" },
+  HEBREWS: { en: "Hebrews", ja: "ヘブル人への手紙" },
+  JAMES: { en: "James", ja: "ヤコブの手紙" },
+  FIRST_PETER: { en: "1 Peter", ja: "ペテロの手紙第一" },
+  SECOND_PETER: { en: "2 Peter", ja: "ペテロの手紙第二" },
+  FIRST_JOHN: { en: "1 John", ja: "ヨハネの手紙第一" },
+  SECOND_JOHN: { en: "2 John", ja: "ヨハネの手紙第二" },
+  THIRD_JOHN: { en: "3 John", ja: "ヨハネの手紙第三" },
+  JUDE: { en: "Jude", ja: "ユダの手紙" },
+  REVELATION: { en: "Revelation", ja: "ヨハネの黙示録" },
+} as const;
+
+export type BibleBookKey = keyof typeof BibleBook;
+export type BibleBookValue = (typeof BibleBook)[BibleBookKey];
+
+// Helper arrays
+export const bibleBookKeys = Object.keys(BibleBook) as BibleBookKey[];
+export const bibleBookNamesEn = Object.values(BibleBook).map((b) => b.en);
+export const bibleBookNamesJa = Object.values(BibleBook).map((b) => b.ja);
+
+// Get book by English name
+export function getBookByEnglishName(name: string): BibleBookValue | undefined {
+  return Object.values(BibleBook).find((b) => b.en.toLowerCase() === name.toLowerCase());
+}
+
+// Get book by Japanese name
+export function getBookByJapaneseName(name: string): BibleBookValue | undefined {
+  return Object.values(BibleBook).find((b) => b.ja === name);
+}
 
 export const verseSchema = z.object({
   book: z.string().min(1),
@@ -438,8 +509,45 @@ export type ClipUpdate = z.infer<typeof clipUpdateSchema>;
 ```typescript
 import { z } from "zod";
 
+// Category enum with English and Japanese names
+export const CategoryEnum = {
+  LOVE: { slug: "love", en: "Love", ja: "愛" },
+  ANXIETY: { slug: "anxiety", en: "Anxiety", ja: "不安" },
+  ANGER: { slug: "anger", en: "Anger", ja: "怒り" },
+  HOPE: { slug: "hope", en: "Hope", ja: "希望" },
+  DEPRESSION: { slug: "depression", en: "Depression", ja: "うつ" },
+  PEACE: { slug: "peace", en: "Peace", ja: "平安" },
+  FEAR: { slug: "fear", en: "Fear", ja: "恐れ" },
+  STRESS: { slug: "stress", en: "Stress", ja: "ストレス" },
+  PATIENCE: { slug: "patience", en: "Patience", ja: "忍耐" },
+  TEMPTATION: { slug: "temptation", en: "Temptation", ja: "誘惑" },
+  PRIDE: { slug: "pride", en: "Pride", ja: "高慢" },
+  DOUBT: { slug: "doubt", en: "Doubt", ja: "疑い" },
+  JOY: { slug: "joy", en: "Joy", ja: "喜び" },
+  JEALOUSY: { slug: "jealousy", en: "Jealousy", ja: "嫉妬" },
+  LOSS: { slug: "loss", en: "Loss", ja: "喪失" },
+  HEALING: { slug: "healing", en: "Healing", ja: "癒し" },
+} as const;
+
+export type CategoryKey = keyof typeof CategoryEnum;
+export type CategoryValue = (typeof CategoryEnum)[CategoryKey];
+
+// Helper arrays
+export const categoryKeys = Object.keys(CategoryEnum) as CategoryKey[];
+export const categorySlugs = Object.values(CategoryEnum).map((c) => c.slug);
+export const categoryNamesEn = Object.values(CategoryEnum).map((c) => c.en);
+export const categoryNamesJa = Object.values(CategoryEnum).map((c) => c.ja);
+
+// Get category by slug
+export function getCategoryBySlug(slug: string): CategoryValue | undefined {
+  return Object.values(CategoryEnum).find((c) => c.slug === slug);
+}
+
+// Zod schema for category slug validation
+export const categorySlugSchema = z.enum(categorySlugs as [string, ...string[]]);
+
 export const categorySchema = z.object({
-  slug: z.string().min(1).max(50).regex(/^[a-z0-9-]+$/, "Slug must be lowercase alphanumeric with dashes"),
+  slug: categorySlugSchema,
   nameEn: z.string().min(1).max(100),
   nameJa: z.string().min(1).max(100),
   sortOrder: z.number().int().min(0).default(0),
@@ -477,12 +585,19 @@ export const userProfileUpdateSchema = userProfileSchema.partial();
 **Step 7: Create packages/validation/src/index.ts**
 
 ```typescript
-// Verse
+// Verse & Bible Books
 export {
+  BibleBook,
+  bibleBookKeys,
+  bibleBookNamesEn,
+  bibleBookNamesJa,
+  getBookByEnglishName,
+  getBookByJapaneseName,
   verseSchema,
-  bibleBooks,
   formatVerseRef,
   getBibleGatewayUrl,
+  type BibleBookKey,
+  type BibleBookValue,
   type Verse,
 } from "./verse";
 
@@ -499,9 +614,18 @@ export {
 
 // Category
 export {
+  CategoryEnum,
+  categoryKeys,
+  categorySlugs,
+  categoryNamesEn,
+  categoryNamesJa,
+  getCategoryBySlug,
+  categorySlugSchema,
   categorySchema,
   categoryCreateSchema,
   categoryUpdateSchema,
+  type CategoryKey,
+  type CategoryValue,
   type Category,
 } from "./category";
 
