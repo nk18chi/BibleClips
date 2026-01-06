@@ -1,0 +1,84 @@
+import { createServerClient } from '@/lib/supabase/server';
+import { ReelViewer } from '@/components/reel/reel-viewer';
+import Link from 'next/link';
+
+type Props = {
+  params: { slug: string };
+};
+
+async function getClipsForCategory(slug: string, userId?: string) {
+  const supabase = createServerClient();
+
+  const { data: clips } = await supabase
+    .from('clips')
+    .select(
+      `
+      id,
+      title,
+      youtube_video_id,
+      start_time,
+      end_time,
+      vote_count,
+      clip_verses (book, book_ja, chapter, verse_start, verse_end),
+      clip_categories!inner (categories!inner (slug, name_en))
+    `
+    )
+    .eq('status', 'APPROVED')
+    .eq('clip_categories.categories.slug', slug)
+    .order('vote_count', { ascending: false });
+
+  if (userId && clips) {
+    const { data: votes } = await supabase
+      .from('votes')
+      .select('clip_id')
+      .eq('user_id', userId)
+      .in(
+        'clip_id',
+        clips.map((c) => c.id)
+      );
+
+    const votedClipIds = new Set(votes?.map((v) => v.clip_id) || []);
+
+    return clips.map((clip) => ({
+      ...clip,
+      has_voted: votedClipIds.has(clip.id),
+    }));
+  }
+
+  return clips?.map((clip) => ({ ...clip, has_voted: false })) || [];
+}
+
+export default async function CategoryPage({ params }: Props) {
+  const supabase = createServerClient();
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
+
+  const clips = await getClipsForCategory(params.slug, session?.user?.id);
+
+  const categoryName = params.slug.charAt(0).toUpperCase() + params.slug.slice(1);
+
+  if (clips.length === 0) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
+        <div className="text-center">
+          <h1 className="text-2xl font-bold text-gray-900 mb-2">{categoryName}</h1>
+          <p className="text-gray-600 mb-4">No clips found in this category yet.</p>
+          <div className="space-y-2">
+            <Link
+              href="/submit"
+              className="block bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700"
+            >
+              Submit a clip
+            </Link>
+            <Link href="/" className="block text-blue-600 hover:text-blue-800">
+              Back to home
+            </Link>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return <ReelViewer clips={clips} />;
+}
