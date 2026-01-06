@@ -4,8 +4,15 @@ import { useState, useCallback } from 'react';
 import { YouTubePlayer } from './youtube-player';
 import { ActionButtons } from './action-buttons';
 import { VerseModal } from './verse-modal';
+import { SubtitleOverlay } from './subtitle-overlay';
 import { Header } from '@/components/ui/header';
 import Link from 'next/link';
+
+type SubtitleCue = {
+  start: number;
+  end: number;
+  text: string;
+};
 
 type Clip = {
   id: string;
@@ -15,6 +22,7 @@ type Clip = {
   end_time: number;
   vote_count: number;
   has_voted: boolean;
+  subtitles?: SubtitleCue[];
   clip_verses: {
     book: string;
     book_ja: string;
@@ -39,6 +47,7 @@ type ReelViewerProps = {
 export function ReelViewer({ clips, initialIndex = 0, showHeader = false }: ReelViewerProps) {
   const [currentIndex, setCurrentIndex] = useState(initialIndex);
   const [showVerseModal, setShowVerseModal] = useState(false);
+  const [currentTime, setCurrentTime] = useState(0);
 
   const currentClip = clips[currentIndex];
 
@@ -111,8 +120,14 @@ export function ReelViewer({ clips, initialIndex = 0, showHeader = false }: Reel
             startTime={currentClip.start_time}
             endTime={currentClip.end_time}
             onEnded={goToNext}
+            onTimeUpdate={setCurrentTime}
           />
         </div>
+
+        {/* Subtitle Overlay */}
+        {currentClip.subtitles && currentClip.subtitles.length > 0 && (
+          <SubtitleOverlay cues={currentClip.subtitles} currentTime={currentTime} />
+        )}
 
         {/* Action Buttons - Right side */}
         <div className="absolute right-4 bottom-32 z-10">

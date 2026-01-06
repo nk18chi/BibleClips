@@ -23,7 +23,7 @@ export function Header() {
 
     // Check if it's a verse reference (e.g., "John 3:16")
     const verseMatch = searchQuery.match(/^(\d?\s*\w+)\s+(\d+):(\d+)(?:-(\d+))?$/i);
-    if (verseMatch) {
+    if (verseMatch && verseMatch[1] && verseMatch[2] && verseMatch[3]) {
       const book = verseMatch[1].toLowerCase().replace(/\s+/g, '-');
       const chapter = verseMatch[2];
       const verse = verseMatch[3];

@@ -7,6 +7,7 @@ type YouTubePlayerProps = {
   startTime: number;
   endTime: number;
   onEnded?: () => void;
+  onTimeUpdate?: (currentTime: number) => void;
 };
 
 interface YTPlayer {
@@ -29,7 +30,7 @@ declare global {
   }
 }
 
-export function YouTubePlayer({ videoId, startTime, endTime, onEnded }: YouTubePlayerProps) {
+export function YouTubePlayer({ videoId, startTime, endTime, onEnded, onTimeUpdate }: YouTubePlayerProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const playerRef = useRef<YTPlayer | null>(null);
   const checkIntervalRef = useRef<NodeJS.Timeout | null>(null);
@@ -58,6 +59,7 @@ export function YouTubePlayer({ videoId, startTime, endTime, onEnded }: YouTubeP
           modestbranding: 1,
           rel: 0,
           playsinline: 1,
+          cc_load_policy: 0, // Disable YouTube captions (use our overlay)
         },
         events: {
           onStateChange: (event: YTPlayerEvent) => {
@@ -68,16 +70,17 @@ export function YouTubePlayer({ videoId, startTime, endTime, onEnded }: YouTubeP
         },
       });
 
-      // Check if video passed end time
+      // Check time updates and end time
       checkIntervalRef.current = setInterval(() => {
         if (playerRef.current?.getCurrentTime) {
           const currentTime = playerRef.current.getCurrentTime();
+          onTimeUpdate?.(currentTime);
           if (currentTime >= endTime) {
             playerRef.current.pauseVideo();
             onEnded?.();
           }
         }
-      }, 500);
+      }, 100); // More frequent updates for smooth subtitles
     };
 
     if (window.YT?.Player) {
@@ -92,7 +95,7 @@ export function YouTubePlayer({ videoId, startTime, endTime, onEnded }: YouTubeP
       }
       playerRef.current?.destroy();
     };
-  }, [videoId, startTime, endTime, onEnded]);
+  }, [videoId, startTime, endTime, onEnded, onTimeUpdate]);
 
   return (
     <div className="w-full h-full bg-black relative overflow-hidden">

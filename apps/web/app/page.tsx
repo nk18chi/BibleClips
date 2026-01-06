@@ -2,6 +2,7 @@ import { createServerClient } from '@/lib/supabase/server';
 import { ReelViewer } from '@/components/reel/reel-viewer';
 import { Header } from '@/components/ui/header';
 import Link from 'next/link';
+import { fetchYouTubeCaptions } from '@/lib/youtube-captions';
 
 type ClipFromDb = {
   id: string;
@@ -25,6 +26,12 @@ type ClipFromDb = {
   }[];
 };
 
+type SubtitleCue = {
+  start: number;
+  end: number;
+  text: string;
+};
+
 type Clip = {
   id: string;
   title: string;
@@ -33,6 +40,7 @@ type Clip = {
   end_time: number;
   vote_count: number;
   has_voted: boolean;
+  subtitles?: SubtitleCue[];
   clip_verses: {
     book: string;
     book_ja: string;
@@ -47,6 +55,18 @@ type Clip = {
     } | null;
   }[];
 };
+
+// Fetch subtitles from YouTube
+async function fetchSubtitles(videoId: string, startTime: number, endTime: number): Promise<SubtitleCue[]> {
+  try {
+    const captions = await fetchYouTubeCaptions(videoId);
+
+    // Filter by time range
+    return captions.filter((sub) => sub.end > startTime && sub.start < endTime);
+  } catch {
+    return [];
+  }
+}
 
 async function getApprovedClips(userId?: string): Promise<Clip[]> {
   const supabase = createServerClient();
@@ -67,24 +87,40 @@ async function getApprovedClips(userId?: string): Promise<Clip[]> {
     .order('created_at', { ascending: false })
     .limit(50);
 
-  const clips = (data as ClipFromDb[]) || [];
+  const clips = (data || []) as unknown as ClipFromDb[];
 
-  if (userId && clips.length > 0) {
+  // Fetch subtitles for all clips in parallel
+  const clipsWithSubtitles = await Promise.all(
+    clips.map(async (clip) => {
+      const subtitles = await fetchSubtitles(
+        clip.youtube_video_id,
+        clip.start_time,
+        clip.end_time
+      );
+      return {
+        ...clip,
+        has_voted: false,
+        subtitles,
+      };
+    })
+  );
+
+  if (userId && clipsWithSubtitles.length > 0) {
     const { data: votes } = await supabase
       .from('votes')
       .select('clip_id')
       .eq('user_id', userId)
-      .in('clip_id', clips.map(c => c.id));
+      .in('clip_id', clipsWithSubtitles.map(c => c.id));
 
     const votedClipIds = new Set(votes?.map(v => v.clip_id) || []);
 
-    return clips.map(clip => ({
+    return clipsWithSubtitles.map(clip => ({
       ...clip,
       has_voted: votedClipIds.has(clip.id),
     }));
   }
 
-  return clips.map(clip => ({ ...clip, has_voted: false }));
+  return clipsWithSubtitles;
 }
 
 export default async function HomePage() {
