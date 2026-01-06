@@ -95,8 +95,11 @@ export function YouTubePlayer({ videoId, startTime, endTime, onEnded }: YouTubeP
   }, [videoId, startTime, endTime, onEnded]);
 
   return (
-    <div className="w-full h-full bg-black flex items-center justify-center">
-      <div ref={containerRef} className="w-full aspect-video" />
+    <div className="w-full h-full bg-black relative overflow-hidden">
+      <div
+        ref={containerRef}
+        className="absolute inset-0 w-full h-full [&>iframe]:w-full [&>iframe]:h-full"
+      />
     </div>
   );
 }
