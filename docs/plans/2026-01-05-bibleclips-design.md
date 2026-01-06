@@ -181,7 +181,8 @@ User finds a powerful sermon segment, submits clip with verse and category. Admi
 ### Reel Viewer Layout (following Instagram Reels)
 ```
 ┌─────────────────────────────────────┐
-│                                     │
+│  📖 Philippians 4:6-7               │  ← Verse reference at top
+├─────────────────────────────────────┤
 │                                     │
 │      YouTube Video (Full Screen)    │
 │                                     │
@@ -194,7 +195,6 @@ User finds a powerful sermon segment, submits clip with verse and category. Admi
 │                               │42 │ │
 │                               ├───┤ │
 │                               │ 📖│ │  ← Verse (tap to expand)
-│                               │4:6│ │
 │                               ├───┤ │
 │                               │ 📤│ │  ← Share
 │                               ├───┤ │
@@ -229,6 +229,7 @@ When verse button (📖) is tapped → Modal/Panel opens:
 ### Key UI Elements
 | Element | Behavior |
 |---------|----------|
+| Top header | Verse reference (e.g., "Philippians 4:6-7") |
 | Swipe up/down | Navigate between clips |
 | Tap video | Pause/play |
 | Double tap | Like |
