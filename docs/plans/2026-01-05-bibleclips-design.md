@@ -182,27 +182,35 @@ User finds a powerful sermon segment, submits clip with verse and category. Admi
 ```
 ┌─────────────────────────────────────┐
 │                                     │
-│                                     │
-│                                     │
 │      YouTube Video (Full Screen)    │
 │                                     │
 │  ┌─────────────────────────────┐    │
-│  │ God loves you               │    │
+│  │ God loves you               │    │  ← Subtitle overlay
 │  │ (神はあなたを愛しています)    │    │
 │  └─────────────────────────────┘    │
 │                               ┌───┐ │
 │                               │ ❤️│ │  ← Like
 │                               │42 │ │
 │                               ├───┤ │
-│                               │ 💬│ │  ← Comments (future)
-│                               ├───┤ │
 │                               │ 📤│ │  ← Share
 │                               ├───┤ │
-│  ┌──────────────────────────┐ │ ▶️│ │  ← Full sermon
-│  │ 📖 Philippians 4:6       │ └───┘ │
-│  │ "Be anxious for nothing" │       │
-│  │ Pastor John · Grace Church│       │
-│  └──────────────────────────┘       │
+│                               │ ▶️│ │  ← Full sermon
+│                               └───┘ │
+├─────────────────────────────────────┤
+│ 📖 Philippians 4:6                  │
+│                                     │
+│ "Be anxious for nothing, but in     │
+│ everything by prayer and            │  ← Bible verse text
+│ supplication with thanksgiving let  │
+│ your requests be made known to God."│
+│                                     │
+│ 「何事も思い煩うな、ただ、事ごとに、 │  ← Japanese translation
+│ 感謝をもって祈りと願いとをささげ、  │
+│ あなたがたの求めるところを神に申し上げ│
+│ るがよい。」                        │
+│                                     │
+│ Pastor John · Grace Church          │
+├─────────────────────────────────────┤
 │         ↑ Swipe up for next         │
 └─────────────────────────────────────┘
 ```
@@ -214,8 +222,8 @@ User finds a powerful sermon segment, submits clip with verse and category. Admi
 | Tap video | Pause/play |
 | Double tap | Like |
 | Right side buttons | Like, share, full sermon link |
-| Bottom overlay | Bible verse, pastor info |
-| Subtitle overlay | Dual-language captions on video |
+| Bottom panel | Bible verse reference, full verse text (EN + JP), pastor info |
+| Subtitle overlay | Dual-language captions synced with video |
 
 ### Home Page Layout
 ```
