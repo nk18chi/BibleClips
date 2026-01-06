@@ -44,6 +44,9 @@ importers:
       youtube-transcript:
         specifier: ^1.2.1
         version: 1.2.1
+      youtube-transcript-plus:
+        specifier: ^1.1.2
+        version: 1.1.2
       youtubei.js:
         specifier: ^16.0.1
         version: 16.0.1
@@ -4143,6 +4146,11 @@ packages:
       striptags: 3.2.0
     transitivePeerDependencies:
       - debug
+    dev: false
+
+  /youtube-transcript-plus@1.1.2:
+    resolution: {integrity: sha512-bLlqkA6gVVUorZpcc+THuECXyAwOpnHqW2lOav9g6gGovxAP3FCD8s9GBFVjmSl3cWWwwPPXtG/zY1nD+GvQ7A==}
+    engines: {node: '>=18.0.0'}
     dev: false
 
   /youtube-transcript@1.2.1:
