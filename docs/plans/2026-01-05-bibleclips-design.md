@@ -182,6 +182,7 @@ User finds a powerful sermon segment, submits clip with verse and category. Admi
 ```
 ┌─────────────────────────────────────┐
 │                                     │
+│                                     │
 │      YouTube Video (Full Screen)    │
 │                                     │
 │  ┌─────────────────────────────┐    │
@@ -192,26 +193,36 @@ User finds a powerful sermon segment, submits clip with verse and category. Admi
 │                               │ ❤️│ │  ← Like
 │                               │42 │ │
 │                               ├───┤ │
+│                               │ 📖│ │  ← Verse (tap to expand)
+│                               │4:6│ │
+│                               ├───┤ │
 │                               │ 📤│ │  ← Share
 │                               ├───┤ │
 │                               │ ▶️│ │  ← Full sermon
 │                               └───┘ │
+│                                     │
+│  Pastor John · Grace Church         │
+│  #anxiety #worry                    │
+│         ↑ Swipe up for next         │
+└─────────────────────────────────────┘
+
+When verse button (📖) is tapped → Modal/Panel opens:
+┌─────────────────────────────────────┐
+│ 📖 Philippians 4:6              ✕   │
 ├─────────────────────────────────────┤
-│ 📖 Philippians 4:6                  │
 │                                     │
 │ "Be anxious for nothing, but in     │
-│ everything by prayer and            │  ← Bible verse text
+│ everything by prayer and            │
 │ supplication with thanksgiving let  │
 │ your requests be made known to God."│
 │                                     │
-│ 「何事も思い煩うな、ただ、事ごとに、 │  ← Japanese translation
+│ 「何事も思い煩うな、ただ、事ごとに、 │
 │ 感謝をもって祈りと願いとをささげ、  │
-│ あなたがたの求めるところを神に申し上げ│
-│ るがよい。」                        │
+│ あなたがたの求めるところを神に申し上│
+│ げるがよい。」                      │
 │                                     │
-│ Pastor John · Grace Church          │
-├─────────────────────────────────────┤
-│         ↑ Swipe up for next         │
+│  [ See all clips for this verse ]   │
+│                                     │
 └─────────────────────────────────────┘
 ```
 
@@ -221,8 +232,9 @@ User finds a powerful sermon segment, submits clip with verse and category. Admi
 | Swipe up/down | Navigate between clips |
 | Tap video | Pause/play |
 | Double tap | Like |
-| Right side buttons | Like, share, full sermon link |
-| Bottom panel | Bible verse reference, full verse text (EN + JP), pastor info |
+| Right side buttons | Like, verse, share, full sermon link |
+| Verse button | Tap to open modal with full verse text (EN + JP) |
+| Bottom info | Pastor name, category tags |
 | Subtitle overlay | Dual-language captions synced with video |
 
 ### Home Page Layout
