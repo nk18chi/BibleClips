@@ -181,7 +181,7 @@ User finds a powerful sermon segment, submits clip with verse and category. Admi
 ### Reel Viewer Layout (following Instagram Reels)
 ```
 ┌─────────────────────────────────────┐
-│  📖 Philippians 4:6-7               │  ← Verse reference at top
+│  📖 Philippians 4:6-7 ↗            │  ← Tap to open Bible Gateway
 ├─────────────────────────────────────┤
 │                                     │
 │      YouTube Video (Full Screen)    │
@@ -229,7 +229,7 @@ When verse button (📖) is tapped → Modal/Panel opens:
 ### Key UI Elements
 | Element | Behavior |
 |---------|----------|
-| Top header | Verse reference (e.g., "Philippians 4:6-7") |
+| Top header | Verse reference - links to [Bible Gateway](https://www.biblegateway.com) |
 | Swipe up/down | Navigate between clips |
 | Tap video | Pause/play |
 | Double tap | Like |
@@ -237,6 +237,12 @@ When verse button (📖) is tapped → Modal/Panel opens:
 | Verse button | Tap to open modal with full verse text (EN + JP) |
 | Bottom info | Pastor name, category tags |
 | Subtitle overlay | Dual-language captions synced with video |
+
+### External Links
+| Element | URL Pattern |
+|---------|-------------|
+| Top verse header | `https://www.biblegateway.com/passage/?search={verse}&version=NIV` |
+| Full sermon button | `https://www.youtube.com/watch?v={videoId}` |
 
 ### Home Page Layout
 ```
