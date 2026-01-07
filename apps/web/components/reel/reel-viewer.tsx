@@ -1,12 +1,12 @@
-'use client';
+"use client";
 
-import { useState, useCallback } from 'react';
-import { YouTubePlayer } from './youtube-player';
-import { ActionButtons } from './action-buttons';
-import { VerseModal } from './verse-modal';
-import { SubtitleOverlay } from './subtitle-overlay';
-import { Header } from '@/components/ui/header';
-import Link from 'next/link';
+import { useState, useCallback } from "react";
+import { YouTubePlayer } from "./youtube-player";
+import { ActionButtons } from "./action-buttons";
+import { VerseModal } from "./verse-modal";
+import { SubtitleOverlay } from "./subtitle-overlay";
+import { Header } from "@/components/ui/header";
+import Link from "next/link";
 
 type WordTiming = {
   word: string;
@@ -65,7 +65,7 @@ export function ReelViewer({ clips, initialIndex = 0, showHeader = false }: Reel
 
   if (!currentClip) {
     return (
-      <div className="h-screen flex items-center justify-center bg-black text-white">
+      <div className='h-screen flex items-center justify-center bg-black text-white'>
         <p>No clips available</p>
       </div>
     );
@@ -76,44 +76,39 @@ export function ReelViewer({ clips, initialIndex = 0, showHeader = false }: Reel
     ? verse.verse_end
       ? `${verse.book} ${verse.chapter}:${verse.verse_start}-${verse.verse_end}`
       : `${verse.book} ${verse.chapter}:${verse.verse_start}`
-    : '';
+    : "";
 
-  const bibleGatewayUrl = verse
-    ? `https://www.biblegateway.com/passage/?search=${encodeURIComponent(verseRef)}&version=NIV`
-    : '';
+  const bibleGatewayUrl = verse ? `https://www.biblegateway.com/passage/?search=${encodeURIComponent(verseRef)}&version=NIV` : "";
 
   return (
-    <div className="h-screen bg-black relative overflow-hidden flex flex-col">
+    <div className='h-screen bg-black relative overflow-hidden flex flex-col'>
       {/* Header */}
       {showHeader ? (
         <Header />
       ) : (
-        <Link
-          href="/"
-          className="absolute top-4 right-4 z-20 bg-white/20 hover:bg-white/30 text-white p-2 rounded-full"
-        >
+        <Link href='/' className='absolute top-4 right-4 z-20 bg-white/20 hover:bg-white/30 text-white p-2 rounded-full'>
           X
         </Link>
       )}
 
       {/* Main content area */}
-      <div className="flex-1 relative">
+      <div className='flex-1 relative'>
         {/* Verse reference overlay */}
-        <div className="absolute top-0 left-0 right-0 z-10 p-4 bg-gradient-to-b from-black/70 to-transparent">
-          {verse && (
+        {verse && (
+          <div className='absolute top-6 left-0 right-0 z-10 flex justify-center'>
             <a
               href={bibleGatewayUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-white font-medium flex items-center gap-1"
+              target='_blank'
+              rel='noopener noreferrer'
+              className='bg-white text-black text-5xl font-semibold px-10 py-5 rounded-full shadow-lg hover:bg-gray-100 transition-colors'
             >
-              {verseRef} <span className="text-sm">↗</span>
+              {verseRef}
             </a>
-          )}
-        </div>
+          </div>
+        )}
 
         {/* Video Player */}
-        <div className="h-full">
+        <div className='h-full'>
           <YouTubePlayer
             key={currentClip.id}
             videoId={currentClip.youtube_video_id}
@@ -130,7 +125,7 @@ export function ReelViewer({ clips, initialIndex = 0, showHeader = false }: Reel
         )}
 
         {/* Action Buttons - Right side */}
-        <div className="absolute right-4 bottom-32 z-10">
+        <div className='absolute right-4 bottom-32 z-10'>
           <ActionButtons
             clipId={currentClip.id}
             youtubeVideoId={currentClip.youtube_video_id}
@@ -141,16 +136,12 @@ export function ReelViewer({ clips, initialIndex = 0, showHeader = false }: Reel
         </div>
 
         {/* Bottom Info */}
-        <div className="absolute bottom-0 left-0 right-0 z-10 p-4 bg-gradient-to-t from-black/70 to-transparent">
-          <h3 className="text-white font-medium mb-1">{currentClip.title}</h3>
-          <div className="flex flex-wrap gap-2">
+        <div className='absolute bottom-0 left-0 right-0 z-10 p-4 bg-gradient-to-t from-black/70 to-transparent'>
+          <h3 className='text-white font-medium mb-1'>{currentClip.title}</h3>
+          <div className='flex flex-wrap gap-2'>
             {currentClip.clip_categories?.map((cc) =>
               cc.categories ? (
-                <Link
-                  key={cc.categories.slug}
-                  href={`/category/${cc.categories.slug}`}
-                  className="text-blue-400 text-sm hover:underline"
-                >
+                <Link key={cc.categories.slug} href={`/category/${cc.categories.slug}`} className='text-blue-400 text-sm hover:underline'>
                   #{cc.categories.name_en.toLowerCase()}
                 </Link>
               ) : null
@@ -158,24 +149,24 @@ export function ReelViewer({ clips, initialIndex = 0, showHeader = false }: Reel
           </div>
 
           {/* Clip counter */}
-          <div className="mt-2 text-white/50 text-xs">
+          <div className='mt-2 text-white/50 text-xs'>
             {currentIndex + 1} / {clips.length}
           </div>
         </div>
 
         {/* Navigation buttons (for desktop) */}
-        <div className="absolute left-4 top-1/2 -translate-y-1/2 z-10 hidden sm:flex flex-col gap-2">
+        <div className='absolute left-4 top-1/2 -translate-y-1/2 z-10 hidden sm:flex flex-col gap-2'>
           <button
             onClick={goToPrev}
             disabled={currentIndex === 0}
-            className="bg-white/20 hover:bg-white/30 text-white p-2 rounded-full disabled:opacity-30"
+            className='bg-white/20 hover:bg-white/30 text-white p-2 rounded-full disabled:opacity-30'
           >
             ↑
           </button>
           <button
             onClick={goToNext}
             disabled={currentIndex === clips.length - 1}
-            className="bg-white/20 hover:bg-white/30 text-white p-2 rounded-full disabled:opacity-30"
+            className='bg-white/20 hover:bg-white/30 text-white p-2 rounded-full disabled:opacity-30'
           >
             ↓
           </button>
