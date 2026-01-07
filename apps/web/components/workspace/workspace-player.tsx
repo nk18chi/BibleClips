@@ -7,21 +7,13 @@ type WorkspacePlayerProps = {
   onTimeCapture: (type: 'start' | 'end', time: number) => void;
 };
 
-interface YTPlayer {
+// Extended YTPlayer interface for workspace (superset of reel player)
+interface WorkspaceYTPlayer {
   destroy: () => void;
   getCurrentTime: () => number;
   seekTo: (seconds: number, allowSeekAhead: boolean) => void;
   playVideo: () => void;
   pauseVideo: () => void;
-}
-
-declare global {
-  interface Window {
-    YT: {
-      Player: new (element: HTMLElement, options: object) => YTPlayer;
-    };
-    onYouTubeIframeAPIReady: () => void;
-  }
 }
 
 function formatTime(seconds: number): string {
@@ -36,7 +28,7 @@ function formatTime(seconds: number): string {
 
 export function WorkspacePlayer({ videoId, onTimeCapture }: WorkspacePlayerProps) {
   const containerRef = useRef<HTMLDivElement>(null);
-  const playerRef = useRef<YTPlayer | null>(null);
+  const playerRef = useRef<WorkspaceYTPlayer | null>(null);
   const [currentTime, setCurrentTime] = useState(0);
   const [isReady, setIsReady] = useState(false);
 
@@ -70,7 +62,7 @@ export function WorkspacePlayer({ videoId, onTimeCapture }: WorkspacePlayerProps
         events: {
           onReady: () => setIsReady(true),
         },
-      });
+      }) as WorkspaceYTPlayer;
     };
 
     if (window.YT?.Player) {

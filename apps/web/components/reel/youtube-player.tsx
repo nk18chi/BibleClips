@@ -13,6 +13,8 @@ type YouTubePlayerProps = {
 interface YTPlayer {
   destroy: () => void;
   getCurrentTime: () => number;
+  seekTo: (seconds: number, allowSeekAhead: boolean) => void;
+  playVideo: () => void;
   pauseVideo: () => void;
 }
 
