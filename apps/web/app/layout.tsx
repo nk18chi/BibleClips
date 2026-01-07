@@ -9,7 +9,7 @@ export const metadata: Metadata = {
   title: "BibleClips - Discover Scripture Through Sermons",
   description: "A community-driven platform connecting Bible verses to sermon video clips",
   icons: {
-    icon: "/favicon.png",
+    icon: "/favicon.svg",
     apple: "/favicon.png",
   },
 };
