@@ -1,5 +1,9 @@
-const YOUTUBE_API_KEY = process.env.YOUTUBE_API_KEY;
 const YOUTUBE_API_BASE = 'https://www.googleapis.com/youtube/v3';
+
+// Read API key at call time (not module load time) to support dotenv
+function getApiKey(): string {
+  return process.env.YOUTUBE_API_KEY || '';
+}
 
 type YouTubeSearchResult = {
   id: { videoId: string };
@@ -34,7 +38,7 @@ function parseDuration(duration: string): number {
 // Get channel ID from handle (e.g., @saddlebackchurch)
 export async function getChannelId(handle: string): Promise<string | null> {
   const cleanHandle = handle.replace('@', '');
-  const url = `${YOUTUBE_API_BASE}/channels?forHandle=${cleanHandle}&part=id&key=${YOUTUBE_API_KEY}`;
+  const url = `${YOUTUBE_API_BASE}/channels?forHandle=${cleanHandle}&part=id&key=${getApiKey()}`;
 
   const res = await fetch(url);
   const data = await res.json();
@@ -52,7 +56,7 @@ export async function fetchChannelVideos(
   thumbnailUrl: string;
   publishedAt: string;
 }[]> {
-  const url = `${YOUTUBE_API_BASE}/search?channelId=${channelId}&order=viewCount&type=video&part=snippet&maxResults=${maxResults}&key=${YOUTUBE_API_KEY}`;
+  const url = `${YOUTUBE_API_BASE}/search?channelId=${channelId}&order=viewCount&type=video&part=snippet&maxResults=${maxResults}&key=${getApiKey()}`;
 
   const res = await fetch(url);
   const data = await res.json();
@@ -74,7 +78,7 @@ export async function getVideoStats(
   // YouTube API allows max 50 IDs per request
   for (let i = 0; i < videoIds.length; i += 50) {
     const batch = videoIds.slice(i, i + 50);
-    const url = `${YOUTUBE_API_BASE}/videos?id=${batch.join(',')}&part=statistics,contentDetails&key=${YOUTUBE_API_KEY}`;
+    const url = `${YOUTUBE_API_BASE}/videos?id=${batch.join(',')}&part=statistics,contentDetails&key=${getApiKey()}`;
 
     const res = await fetch(url);
     const data = await res.json();
