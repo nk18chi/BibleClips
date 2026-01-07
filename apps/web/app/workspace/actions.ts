@@ -35,7 +35,7 @@ export async function getQueueVideos(channelId?: string): Promise<WorkQueueVideo
     .from('work_queue_videos')
     .select('*, channel:youtube_channels(*)')
     .eq('status', 'pending')
-    .order('like_count', { ascending: false });
+    .order('view_count', { ascending: false });
 
   if (channelId) {
     query = query.eq('channel_id', channelId);
