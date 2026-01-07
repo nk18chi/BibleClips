@@ -118,17 +118,17 @@ export function SubtitleOverlay({
   if (!currentSentence) return null;
 
   return (
-    <div className="absolute bottom-24 left-0 right-0 flex justify-center px-4 z-20 pointer-events-none">
-      <div className="flex flex-wrap justify-center items-baseline gap-x-2 max-w-[90%]">
+    <div className="absolute top-[55%] left-0 right-0 flex justify-center px-4 z-20 pointer-events-none">
+      <div className="flex flex-wrap justify-center items-baseline gap-x-6 max-w-[90%]">
         {currentSentence.words.map((wordObj, index) => (
           <span
             key={index}
-            className={`font-bold text-2xl uppercase tracking-wide transition-all duration-75 ${
+            className={`font-bold text-5xl uppercase tracking-wide transition-all duration-75 ${
               index === activeWordIndex ? 'text-yellow-400' : 'text-white'
             }`}
             style={{
-              textShadow: '2px 2px 4px rgba(0,0,0,0.8)',
-              transform: index === activeWordIndex ? 'scale(1.1)' : 'scale(1)',
+              textShadow: '3px 3px 6px rgba(0,0,0,0.9)',
+              transform: index === activeWordIndex ? 'scale(1.15)' : 'scale(1)',
             }}
           >
             {wordObj.word}
