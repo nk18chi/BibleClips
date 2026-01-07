@@ -55,7 +55,7 @@ export function YouTubePlayer({ videoId, startTime, endTime, onEnded, onTimeUpda
           start: startTime,
           end: endTime,
           autoplay: 1,
-          controls: 1,
+          controls: 0,
           modestbranding: 1,
           rel: 0,
           playsinline: 1,
