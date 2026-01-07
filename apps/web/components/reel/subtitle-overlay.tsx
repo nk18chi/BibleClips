@@ -1,6 +1,6 @@
-'use client';
+"use client";
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo } from "react";
 
 type WordTiming = {
   word: string;
@@ -42,7 +42,7 @@ function groupIntoSentences(words: WordTiming[], maxWords = 6, pauseThreshold = 
 
     // Check if we should end the sentence
     const endsPunctuation = /[.!?]$/.test(word.word);
-    const hasLongPause = nextWord && (nextWord.start - word.end) > pauseThreshold;
+    const hasLongPause = nextWord && nextWord.start - word.end > pauseThreshold;
     const reachedMaxWords = currentWords.length >= maxWords;
 
     if (endsPunctuation || hasLongPause || reachedMaxWords || !nextWord) {
@@ -63,20 +63,12 @@ function groupIntoSentences(words: WordTiming[], maxWords = 6, pauseThreshold = 
   return sentences;
 }
 
-export function SubtitleOverlay({
-  wordTimings,
-  currentTime,
-  offset = DEFAULT_OFFSET,
-  maxWordsPerSentence = 6,
-}: SubtitleOverlayProps) {
+export function SubtitleOverlay({ wordTimings, currentTime, offset = DEFAULT_OFFSET, maxWordsPerSentence = 6 }: SubtitleOverlayProps) {
   const [activeSentenceIndex, setActiveSentenceIndex] = useState<number>(-1);
   const [activeWordIndex, setActiveWordIndex] = useState<number>(-1);
 
   // Group words into display sentences
-  const sentences = useMemo(
-    () => groupIntoSentences(wordTimings, maxWordsPerSentence),
-    [wordTimings, maxWordsPerSentence]
-  );
+  const sentences = useMemo(() => groupIntoSentences(wordTimings, maxWordsPerSentence), [wordTimings, maxWordsPerSentence]);
 
   useEffect(() => {
     const adjustedTime = currentTime + offset;
@@ -118,17 +110,17 @@ export function SubtitleOverlay({
   if (!currentSentence) return null;
 
   return (
-    <div className="absolute top-[55%] left-0 right-0 flex justify-center px-4 z-20 pointer-events-none">
-      <div className="flex flex-wrap justify-center items-baseline gap-x-6 max-w-[90%]">
+    <div className='absolute top-[65%] left-0 right-0 flex justify-center px-4 z-20 pointer-events-none'>
+      <div className='flex flex-wrap justify-center items-baseline gap-x-6 max-w-[90%]'>
         {currentSentence.words.map((wordObj, index) => (
           <span
             key={index}
-            className={`font-bold text-5xl uppercase tracking-wide transition-all duration-75 ${
-              index === activeWordIndex ? 'text-yellow-400' : 'text-white'
+            className={`font-bold text-4xl uppercase tracking-wide transition-all duration-75 ${
+              index === activeWordIndex ? "text-yellow-400" : "text-white"
             }`}
             style={{
-              textShadow: '3px 3px 6px rgba(0,0,0,0.9)',
-              transform: index === activeWordIndex ? 'scale(1.15)' : 'scale(1)',
+              textShadow: "3px 3px 6px rgba(0,0,0,0.9)",
+              transform: index === activeWordIndex ? "scale(1.15)" : "scale(1)",
             }}
           >
             {wordObj.word}

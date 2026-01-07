@@ -81,7 +81,7 @@ export function ReelViewer({ clips, initialIndex = 0, showHeader = false }: Reel
   const bibleGatewayUrl = verse ? `https://www.biblegateway.com/passage/?search=${encodeURIComponent(verseRef)}&version=NIV` : "";
 
   return (
-    <div className='h-screen bg-black relative overflow-hidden flex flex-col'>
+    <div className='h-screen bg-white relative overflow-hidden flex flex-col'>
       {/* Header */}
       {showHeader ? (
         <Header />
@@ -91,41 +91,74 @@ export function ReelViewer({ clips, initialIndex = 0, showHeader = false }: Reel
         </Link>
       )}
 
-      {/* Main content area */}
-      <div className='flex-1 relative'>
-        {/* Verse reference overlay */}
-        {verse && (
-          <div className='absolute top-6 left-0 right-0 z-10 flex justify-center'>
-            <a
-              href={bibleGatewayUrl}
-              target='_blank'
-              rel='noopener noreferrer'
-              className='bg-white text-black text-5xl font-semibold px-10 py-5 rounded-full shadow-lg hover:bg-gray-100 transition-colors'
-            >
-              {verseRef}
-            </a>
-          </div>
-        )}
+      {/* Main content area - constrained to mobile aspect ratio */}
+      <div className='flex-1 flex items-start justify-center gap-4 px-4 pt-4 overflow-hidden'>
+        {/* Videos column */}
+        <div className='flex flex-col gap-2 max-w-[500px] w-full h-full'>
+          {/* Current video container - takes most of the height */}
+          <div className='relative w-full flex-1 min-h-0 rounded-lg overflow-hidden'>
+            {/* Verse reference overlay */}
+            {verse && (
+              <div className='absolute top-24 left-0 right-0 z-10 flex justify-center'>
+                <a
+                  href={bibleGatewayUrl}
+                  target='_blank'
+                  rel='noopener noreferrer'
+                  className='bg-white text-black text-3xl sm:text-5xl font-semibold px-6 sm:px-10 py-3 sm:py-5 rounded-full shadow-lg hover:bg-gray-100 transition-colors'
+                >
+                  {verseRef}
+                </a>
+              </div>
+            )}
 
-        {/* Video Player */}
-        <div className='h-full'>
-          <YouTubePlayer
-            key={currentClip.id}
-            videoId={currentClip.youtube_video_id}
-            startTime={currentClip.start_time}
-            endTime={currentClip.end_time}
-            onEnded={goToNext}
-            onTimeUpdate={setCurrentTime}
-          />
+            {/* Video Player */}
+            <div className='h-full'>
+              <YouTubePlayer
+                key={currentClip.id}
+                videoId={currentClip.youtube_video_id}
+                startTime={currentClip.start_time}
+                endTime={currentClip.end_time}
+                onEnded={goToNext}
+                onTimeUpdate={setCurrentTime}
+              />
+            </div>
+
+            {/* Subtitle Overlay */}
+            {currentClip.wordTimings && currentClip.wordTimings.length > 0 && (
+              <SubtitleOverlay wordTimings={currentClip.wordTimings} currentTime={currentTime} />
+            )}
+
+            {/* Bottom Info */}
+            <div className='absolute bottom-0 left-0 right-0 z-10 p-4 bg-gradient-to-t from-black/70 to-transparent'>
+              <h3 className='text-white font-medium mb-1'>{currentClip.title}</h3>
+              <div className='flex flex-wrap gap-2'>
+                {currentClip.clip_categories?.map((cc) =>
+                  cc.categories ? (
+                    <Link key={cc.categories.slug} href={`/category/${cc.categories.slug}`} className='text-blue-400 text-sm hover:underline'>
+                      #{cc.categories.name_en.toLowerCase()}
+                    </Link>
+                  ) : null
+                )}
+              </div>
+
+              {/* Clip counter */}
+              <div className='mt-2 text-white/50 text-xs'>
+                {currentIndex + 1} / {clips.length}
+              </div>
+            </div>
+          </div>
+
+          {/* Next video preview - just a small peek */}
+          {currentIndex < clips.length - 1 && (
+            <div
+              className='relative w-full h-16 rounded-t-lg overflow-hidden flex-shrink-0 bg-gray-800 cursor-pointer hover:bg-gray-700 transition-colors'
+              onClick={goToNext}
+            />
+          )}
         </div>
 
-        {/* Subtitle Overlay */}
-        {currentClip.wordTimings && currentClip.wordTimings.length > 0 && (
-          <SubtitleOverlay wordTimings={currentClip.wordTimings} currentTime={currentTime} />
-        )}
-
-        {/* Action Buttons - Right side */}
-        <div className='absolute right-4 bottom-32 z-10'>
+        {/* Action Buttons - Right side outside video (desktop only) */}
+        <div className='hidden sm:flex flex-col items-center justify-end pb-24 h-full'>
           <ActionButtons
             clipId={currentClip.id}
             youtubeVideoId={currentClip.youtube_video_id}
@@ -135,41 +168,15 @@ export function ReelViewer({ clips, initialIndex = 0, showHeader = false }: Reel
           />
         </div>
 
-        {/* Bottom Info */}
-        <div className='absolute bottom-0 left-0 right-0 z-10 p-4 bg-gradient-to-t from-black/70 to-transparent'>
-          <h3 className='text-white font-medium mb-1'>{currentClip.title}</h3>
-          <div className='flex flex-wrap gap-2'>
-            {currentClip.clip_categories?.map((cc) =>
-              cc.categories ? (
-                <Link key={cc.categories.slug} href={`/category/${cc.categories.slug}`} className='text-blue-400 text-sm hover:underline'>
-                  #{cc.categories.name_en.toLowerCase()}
-                </Link>
-              ) : null
-            )}
-          </div>
-
-          {/* Clip counter */}
-          <div className='mt-2 text-white/50 text-xs'>
-            {currentIndex + 1} / {clips.length}
-          </div>
-        </div>
-
-        {/* Navigation buttons (for desktop) */}
-        <div className='absolute left-4 top-1/2 -translate-y-1/2 z-10 hidden sm:flex flex-col gap-2'>
-          <button
-            onClick={goToPrev}
-            disabled={currentIndex === 0}
-            className='bg-white/20 hover:bg-white/30 text-white p-2 rounded-full disabled:opacity-30'
-          >
-            ↑
-          </button>
-          <button
-            onClick={goToNext}
-            disabled={currentIndex === clips.length - 1}
-            className='bg-white/20 hover:bg-white/30 text-white p-2 rounded-full disabled:opacity-30'
-          >
-            ↓
-          </button>
+        {/* Action Buttons - Mobile (inside video) */}
+        <div className='absolute right-4 bottom-32 z-10 sm:hidden'>
+          <ActionButtons
+            clipId={currentClip.id}
+            youtubeVideoId={currentClip.youtube_video_id}
+            voteCount={currentClip.vote_count}
+            hasVoted={currentClip.has_voted}
+            onVerseClick={() => setShowVerseModal(true)}
+          />
         </div>
       </div>
 

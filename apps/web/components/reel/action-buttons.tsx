@@ -11,6 +11,35 @@ type ActionButtonsProps = {
   onVerseClick: () => void;
 };
 
+// Simple SVG icons (Instagram-style outlines)
+const HeartIcon = ({ filled }: { filled: boolean }) => (
+  <svg width="28" height="28" viewBox="0 0 24 24" fill={filled ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2">
+    <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
+  </svg>
+);
+
+const ShareIcon = () => (
+  <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+    <line x1="22" y1="2" x2="11" y2="13" />
+    <polygon points="22 2 15 22 11 13 2 9 22 2" />
+  </svg>
+);
+
+const MoreIcon = () => (
+  <svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor">
+    <circle cx="12" cy="12" r="1.5" />
+    <circle cx="12" cy="6" r="1.5" />
+    <circle cx="12" cy="18" r="1.5" />
+  </svg>
+);
+
+const BookIcon = () => (
+  <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+    <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
+    <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" />
+  </svg>
+);
+
 export function ActionButtons({
   clipId,
   youtubeVideoId,
@@ -66,38 +95,41 @@ export function ActionButtons({
   };
 
   return (
-    <div className="flex flex-col gap-4">
-      {/* Vote */}
+    <div className="flex flex-col items-center gap-5">
+      {/* Like */}
       <button
         onClick={handleVote}
         disabled={!user || voting}
-        className={`flex flex-col items-center ${hasVoted ? 'text-red-500' : 'text-white'} disabled:opacity-50`}
+        className={`flex flex-col items-center gap-1 ${hasVoted ? 'text-red-500' : 'text-gray-700'} disabled:opacity-50 hover:scale-110 transition-transform`}
       >
-        <span className="text-2xl">{hasVoted ? '\u2764\uFE0F' : '\u{1F90D}'}</span>
-        <span className="text-xs">{voteCount}</span>
-      </button>
-
-      {/* Verse */}
-      <button onClick={onVerseClick} className="flex flex-col items-center text-white">
-        <span className="text-2xl">{'\u{1F4D6}'}</span>
-        <span className="text-xs">Verse</span>
+        <HeartIcon filled={hasVoted} />
+        <span className="text-sm font-medium">{voteCount > 0 ? voteCount : ''}</span>
       </button>
 
       {/* Share */}
-      <button onClick={handleShare} className="flex flex-col items-center text-white">
-        <span className="text-2xl">{'\u{1F4E4}'}</span>
-        <span className="text-xs">Share</span>
+      <button
+        onClick={handleShare}
+        className="flex flex-col items-center text-gray-700 hover:scale-110 transition-transform"
+      >
+        <ShareIcon />
       </button>
 
-      {/* Full Video */}
+      {/* More (verse) */}
+      <button
+        onClick={onVerseClick}
+        className="flex flex-col items-center text-gray-700 hover:scale-110 transition-transform"
+      >
+        <MoreIcon />
+      </button>
+
+      {/* Book/Verse thumbnail */}
       <a
         href={`https://www.youtube.com/watch?v=${youtubeVideoId}`}
         target="_blank"
         rel="noopener noreferrer"
-        className="flex flex-col items-center text-white"
+        className="w-10 h-10 rounded-md bg-gray-200 flex items-center justify-center text-gray-700 hover:bg-gray-300 transition-colors overflow-hidden"
       >
-        <span className="text-2xl">{'\u25B6\uFE0F'}</span>
-        <span className="text-xs">Full</span>
+        <BookIcon />
       </a>
     </div>
   );
