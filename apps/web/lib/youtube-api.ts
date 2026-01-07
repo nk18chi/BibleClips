@@ -35,38 +35,80 @@ function parseDuration(duration: string): number {
   return hours * 3600 + minutes * 60 + seconds;
 }
 
-// Get channel ID from handle (e.g., @saddlebackchurch)
-export async function getChannelId(handle: string): Promise<string | null> {
+// Get channel info including uploads playlist ID
+export async function getChannelInfo(handle: string): Promise<{ channelId: string; uploadsPlaylistId: string } | null> {
   const cleanHandle = handle.replace('@', '');
-  const url = `${YOUTUBE_API_BASE}/channels?forHandle=${cleanHandle}&part=id&key=${getApiKey()}`;
+  const url = `${YOUTUBE_API_BASE}/channels?forHandle=${cleanHandle}&part=id,contentDetails&key=${getApiKey()}`;
 
   const res = await fetch(url);
   const data = await res.json();
 
-  return data.items?.[0]?.id || null;
+  const channel = data.items?.[0];
+  if (!channel) return null;
+
+  return {
+    channelId: channel.id,
+    uploadsPlaylistId: channel.contentDetails?.relatedPlaylists?.uploads,
+  };
 }
 
-// Fetch popular videos from a channel
+// For backwards compatibility
+export async function getChannelId(handle: string): Promise<string | null> {
+  const info = await getChannelInfo(handle);
+  return info?.channelId || null;
+}
+
+// Fetch videos from uploads playlist (more reliable than search API)
 export async function fetchChannelVideos(
   channelId: string,
-  maxResults = 50
+  maxResults = 200
 ): Promise<{
   videoId: string;
   title: string;
   thumbnailUrl: string;
   publishedAt: string;
 }[]> {
-  const url = `${YOUTUBE_API_BASE}/search?channelId=${channelId}&order=viewCount&type=video&part=snippet&maxResults=${maxResults}&key=${getApiKey()}`;
+  // First get the uploads playlist ID
+  const channelUrl = `${YOUTUBE_API_BASE}/channels?id=${channelId}&part=contentDetails&key=${getApiKey()}`;
+  const channelRes = await fetch(channelUrl);
+  const channelData = await channelRes.json();
 
-  const res = await fetch(url);
-  const data = await res.json();
+  const uploadsPlaylistId = channelData.items?.[0]?.contentDetails?.relatedPlaylists?.uploads;
+  if (!uploadsPlaylistId) return [];
 
-  return (data.items || []).map((item: YouTubeSearchResult) => ({
-    videoId: item.id.videoId,
-    title: item.snippet.title,
-    thumbnailUrl: item.snippet.thumbnails.medium.url,
-    publishedAt: item.snippet.publishedAt,
-  }));
+  // Fetch videos from uploads playlist with pagination
+  const videos: { videoId: string; title: string; thumbnailUrl: string; publishedAt: string }[] = [];
+  let pageToken = '';
+
+  while (videos.length < maxResults) {
+    const remaining = maxResults - videos.length;
+    const pageSize = Math.min(50, remaining);
+
+    let url = `${YOUTUBE_API_BASE}/playlistItems?playlistId=${uploadsPlaylistId}&part=snippet&maxResults=${pageSize}&key=${getApiKey()}`;
+    if (pageToken) url += `&pageToken=${pageToken}`;
+
+    const res = await fetch(url);
+    const data = await res.json();
+
+    if (!data.items || data.items.length === 0) break;
+
+    for (const item of data.items) {
+      const snippet = item.snippet;
+      if (snippet.resourceId?.videoId) {
+        videos.push({
+          videoId: snippet.resourceId.videoId,
+          title: snippet.title,
+          thumbnailUrl: snippet.thumbnails?.medium?.url || snippet.thumbnails?.default?.url || '',
+          publishedAt: snippet.publishedAt,
+        });
+      }
+    }
+
+    pageToken = data.nextPageToken;
+    if (!pageToken) break;
+  }
+
+  return videos;
 }
 
 // Get video statistics (views, likes, duration)

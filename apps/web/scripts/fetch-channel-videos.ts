@@ -38,8 +38,8 @@ async function fetchAndStoreVideos() {
         continue;
       }
 
-      // Fetch popular videos
-      const videos = await fetchChannelVideos(channelId, 30);
+      // Fetch videos (up to 200 per channel)
+      const videos = await fetchChannelVideos(channelId, 200);
       console.log(`  Found ${videos.length} videos`);
 
       if (videos.length === 0) continue;
