@@ -62,6 +62,16 @@ export interface Vote {
   created_at: string;
 }
 
+export interface ClipSubtitle {
+  id: string;
+  clip_id: string;
+  word: string;
+  start_time: number; // seconds from video start
+  end_time: number;   // seconds from video start
+  sequence: number;   // word order (0, 1, 2, ...)
+  created_at: string;
+}
+
 // Query result types
 export interface ClipWithRelations extends Clip {
   verses: ClipVerse[];

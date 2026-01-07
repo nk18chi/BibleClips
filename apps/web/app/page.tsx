@@ -2,7 +2,6 @@ import { createServerClient } from '@/lib/supabase/server';
 import { ReelViewer } from '@/components/reel/reel-viewer';
 import { Header } from '@/components/ui/header';
 import Link from 'next/link';
-import { fetchYouTubeCaptions } from '@/lib/youtube-captions';
 
 type ClipFromDb = {
   id: string;
@@ -26,10 +25,10 @@ type ClipFromDb = {
   }[];
 };
 
-type SubtitleCue = {
+type WordTiming = {
+  word: string;
   start: number;
   end: number;
-  text: string;
 };
 
 type Clip = {
@@ -40,7 +39,7 @@ type Clip = {
   end_time: number;
   vote_count: number;
   has_voted: boolean;
-  subtitles?: SubtitleCue[];
+  wordTimings?: WordTiming[];
   clip_verses: {
     book: string;
     book_ja: string;
@@ -56,18 +55,6 @@ type Clip = {
   }[];
 };
 
-// Fetch subtitles from YouTube
-async function fetchSubtitles(videoId: string, startTime: number, endTime: number): Promise<SubtitleCue[]> {
-  try {
-    const captions = await fetchYouTubeCaptions(videoId);
-
-    // Filter by time range
-    return captions.filter((sub) => sub.end > startTime && sub.start < endTime);
-  } catch {
-    return [];
-  }
-}
-
 async function getApprovedClips(userId?: string): Promise<Clip[]> {
   const supabase = createServerClient();
 
@@ -81,46 +68,58 @@ async function getApprovedClips(userId?: string): Promise<Clip[]> {
       end_time,
       vote_count,
       clip_verses (book, book_ja, chapter, verse_start, verse_end),
-      clip_categories (categories (slug, name_en))
+      clip_categories (categories (slug, name_en)),
+      clip_subtitles (word, start_time, end_time, sequence)
     `)
     .eq('status', 'APPROVED')
     .order('created_at', { ascending: false })
     .limit(50);
 
-  const clips = (data || []) as unknown as ClipFromDb[];
+  const clips = (data || []) as unknown as (ClipFromDb & {
+    clip_subtitles: { word: string; start_time: number; end_time: number; sequence: number }[];
+  })[];
 
-  // Fetch subtitles for all clips in parallel
-  const clipsWithSubtitles = await Promise.all(
-    clips.map(async (clip) => {
-      const subtitles = await fetchSubtitles(
-        clip.youtube_video_id,
-        clip.start_time,
-        clip.end_time
-      );
-      return {
-        ...clip,
-        has_voted: false,
-        subtitles,
-      };
-    })
-  );
+  // Convert DB subtitles to WordTiming format
+  const clipsWithTimings = clips.map((clip) => {
+    // Sort by sequence and convert to WordTiming
+    const wordTimings: WordTiming[] = (clip.clip_subtitles || [])
+      .sort((a, b) => a.sequence - b.sequence)
+      .map((sub) => ({
+        word: sub.word,
+        start: Number(sub.start_time),
+        end: Number(sub.end_time),
+      }));
 
-  if (userId && clipsWithSubtitles.length > 0) {
+    return {
+      id: clip.id,
+      title: clip.title,
+      youtube_video_id: clip.youtube_video_id,
+      start_time: clip.start_time,
+      end_time: clip.end_time,
+      vote_count: clip.vote_count,
+      has_voted: false,
+      wordTimings,
+      clip_verses: clip.clip_verses,
+      clip_categories: clip.clip_categories,
+    };
+  });
+
+  if (userId && clipsWithTimings.length > 0) {
     const { data: votes } = await supabase
       .from('votes')
       .select('clip_id')
       .eq('user_id', userId)
-      .in('clip_id', clipsWithSubtitles.map(c => c.id));
+      .in('clip_id', clipsWithTimings.map(c => c.id));
 
     const votedClipIds = new Set(votes?.map(v => v.clip_id) || []);
 
-    return clipsWithSubtitles.map(clip => ({
+    return clipsWithTimings.map(clip => ({
       ...clip,
       has_voted: votedClipIds.has(clip.id),
     }));
   }
 
-  return clipsWithSubtitles;
+  return clipsWithTimings;
 }
 
 export default async function HomePage() {

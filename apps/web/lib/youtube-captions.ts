@@ -1,3 +1,5 @@
+import { formatCaptionsWithAI } from './caption-formatter';
+
 type CaptionCue = {
   start: number;
   end: number;
@@ -37,17 +39,21 @@ function decodeHtmlEntities(text: string): string {
 
 /**
  * Fetches YouTube captions for a video using youtube-transcript-plus.
+ * Uses AI to format raw transcript into proper sentences.
  */
 export async function fetchYouTubeCaptions(videoId: string): Promise<CaptionCue[]> {
   try {
     const { fetchTranscript } = await import('youtube-transcript-plus');
     const transcript: TranscriptItem[] = await fetchTranscript(videoId);
 
-    return transcript.map((item) => ({
+    const rawCues = transcript.map((item) => ({
       start: item.offset,
       end: item.offset + item.duration,
       text: decodeHtmlEntities(item.text),
     }));
+
+    // Use AI to format into proper sentences
+    return formatCaptionsWithAI(rawCues);
   } catch (error) {
     console.error('Failed to fetch YouTube captions:', error);
     return [];

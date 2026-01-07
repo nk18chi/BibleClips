@@ -8,10 +8,10 @@ import { SubtitleOverlay } from './subtitle-overlay';
 import { Header } from '@/components/ui/header';
 import Link from 'next/link';
 
-type SubtitleCue = {
+type WordTiming = {
+  word: string;
   start: number;
   end: number;
-  text: string;
 };
 
 type Clip = {
@@ -22,7 +22,7 @@ type Clip = {
   end_time: number;
   vote_count: number;
   has_voted: boolean;
-  subtitles?: SubtitleCue[];
+  wordTimings?: WordTiming[];
   clip_verses: {
     book: string;
     book_ja: string;
@@ -125,8 +125,8 @@ export function ReelViewer({ clips, initialIndex = 0, showHeader = false }: Reel
         </div>
 
         {/* Subtitle Overlay */}
-        {currentClip.subtitles && currentClip.subtitles.length > 0 && (
-          <SubtitleOverlay cues={currentClip.subtitles} currentTime={currentTime} />
+        {currentClip.wordTimings && currentClip.wordTimings.length > 0 && (
+          <SubtitleOverlay wordTimings={currentClip.wordTimings} currentTime={currentTime} />
         )}
 
         {/* Action Buttons - Right side */}
