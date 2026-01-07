@@ -38,14 +38,23 @@ type Sentence = {
 };
 
 /**
- * Groups word timings into sentences based on pauses and word count.
- * Same logic as subtitle-overlay.tsx
+ * Groups word timings into sentences based on punctuation and pauses.
+ * Same logic as subtitle-overlay.tsx - prioritizes natural sentence boundaries.
  */
-function groupIntoSentences(words: WordTiming[], maxWords = 6, pauseThreshold = 0.4): Sentence[] {
+function groupIntoSentences(words: WordTiming[], maxWords = 10, pauseThreshold = 0.5): Sentence[] {
   if (words.length === 0) return [];
 
   const sentences: Sentence[] = [];
   let currentWords: WordTiming[] = [];
+
+  // Check if punctuation exists within next N words
+  const hasPunctuationAhead = (startIndex: number, lookAhead: number): boolean => {
+    for (let j = startIndex; j < Math.min(startIndex + lookAhead, words.length); j++) {
+      const w = words[j];
+      if (w && /[.!?,;]$/.test(w.word)) return true;
+    }
+    return false;
+  };
 
   for (let i = 0; i < words.length; i++) {
     const word = words[i];
@@ -54,12 +63,18 @@ function groupIntoSentences(words: WordTiming[], maxWords = 6, pauseThreshold = 
     const nextWord = words[i + 1];
     currentWords.push(word);
 
-    // Check if we should end the sentence
+    // Check natural sentence boundaries
     const endsPunctuation = /[.!?]$/.test(word.word);
+    const endsClause = /[,;]$/.test(word.word);
     const hasLongPause = nextWord && nextWord.start_time - word.end_time > pauseThreshold;
-    const reachedMaxWords = currentWords.length >= maxWords;
 
-    if (endsPunctuation || hasLongPause || reachedMaxWords || !nextWord) {
+    // Only use maxWords if no punctuation is coming soon
+    const reachedMaxWords = currentWords.length >= maxWords && !hasPunctuationAhead(i + 1, 4);
+
+    // Split on clause boundaries only if sentence is getting long
+    const splitOnClause = endsClause && currentWords.length >= 6;
+
+    if (endsPunctuation || hasLongPause || reachedMaxWords || splitOnClause || !nextWord) {
       const firstWord = currentWords[0];
       if (firstWord) {
         sentences.push({
@@ -112,6 +127,13 @@ async function addTranslations(clipId: string) {
   const supabase = createClient(supabaseUrl, supabaseSecretKey);
 
   console.log(`Fetching subtitles for clip ${clipId}...`);
+
+  // Clear existing translations first
+  console.log('Clearing existing translations...');
+  await supabase
+    .from('clip_subtitles')
+    .update({ word_ja: null })
+    .eq('clip_id', clipId);
 
   // Get all subtitles for the clip
   const { data: subtitles, error } = await supabase

@@ -27,13 +27,23 @@ type SubtitleOverlayProps = {
 const DEFAULT_OFFSET = 0; // No offset needed with Whisper timestamps
 
 /**
- * Groups word timings into display sentences based on pauses and word count.
+ * Groups word timings into display sentences based on punctuation and pauses.
+ * Prioritizes natural sentence boundaries over word count.
  */
-function groupIntoSentences(words: WordTiming[], maxWords = 6, pauseThreshold = 0.4): Sentence[] {
+function groupIntoSentences(words: WordTiming[], maxWords = 10, pauseThreshold = 0.5): Sentence[] {
   if (words.length === 0) return [];
 
   const sentences: Sentence[] = [];
   let currentWords: WordTiming[] = [];
+
+  // Check if punctuation exists within next N words
+  const hasPunctuationAhead = (startIndex: number, lookAhead: number): boolean => {
+    for (let j = startIndex; j < Math.min(startIndex + lookAhead, words.length); j++) {
+      const w = words[j];
+      if (w && /[.!?,;]$/.test(w.word)) return true;
+    }
+    return false;
+  };
 
   for (let i = 0; i < words.length; i++) {
     const word = words[i];
@@ -43,12 +53,18 @@ function groupIntoSentences(words: WordTiming[], maxWords = 6, pauseThreshold = 
 
     currentWords.push(word);
 
-    // Check if we should end the sentence
+    // Check natural sentence boundaries
     const endsPunctuation = /[.!?]$/.test(word.word);
+    const endsClause = /[,;]$/.test(word.word);
     const hasLongPause = nextWord && nextWord.start - word.end > pauseThreshold;
-    const reachedMaxWords = currentWords.length >= maxWords;
 
-    if (endsPunctuation || hasLongPause || reachedMaxWords || !nextWord) {
+    // Only use maxWords if no punctuation is coming soon
+    const reachedMaxWords = currentWords.length >= maxWords && !hasPunctuationAhead(i + 1, 4);
+
+    // Split on clause boundaries only if sentence is getting long
+    const splitOnClause = endsClause && currentWords.length >= 6;
+
+    if (endsPunctuation || hasLongPause || reachedMaxWords || splitOnClause || !nextWord) {
       const firstWord = currentWords[0];
       const lastWord = currentWords[currentWords.length - 1];
 
