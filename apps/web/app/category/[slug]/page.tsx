@@ -13,6 +13,7 @@ type ClipFromDb = {
   start_time: number;
   end_time: number;
   vote_count: number;
+  language: string | null;
   clip_verses: {
     book: string;
     book_ja: string;
@@ -41,6 +42,7 @@ async function getClipsForCategory(slug: string, userId?: string) {
       start_time,
       end_time,
       vote_count,
+      language,
       clip_verses (book, book_ja, chapter, verse_start, verse_end),
       clip_categories!inner (categories!inner (slug, name_en))
     `
@@ -66,10 +68,11 @@ async function getClipsForCategory(slug: string, userId?: string) {
     return typedClips.map((clip) => ({
       ...clip,
       has_voted: votedClipIds.has(clip.id),
+      language: (clip.language === 'ja' ? 'ja' : 'en') as 'en' | 'ja',
     }));
   }
 
-  return typedClips?.map((clip) => ({ ...clip, has_voted: false })) || [];
+  return typedClips?.map((clip) => ({ ...clip, has_voted: false, language: (clip.language === 'ja' ? 'ja' : 'en') as 'en' | 'ja' })) || [];
 }
 
 export default async function CategoryPage({ params }: Props) {

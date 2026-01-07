@@ -1,9 +1,11 @@
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
+import { useLanguage } from "@/components/providers/language-provider";
 
 type WordTiming = {
   word: string;
+  word_ja?: string;
   start: number;
   end: number;
 };
@@ -19,6 +21,7 @@ type SubtitleOverlayProps = {
   currentTime: number;
   offset?: number;
   maxWordsPerSentence?: number;
+  videoLanguage?: 'en' | 'ja';
 };
 
 const DEFAULT_OFFSET = 0; // No offset needed with Whisper timestamps
@@ -63,9 +66,13 @@ function groupIntoSentences(words: WordTiming[], maxWords = 6, pauseThreshold = 
   return sentences;
 }
 
-export function SubtitleOverlay({ wordTimings, currentTime, offset = DEFAULT_OFFSET, maxWordsPerSentence = 6 }: SubtitleOverlayProps) {
+export function SubtitleOverlay({ wordTimings, currentTime, offset = DEFAULT_OFFSET, maxWordsPerSentence = 6, videoLanguage = 'en' }: SubtitleOverlayProps) {
+  const { language: userLanguage } = useLanguage();
   const [activeSentenceIndex, setActiveSentenceIndex] = useState<number>(-1);
   const [activeWordIndex, setActiveWordIndex] = useState<number>(-1);
+
+  // Should show translation if user language differs from video language
+  const showTranslation = userLanguage !== videoLanguage;
 
   // Group words into display sentences
   const sentences = useMemo(() => groupIntoSentences(wordTimings, maxWordsPerSentence), [wordTimings, maxWordsPerSentence]);
@@ -109,8 +116,13 @@ export function SubtitleOverlay({ wordTimings, currentTime, offset = DEFAULT_OFF
   const currentSentence = sentences[activeSentenceIndex];
   if (!currentSentence) return null;
 
+  // Get sentence translation from first word's word_ja (stores full sentence translation)
+  const firstWord = currentSentence.words[0];
+  const translatedSentence = showTranslation && firstWord?.word_ja ? firstWord.word_ja : null;
+
   return (
-    <div className='absolute top-[65%] left-0 right-0 flex justify-center px-4 z-20 pointer-events-none'>
+    <div className='absolute top-[60%] left-0 right-0 flex flex-col items-center px-4 z-20 pointer-events-none'>
+      {/* Main subtitle */}
       <div className='flex flex-wrap justify-center items-baseline gap-x-6 max-w-[90%]'>
         {currentSentence.words.map((wordObj, index) => (
           <span
@@ -127,6 +139,13 @@ export function SubtitleOverlay({ wordTimings, currentTime, offset = DEFAULT_OFF
           </span>
         ))}
       </div>
+
+      {/* Translation in parentheses */}
+      {translatedSentence && (
+        <div className='mt-2 text-white/80 text-xl' style={{ textShadow: "2px 2px 4px rgba(0,0,0,0.9)" }}>
+          ({translatedSentence})
+        </div>
+      )}
     </div>
   );
 }

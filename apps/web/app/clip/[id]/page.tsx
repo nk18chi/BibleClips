@@ -13,6 +13,7 @@ type Clip = {
   start_time: number;
   end_time: number;
   vote_count: number;
+  language: string | null;
   clip_verses: {
     book: string;
     book_ja: string;
@@ -41,6 +42,7 @@ async function getClip(id: string, userId?: string) {
       start_time,
       end_time,
       vote_count,
+      language,
       clip_verses (book, book_ja, chapter, verse_start, verse_end),
       clip_categories (categories (slug, name_en))
     `
@@ -61,10 +63,10 @@ async function getClip(id: string, userId?: string) {
       .eq('clip_id', id)
       .single();
 
-    return { ...typedClip, has_voted: !!vote };
+    return { ...typedClip, has_voted: !!vote, language: (typedClip.language === 'ja' ? 'ja' : 'en') as 'en' | 'ja' };
   }
 
-  return { ...typedClip, has_voted: false };
+  return { ...typedClip, has_voted: false, language: (typedClip.language === 'ja' ? 'ja' : 'en') as 'en' | 'ja' };
 }
 
 export default async function ClipPage({ params }: Props) {

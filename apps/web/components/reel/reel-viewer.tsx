@@ -6,10 +6,12 @@ import { ActionButtons } from "./action-buttons";
 import { VerseModal } from "./verse-modal";
 import { SubtitleOverlay } from "./subtitle-overlay";
 import { Header } from "@/components/ui/header";
+import { useLanguage } from "@/components/providers/language-provider";
 import Link from "next/link";
 
 type WordTiming = {
   word: string;
+  word_ja?: string;
   start: number;
   end: number;
 };
@@ -22,6 +24,7 @@ type Clip = {
   end_time: number;
   vote_count: number;
   has_voted: boolean;
+  language: 'en' | 'ja';
   wordTimings?: WordTiming[];
   clip_verses: {
     book: string;
@@ -58,15 +61,25 @@ function ReelCard({
   onVerseClick: () => void;
 }) {
   const [currentTime, setCurrentTime] = useState(0);
+  const { language } = useLanguage();
 
   const verse = clip.clip_verses[0];
+
+  // Use Japanese book name when Japanese is selected
+  const bookName = language === 'ja' && verse?.book_ja ? verse.book_ja : verse?.book;
   const verseRef = verse
+    ? verse.verse_end
+      ? `${bookName} ${verse.chapter}:${verse.verse_start}-${verse.verse_end}`
+      : `${bookName} ${verse.chapter}:${verse.verse_start}`
+    : "";
+
+  // Always use English for Bible Gateway URL
+  const verseRefEn = verse
     ? verse.verse_end
       ? `${verse.book} ${verse.chapter}:${verse.verse_start}-${verse.verse_end}`
       : `${verse.book} ${verse.chapter}:${verse.verse_start}`
     : "";
-
-  const bibleGatewayUrl = verse ? `https://www.biblegateway.com/passage/?search=${encodeURIComponent(verseRef)}&version=NIV` : "";
+  const bibleGatewayUrl = verse ? `https://www.biblegateway.com/passage/?search=${encodeURIComponent(verseRefEn)}&version=NIV` : "";
 
   return (
     <div className='relative w-full h-full rounded-lg overflow-hidden bg-black'>
@@ -102,7 +115,7 @@ function ReelCard({
       </div>
 
       {/* Subtitle Overlay */}
-      {isActive && clip.wordTimings && clip.wordTimings.length > 0 && <SubtitleOverlay wordTimings={clip.wordTimings} currentTime={currentTime} />}
+      {isActive && clip.wordTimings && clip.wordTimings.length > 0 && <SubtitleOverlay wordTimings={clip.wordTimings} currentTime={currentTime} videoLanguage={clip.language} />}
 
       {/* Bottom Info */}
       <div className='absolute bottom-0 left-0 right-0 z-10 p-4 bg-gradient-to-t from-black/70 to-transparent'>

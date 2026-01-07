@@ -5,10 +5,12 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useSupabase } from '@/components/providers/supabase-provider';
 import { useUserProfile } from '@/hooks/use-user-profile';
+import { useLanguage } from '@/components/providers/language-provider';
 
 export function Header() {
   const { supabase, user } = useSupabase();
   const { isAdmin } = useUserProfile();
+  const { language, setLanguage, t } = useLanguage();
   const router = useRouter();
   const [searchQuery, setSearchQuery] = useState('');
   const [showSearch, setShowSearch] = useState(false);
@@ -89,11 +91,19 @@ export function Header() {
             </button>
           )}
 
+          {/* Language Switcher */}
+          <button
+            onClick={() => setLanguage(language === 'en' ? 'ja' : 'en')}
+            className="text-sm text-gray-600 hover:text-gray-900 font-medium px-2 py-1 rounded border border-gray-300 hover:bg-gray-50"
+          >
+            {language === 'en' ? '日本語' : 'EN'}
+          </button>
+
           {user ? (
             <>
               {isAdmin && (
                 <Link href="/admin/pending" className="text-sm text-gray-600 hover:text-gray-900 hidden sm:block">
-                  Admin
+                  {t('header.admin')}
                 </Link>
               )}
               <Link href="/submit" className="p-2 text-gray-600 hover:text-gray-900" aria-label="Submit clip">
@@ -102,13 +112,13 @@ export function Header() {
                 </svg>
               </Link>
               <Link href="/my-clips" className="text-sm text-gray-600 hover:text-gray-900 hidden sm:block">
-                My Clips
+                {t('header.myClips')}
               </Link>
               <button
                 onClick={handleSignOut}
                 className="text-sm text-gray-600 hover:text-gray-900 hidden sm:block"
               >
-                Sign out
+                {t('header.signOut')}
               </button>
             </>
           ) : (
@@ -116,7 +126,7 @@ export function Header() {
               href="/login"
               className="text-sm bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700"
             >
-              Sign in
+              {t('header.signIn')}
             </Link>
           )}
         </div>

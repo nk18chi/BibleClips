@@ -27,6 +27,7 @@ type ClipFromDb = {
 
 type WordTiming = {
   word: string;
+  word_ja?: string;
   start: number;
   end: number;
 };
@@ -39,6 +40,7 @@ type Clip = {
   end_time: number;
   vote_count: number;
   has_voted: boolean;
+  language: 'en' | 'ja';
   wordTimings?: WordTiming[];
   clip_verses: {
     book: string;
@@ -67,16 +69,18 @@ async function getApprovedClips(userId?: string): Promise<Clip[]> {
       start_time,
       end_time,
       vote_count,
+      language,
       clip_verses (book, book_ja, chapter, verse_start, verse_end),
       clip_categories (categories (slug, name_en)),
-      clip_subtitles (word, start_time, end_time, sequence)
+      clip_subtitles (word, word_ja, start_time, end_time, sequence)
     `)
     .eq('status', 'APPROVED')
     .order('created_at', { ascending: false })
     .limit(50);
 
   const clips = (data || []) as unknown as (ClipFromDb & {
-    clip_subtitles: { word: string; start_time: number; end_time: number; sequence: number }[];
+    language: string | null;
+    clip_subtitles: { word: string; word_ja: string | null; start_time: number; end_time: number; sequence: number }[];
   })[];
 
   // Convert DB subtitles to WordTiming format
@@ -86,6 +90,7 @@ async function getApprovedClips(userId?: string): Promise<Clip[]> {
       .sort((a, b) => a.sequence - b.sequence)
       .map((sub) => ({
         word: sub.word,
+        word_ja: sub.word_ja || undefined,
         start: Number(sub.start_time),
         end: Number(sub.end_time),
       }));
@@ -98,6 +103,7 @@ async function getApprovedClips(userId?: string): Promise<Clip[]> {
       end_time: clip.end_time,
       vote_count: clip.vote_count,
       has_voted: false,
+      language: (clip.language === 'ja' ? 'ja' : 'en') as 'en' | 'ja',
       wordTimings,
       clip_verses: clip.clip_verses,
       clip_categories: clip.clip_categories,
