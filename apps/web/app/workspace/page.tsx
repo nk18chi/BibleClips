@@ -1,11 +1,13 @@
 'use client';
 
 import { useEffect, useState, useCallback } from 'react';
+import { useRouter } from 'next/navigation';
 import { Header } from '@/components/ui/header';
 import { VideoQueue } from '@/components/workspace/video-queue';
 import { WorkspacePlayer } from '@/components/workspace/workspace-player';
 import { ClipForm } from '@/components/workspace/clip-form';
 import { ClipHistory } from '@/components/workspace/clip-history';
+import { useSupabase } from '@/components/providers/supabase-provider';
 import {
   getQueueVideos,
   getChannels,
@@ -15,6 +17,8 @@ import {
 import type { WorkQueueVideo, YouTubeChannel, ClipWithVerse } from '@/types/workspace';
 
 export default function WorkspacePage() {
+  const router = useRouter();
+  const { user, loading: authLoading } = useSupabase();
   const [videos, setVideos] = useState<WorkQueueVideo[]>([]);
   const [channels, setChannels] = useState<YouTubeChannel[]>([]);
   const [categories, setCategories] = useState<{ id: string; slug: string; name_en: string }[]>([]);
@@ -25,8 +29,17 @@ export default function WorkspacePage() {
   const [loading, setLoading] = useState(true);
   const [filterChannelId, setFilterChannelId] = useState<string | null>(null);
 
-  // Load initial data
+  // Redirect to login if not authenticated
   useEffect(() => {
+    if (!authLoading && !user) {
+      router.push('/login?redirectTo=/workspace');
+    }
+  }, [authLoading, user, router]);
+
+  // Load initial data (only if authenticated)
+  useEffect(() => {
+    if (authLoading || !user) return;
+
     async function loadData() {
       try {
         const [videosData, channelsData] = await Promise.all([
@@ -47,7 +60,7 @@ export default function WorkspacePage() {
       }
     }
     loadData();
-  }, []);
+  }, [authLoading, user]);
 
   // Load clips when video selected
   useEffect(() => {
@@ -94,12 +107,15 @@ export default function WorkspacePage() {
     setVideos(videosData);
   };
 
-  if (loading) {
+  // Show loading while auth is checking or data is loading
+  if (authLoading || loading || !user) {
     return (
       <div className="min-h-screen bg-gray-100">
         <Header />
         <div className="flex items-center justify-center h-[calc(100vh-64px)]">
-          <div className="text-gray-500">Loading workspace...</div>
+          <div className="text-gray-500">
+            {authLoading ? 'Checking authentication...' : 'Loading workspace...'}
+          </div>
         </div>
       </div>
     );
