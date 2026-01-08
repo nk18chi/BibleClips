@@ -18,7 +18,7 @@ import type { WorkQueueVideo, YouTubeChannel, ClipWithVerse } from '@/types/work
 
 export default function WorkspacePage() {
   const router = useRouter();
-  const { user, loading: authLoading } = useSupabase();
+  const { user, isAdmin, loading: authLoading } = useSupabase();
   const [videos, setVideos] = useState<WorkQueueVideo[]>([]);
   const [channels, setChannels] = useState<YouTubeChannel[]>([]);
   const [categories, setCategories] = useState<{ id: string; slug: string; name_en: string }[]>([]);
@@ -29,16 +29,20 @@ export default function WorkspacePage() {
   const [loading, setLoading] = useState(true);
   const [filterChannelId, setFilterChannelId] = useState<string | null>(null);
 
-  // Redirect to login if not authenticated
+  // Redirect if not authenticated or not admin
   useEffect(() => {
-    if (!authLoading && !user) {
-      router.push('/login?redirectTo=/workspace');
-    }
-  }, [authLoading, user, router]);
+    if (authLoading) return;
 
-  // Load initial data (only if authenticated)
+    if (!user) {
+      router.push('/login?redirectTo=/workspace');
+    } else if (!isAdmin) {
+      router.push('/');
+    }
+  }, [authLoading, user, isAdmin, router]);
+
+  // Load initial data (only if admin)
   useEffect(() => {
-    if (authLoading || !user) return;
+    if (authLoading || !user || !isAdmin) return;
 
     async function loadData() {
       try {
@@ -60,7 +64,7 @@ export default function WorkspacePage() {
       }
     }
     loadData();
-  }, [authLoading, user]);
+  }, [authLoading, user, isAdmin]);
 
   // Load clips when video selected
   useEffect(() => {
@@ -108,7 +112,7 @@ export default function WorkspacePage() {
   };
 
   // Show loading while auth is checking or data is loading
-  if (authLoading || loading || !user) {
+  if (authLoading || loading || !user || !isAdmin) {
     return (
       <div className="min-h-screen bg-gray-100">
         <Header />

@@ -5,10 +5,14 @@ import { createBrowserClient } from '@/lib/supabase/client';
 import { useRouter } from 'next/navigation';
 import type { SupabaseClient, User } from '@supabase/supabase-js';
 
+type UserRole = 'USER' | 'ADMIN';
+
 type SupabaseContext = {
   supabase: SupabaseClient;
   user: User | null;
+  userRole: UserRole | null;
   loading: boolean;
+  isAdmin: boolean;
 };
 
 const Context = createContext<SupabaseContext | undefined>(undefined);
@@ -16,14 +20,34 @@ const Context = createContext<SupabaseContext | undefined>(undefined);
 export function SupabaseProvider({ children }: { children: React.ReactNode }) {
   const [supabase] = useState(() => createBrowserClient());
   const [user, setUser] = useState<User | null>(null);
+  const [userRole, setUserRole] = useState<UserRole | null>(null);
   const [loading, setLoading] = useState(true);
   const router = useRouter();
+
+  // Fetch user role from users table
+  const fetchUserRole = async (userId: string) => {
+    const { data } = await supabase
+      .from('users')
+      .select('role')
+      .eq('id', userId)
+      .single();
+    return (data?.role as UserRole) || 'USER';
+  };
 
   useEffect(() => {
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((event, session) => {
-      setUser(session?.user ?? null);
+    } = supabase.auth.onAuthStateChange(async (event, session) => {
+      const currentUser = session?.user ?? null;
+      setUser(currentUser);
+
+      if (currentUser) {
+        const role = await fetchUserRole(currentUser.id);
+        setUserRole(role);
+      } else {
+        setUserRole(null);
+      }
+
       setLoading(false);
 
       if (event === 'SIGNED_IN' || event === 'SIGNED_OUT') {
@@ -32,8 +56,15 @@ export function SupabaseProvider({ children }: { children: React.ReactNode }) {
     });
 
     // Get initial session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setUser(session?.user ?? null);
+    supabase.auth.getSession().then(async ({ data: { session } }) => {
+      const currentUser = session?.user ?? null;
+      setUser(currentUser);
+
+      if (currentUser) {
+        const role = await fetchUserRole(currentUser.id);
+        setUserRole(role);
+      }
+
       setLoading(false);
     });
 
@@ -42,8 +73,10 @@ export function SupabaseProvider({ children }: { children: React.ReactNode }) {
     };
   }, [supabase, router]);
 
+  const isAdmin = userRole === 'ADMIN';
+
   return (
-    <Context.Provider value={{ supabase, user, loading }}>
+    <Context.Provider value={{ supabase, user, userRole, loading, isAdmin }}>
       {children}
     </Context.Provider>
   );
