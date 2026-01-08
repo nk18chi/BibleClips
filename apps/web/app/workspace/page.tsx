@@ -18,7 +18,7 @@ import type { WorkQueueVideo, YouTubeChannel, ClipWithVerse } from '@/types/work
 
 export default function WorkspacePage() {
   const router = useRouter();
-  const { user, isAdmin, canAccessWorkspace, loading: authLoading } = useSupabase();
+  const { user, userRole, isAdmin, canAccessWorkspace, loading: authLoading } = useSupabase();
   const [videos, setVideos] = useState<WorkQueueVideo[]>([]);
   const [channels, setChannels] = useState<YouTubeChannel[]>([]);
   const [categories, setCategories] = useState<{ id: string; slug: string; name_en: string }[]>([]);
@@ -29,20 +29,26 @@ export default function WorkspacePage() {
   const [loading, setLoading] = useState(true);
   const [filterChannelId, setFilterChannelId] = useState<string | null>(null);
 
-  // Redirect if not authenticated or not allowed
+  // Redirect if not authenticated
   useEffect(() => {
     if (authLoading) return;
 
     if (!user) {
       router.push('/login?redirectTo=/workspace');
-    } else if (!canAccessWorkspace) {
+    }
+  }, [authLoading, user, router]);
+
+  // Redirect if role loaded and not allowed
+  useEffect(() => {
+    if (authLoading || !user) return;
+    if (userRole !== null && !canAccessWorkspace) {
       router.push('/');
     }
-  }, [authLoading, user, canAccessWorkspace, router]);
+  }, [authLoading, user, canAccessWorkspace, userRole, router]);
 
-  // Load initial data (only if allowed)
+  // Load initial data (only if logged in - role check is separate)
   useEffect(() => {
-    if (authLoading || !user || !canAccessWorkspace) return;
+    if (authLoading || !user) return;
 
     async function loadData() {
       try {
@@ -64,7 +70,7 @@ export default function WorkspacePage() {
       }
     }
     loadData();
-  }, [authLoading, user, canAccessWorkspace]);
+  }, [authLoading, user]);
 
   // Load clips when video selected
   useEffect(() => {
@@ -112,7 +118,7 @@ export default function WorkspacePage() {
   };
 
   // Show loading while auth is checking or data is loading
-  if (authLoading || loading || !user || !canAccessWorkspace) {
+  if (authLoading || loading || !user) {
     return (
       <div className="min-h-screen bg-gray-100">
         <Header />

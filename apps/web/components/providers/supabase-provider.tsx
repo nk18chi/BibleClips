@@ -26,7 +26,7 @@ export function SupabaseProvider({ children }: { children: React.ReactNode }) {
   const router = useRouter();
 
   // Fetch user role from users table
-  const fetchUserRole = async (userId: string): Promise<UserRole> => {
+  const fetchUserRole = async (userId: string): Promise<UserRole | null> => {
     try {
       const { data, error } = await supabase
         .from('users')
@@ -35,43 +35,19 @@ export function SupabaseProvider({ children }: { children: React.ReactNode }) {
         .single();
 
       if (error) {
-        console.error('Failed to fetch user role:', error);
-        return 'USER';
+        return null;
       }
 
       return (data?.role as UserRole) || 'USER';
-    } catch (err) {
-      console.error('Error fetching user role:', err);
-      return 'USER';
+    } catch {
+      return null;
     }
   };
 
   useEffect(() => {
     let isMounted = true;
 
-    // Get initial session first
-    const initSession = async () => {
-      try {
-        const { data: { session } } = await supabase.auth.getSession();
-        if (!isMounted) return;
-
-        const currentUser = session?.user ?? null;
-        setUser(currentUser);
-
-        if (currentUser) {
-          const role = await fetchUserRole(currentUser.id);
-          if (isMounted) setUserRole(role);
-        }
-      } catch (err) {
-        console.error('Error initializing session:', err);
-      } finally {
-        if (isMounted) setLoading(false);
-      }
-    };
-
-    initSession();
-
-    // Listen for auth changes
+    // Use onAuthStateChange for everything - it fires immediately with current session
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(async (event, session) => {
@@ -81,11 +57,14 @@ export function SupabaseProvider({ children }: { children: React.ReactNode }) {
       setUser(currentUser);
 
       if (currentUser) {
-        const role = await fetchUserRole(currentUser.id);
-        if (isMounted) setUserRole(role);
+        fetchUserRole(currentUser.id).then((role) => {
+          if (isMounted) setUserRole(role);
+        });
       } else {
         setUserRole(null);
       }
+
+      setLoading(false);
 
       if (event === 'SIGNED_IN' || event === 'SIGNED_OUT') {
         router.refresh();
