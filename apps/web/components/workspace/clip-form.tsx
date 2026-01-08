@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { saveClip } from '@/app/workspace/actions';
+import { useSupabase } from '@/components/providers/supabase-provider';
 
 const BIBLE_BOOKS = [
   'Genesis', 'Exodus', 'Leviticus', 'Numbers', 'Deuteronomy',
@@ -41,6 +42,7 @@ export function ClipForm({
   onSaved,
   categories,
 }: ClipFormProps) {
+  const { user } = useSupabase();
   const [title, setTitle] = useState('');
   const [book, setBook] = useState('');
   const [chapter, setChapter] = useState('');
@@ -83,6 +85,7 @@ export function ClipForm({
         verseStart: parseInt(verseStart),
         verseEnd: verseEnd ? parseInt(verseEnd) : undefined,
         categoryIds: selectedCategories,
+        userId: user?.id,
       });
 
       // Reset form
@@ -103,6 +106,12 @@ export function ClipForm({
   return (
     <form onSubmit={handleSubmit} className="space-y-4 p-4 bg-gray-50 rounded-lg">
       <h3 className="font-semibold text-gray-900">Create Clip</h3>
+
+      {!user && (
+        <div className="text-sm text-amber-600 bg-amber-50 p-2 rounded">
+          Not logged in - clips will be saved without submitter info
+        </div>
+      )}
 
       {error && (
         <div className="text-sm text-red-600 bg-red-50 p-2 rounded">{error}</div>

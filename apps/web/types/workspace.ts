@@ -52,4 +52,5 @@ export type SaveClipInput = {
   verseStart: number;
   verseEnd?: number;
   categoryIds: string[];
+  userId?: string; // Optional - for tracking who submitted
 };

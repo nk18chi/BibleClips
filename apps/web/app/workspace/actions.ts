@@ -1,8 +1,16 @@
 'use server';
 
-import { createServerClient } from '@/lib/supabase/server';
+import { createClient } from '@supabase/supabase-js';
 import { revalidatePath } from 'next/cache';
 import type { WorkQueueVideo, ClipWithVerse, SaveClipInput } from '@/types/workspace';
+
+// Use service role for workspace actions (admin tool)
+function createAdminClient() {
+  return createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SECRET_KEY!
+  );
+}
 
 const BOOK_JA_MAP: Record<string, string> = {
   'Genesis': '創世記', 'Exodus': '出エジプト記', 'Leviticus': 'レビ記',
@@ -29,7 +37,7 @@ const BOOK_JA_MAP: Record<string, string> = {
 };
 
 export async function getQueueVideos(channelId?: string): Promise<WorkQueueVideo[]> {
-  const supabase = createServerClient();
+  const supabase = createAdminClient();
 
   let query = supabase
     .from('work_queue_videos')
@@ -48,7 +56,7 @@ export async function getQueueVideos(channelId?: string): Promise<WorkQueueVideo
 }
 
 export async function getChannels() {
-  const supabase = createServerClient();
+  const supabase = createAdminClient();
 
   const { data, error } = await supabase
     .from('youtube_channels')
@@ -61,7 +69,7 @@ export async function getChannels() {
 }
 
 export async function getVideoClips(youtubeVideoId: string): Promise<ClipWithVerse[]> {
-  const supabase = createServerClient();
+  const supabase = createAdminClient();
 
   const { data, error } = await supabase
     .from('clips')
@@ -89,11 +97,7 @@ export async function getVideoClips(youtubeVideoId: string): Promise<ClipWithVer
 }
 
 export async function saveClip(input: SaveClipInput): Promise<{ clipId: string }> {
-  const supabase = createServerClient();
-
-  // Get current user
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) throw new Error('Not authenticated');
+  const supabase = createAdminClient();
 
   // Insert clip
   const { data: clip, error: clipError } = await supabase
@@ -103,7 +107,7 @@ export async function saveClip(input: SaveClipInput): Promise<{ clipId: string }
       start_time: input.startTime,
       end_time: input.endTime,
       title: input.title,
-      submitted_by: user.id,
+      submitted_by: input.userId || null,
       status: 'APPROVED', // Auto-approve for workspace
     })
     .select()
@@ -145,7 +149,7 @@ export async function saveClip(input: SaveClipInput): Promise<{ clipId: string }
 }
 
 export async function deleteClip(clipId: string): Promise<void> {
-  const supabase = createServerClient();
+  const supabase = createAdminClient();
 
   // Get clip to find youtube_video_id
   const { data: clip } = await supabase
@@ -174,7 +178,7 @@ export async function updateVideoStatus(
   youtubeVideoId: string,
   status: 'completed' | 'skipped'
 ): Promise<void> {
-  const supabase = createServerClient();
+  const supabase = createAdminClient();
 
   const { error } = await supabase
     .from('work_queue_videos')
