@@ -26,9 +26,10 @@ export default function LoginPage() {
       password,
     });
 
+    setLoading(false);
+
     if (error) {
       setError(error.message);
-      setLoading(false);
     } else {
       router.push(redirectTo);
       router.refresh();

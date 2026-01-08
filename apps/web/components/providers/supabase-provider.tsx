@@ -26,13 +26,24 @@ export function SupabaseProvider({ children }: { children: React.ReactNode }) {
   const router = useRouter();
 
   // Fetch user role from users table
-  const fetchUserRole = async (userId: string) => {
-    const { data } = await supabase
-      .from('users')
-      .select('role')
-      .eq('id', userId)
-      .single();
-    return (data?.role as UserRole) || 'USER';
+  const fetchUserRole = async (userId: string): Promise<UserRole> => {
+    try {
+      const { data, error } = await supabase
+        .from('users')
+        .select('role')
+        .eq('id', userId)
+        .single();
+
+      if (error) {
+        console.error('Failed to fetch user role:', error);
+        return 'USER';
+      }
+
+      return (data?.role as UserRole) || 'USER';
+    } catch (err) {
+      console.error('Error fetching user role:', err);
+      return 'USER';
+    }
   };
 
   useEffect(() => {
