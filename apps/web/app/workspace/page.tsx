@@ -18,7 +18,7 @@ import type { WorkQueueVideo, YouTubeChannel, ClipWithVerse } from '@/types/work
 
 export default function WorkspacePage() {
   const router = useRouter();
-  const { user, isAdmin, loading: authLoading } = useSupabase();
+  const { user, isAdmin, canAccessWorkspace, loading: authLoading } = useSupabase();
   const [videos, setVideos] = useState<WorkQueueVideo[]>([]);
   const [channels, setChannels] = useState<YouTubeChannel[]>([]);
   const [categories, setCategories] = useState<{ id: string; slug: string; name_en: string }[]>([]);
@@ -29,20 +29,20 @@ export default function WorkspacePage() {
   const [loading, setLoading] = useState(true);
   const [filterChannelId, setFilterChannelId] = useState<string | null>(null);
 
-  // Redirect if not authenticated or not admin
+  // Redirect if not authenticated or not allowed
   useEffect(() => {
     if (authLoading) return;
 
     if (!user) {
       router.push('/login?redirectTo=/workspace');
-    } else if (!isAdmin) {
+    } else if (!canAccessWorkspace) {
       router.push('/');
     }
-  }, [authLoading, user, isAdmin, router]);
+  }, [authLoading, user, canAccessWorkspace, router]);
 
-  // Load initial data (only if admin)
+  // Load initial data (only if allowed)
   useEffect(() => {
-    if (authLoading || !user || !isAdmin) return;
+    if (authLoading || !user || !canAccessWorkspace) return;
 
     async function loadData() {
       try {
@@ -64,7 +64,7 @@ export default function WorkspacePage() {
       }
     }
     loadData();
-  }, [authLoading, user, isAdmin]);
+  }, [authLoading, user, canAccessWorkspace]);
 
   // Load clips when video selected
   useEffect(() => {
@@ -112,7 +112,7 @@ export default function WorkspacePage() {
   };
 
   // Show loading while auth is checking or data is loading
-  if (authLoading || loading || !user || !isAdmin) {
+  if (authLoading || loading || !user || !canAccessWorkspace) {
     return (
       <div className="min-h-screen bg-gray-100">
         <Header />
@@ -166,7 +166,7 @@ export default function WorkspacePage() {
               />
 
               {/* Clip History */}
-              <ClipHistory clips={videoClips} onDeleted={handleClipSaved} />
+              <ClipHistory clips={videoClips} onDeleted={handleClipSaved} isAdmin={isAdmin} />
 
               {/* Video Actions */}
               <div className="flex gap-3 pt-4 border-t">

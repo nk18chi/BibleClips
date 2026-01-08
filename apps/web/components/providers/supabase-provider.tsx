@@ -5,7 +5,7 @@ import { createBrowserClient } from '@/lib/supabase/client';
 import { useRouter } from 'next/navigation';
 import type { SupabaseClient, User } from '@supabase/supabase-js';
 
-type UserRole = 'USER' | 'ADMIN';
+type UserRole = 'USER' | 'CONTRIBUTOR' | 'ADMIN';
 
 type SupabaseContext = {
   supabase: SupabaseClient;
@@ -13,6 +13,7 @@ type SupabaseContext = {
   userRole: UserRole | null;
   loading: boolean;
   isAdmin: boolean;
+  canAccessWorkspace: boolean;
 };
 
 const Context = createContext<SupabaseContext | undefined>(undefined);
@@ -74,9 +75,10 @@ export function SupabaseProvider({ children }: { children: React.ReactNode }) {
   }, [supabase, router]);
 
   const isAdmin = userRole === 'ADMIN';
+  const canAccessWorkspace = userRole === 'ADMIN' || userRole === 'CONTRIBUTOR';
 
   return (
-    <Context.Provider value={{ supabase, user, userRole, loading, isAdmin }}>
+    <Context.Provider value={{ supabase, user, userRole, loading, isAdmin, canAccessWorkspace }}>
       {children}
     </Context.Provider>
   );

@@ -7,6 +7,7 @@ import type { ClipWithVerse } from '@/types/workspace';
 type ClipHistoryProps = {
   clips: ClipWithVerse[];
   onDeleted: () => void;
+  isAdmin: boolean;
 };
 
 function formatTime(seconds: number): string {
@@ -15,7 +16,7 @@ function formatTime(seconds: number): string {
   return `${m}:${s.toString().padStart(2, '0')}`;
 }
 
-export function ClipHistory({ clips, onDeleted }: ClipHistoryProps) {
+export function ClipHistory({ clips, onDeleted, isAdmin }: ClipHistoryProps) {
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [confirmId, setConfirmId] = useState<string | null>(null);
 
@@ -65,44 +66,46 @@ export function ClipHistory({ clips, onDeleted }: ClipHistoryProps) {
                 </span>
               </div>
 
-              {confirmId === clip.id ? (
-                <div className="flex gap-1">
+              {isAdmin && (
+                confirmId === clip.id ? (
+                  <div className="flex gap-1">
+                    <button
+                      onClick={() => handleDelete(clip.id)}
+                      disabled={deletingId === clip.id}
+                      className="px-2 py-1 bg-red-600 text-white text-xs rounded hover:bg-red-700 disabled:opacity-50"
+                    >
+                      {deletingId === clip.id ? '...' : 'Yes'}
+                    </button>
+                    <button
+                      onClick={() => setConfirmId(null)}
+                      className="px-2 py-1 bg-gray-200 text-gray-700 text-xs rounded hover:bg-gray-300"
+                    >
+                      No
+                    </button>
+                  </div>
+                ) : (
                   <button
-                    onClick={() => handleDelete(clip.id)}
-                    disabled={deletingId === clip.id}
-                    className="px-2 py-1 bg-red-600 text-white text-xs rounded hover:bg-red-700 disabled:opacity-50"
+                    onClick={() => setConfirmId(clip.id)}
+                    className="p-1 text-gray-400 hover:text-red-600 transition-colors"
+                    title="Delete clip"
                   >
-                    {deletingId === clip.id ? '...' : 'Yes'}
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      width="16"
+                      height="16"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    >
+                      <path d="M3 6h18" />
+                      <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" />
+                      <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" />
+                    </svg>
                   </button>
-                  <button
-                    onClick={() => setConfirmId(null)}
-                    className="px-2 py-1 bg-gray-200 text-gray-700 text-xs rounded hover:bg-gray-300"
-                  >
-                    No
-                  </button>
-                </div>
-              ) : (
-                <button
-                  onClick={() => setConfirmId(clip.id)}
-                  className="p-1 text-gray-400 hover:text-red-600 transition-colors"
-                  title="Delete clip"
-                >
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    width="16"
-                    height="16"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  >
-                    <path d="M3 6h18" />
-                    <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" />
-                    <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" />
-                  </svg>
-                </button>
+                )
               )}
             </div>
           );
