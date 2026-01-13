@@ -220,18 +220,23 @@ export async function updateVideoStatus(
 }
 
 // Helper: Group words into sentences for translation
-type WordWithId = WordTiming & { id?: string };
+type SentenceGroup = {
+  text: string;
+  startTime: number;
+  endTime: number;
+  sequence: number;
+};
 
 function groupWordsIntoSentences(
-  words: WordWithId[],
+  words: WordTiming[],
   maxWords = 10,
   pauseThreshold = 0.5
-): { words: WordWithId[]; text: string; firstIndex: number }[] {
+): SentenceGroup[] {
   if (words.length === 0) return [];
 
-  const sentences: { words: WordWithId[]; text: string; firstIndex: number }[] = [];
-  let currentWords: WordWithId[] = [];
-  let firstIndex = 0;
+  const sentences: SentenceGroup[] = [];
+  let currentWords: WordTiming[] = [];
+  let sequenceIndex = 0;
 
   const hasPunctuationAhead = (startIndex: number, lookAhead: number): boolean => {
     for (let j = startIndex; j < Math.min(startIndex + lookAhead, words.length); j++) {
@@ -245,10 +250,6 @@ function groupWordsIntoSentences(
     const word = words[i];
     if (!word) continue;
 
-    if (currentWords.length === 0) {
-      firstIndex = i;
-    }
-
     const nextWord = words[i + 1];
     currentWords.push(word);
 
@@ -259,11 +260,16 @@ function groupWordsIntoSentences(
     const splitOnClause = endsClause && currentWords.length >= 6;
 
     if (endsPunctuation || hasLongPause || reachedMaxWords || splitOnClause || !nextWord) {
-      sentences.push({
-        words: [...currentWords],
-        text: currentWords.map((w) => w.word).join(' '),
-        firstIndex,
-      });
+      const firstWord = currentWords[0];
+      const lastWord = currentWords[currentWords.length - 1];
+      if (firstWord && lastWord) {
+        sentences.push({
+          text: currentWords.map((w) => w.word).join(' '),
+          startTime: firstWord.start,
+          endTime: lastWord.end,
+          sequence: sequenceIndex++,
+        });
+      }
       currentWords = [];
     }
   }
@@ -359,20 +365,35 @@ export async function generateClipSubtitles(clipId: string): Promise<{ wordCount
   const sentences = groupWordsIntoSentences(words);
   const translations = await translateSentences(sentences.map((s) => s.text));
 
-  // Update first word of each sentence with translation
-  for (let i = 0; i < sentences.length; i++) {
-    const sentence = sentences[i];
-    const translation = translations[i];
+  // Delete existing translations for this clip
+  await supabase.from('clip_translations').delete().eq('clip_id', clipId);
 
-    if (!sentence || !translation) continue;
+  // Insert sentence translations into clip_translations table
+  const translationRows = sentences
+    .map((sentence, i) => {
+      const translation = translations[i];
+      if (!translation) return null;
+      return {
+        clip_id: clipId,
+        language: 'ja',
+        text: translation,
+        start_time: sentence.startTime,
+        end_time: sentence.endTime,
+        sequence: sentence.sequence,
+      };
+    })
+    .filter((row): row is NonNullable<typeof row> => row !== null);
 
-    await supabase
-      .from('clip_subtitles')
-      .update({ word_ja: translation })
-      .eq('clip_id', clipId)
-      .eq('sequence', sentence.firstIndex);
+  if (translationRows.length > 0) {
+    const { error: translationError } = await supabase
+      .from('clip_translations')
+      .insert(translationRows);
+
+    if (translationError) {
+      console.error('Failed to save translations:', translationError);
+    }
   }
 
-  console.log(`Generated ${words.length} subtitles with ${translations.length} translations`);
+  console.log(`Generated ${words.length} subtitles with ${translationRows.length} translations`);
   return { wordCount: words.length };
 }

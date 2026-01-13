@@ -5,7 +5,13 @@ import { useLanguage } from "@/components/providers/language-provider";
 
 type WordTiming = {
   word: string;
-  word_ja?: string;
+  start: number;
+  end: number;
+};
+
+type SentenceTranslation = {
+  language: string;
+  text: string;
   start: number;
   end: number;
 };
@@ -18,6 +24,7 @@ type Sentence = {
 
 type SubtitleOverlayProps = {
   wordTimings: WordTiming[];
+  translations?: SentenceTranslation[];
   currentTime: number;
   offset?: number;
   maxWordsPerSentence?: number;
@@ -82,16 +89,23 @@ function groupIntoSentences(words: WordTiming[], maxWords = 10, pauseThreshold =
   return sentences;
 }
 
-export function SubtitleOverlay({ wordTimings, currentTime, offset = DEFAULT_OFFSET, maxWordsPerSentence = 6, videoLanguage = 'en' }: SubtitleOverlayProps) {
+export function SubtitleOverlay({ wordTimings, translations, currentTime, offset = DEFAULT_OFFSET, maxWordsPerSentence = 6, videoLanguage = 'en' }: SubtitleOverlayProps) {
   const { language: userLanguage } = useLanguage();
   const [activeSentenceIndex, setActiveSentenceIndex] = useState<number>(-1);
   const [activeWordIndex, setActiveWordIndex] = useState<number>(-1);
+  const [activeTranslation, setActiveTranslation] = useState<string | null>(null);
 
   // Should show translation if user language differs from video language
   const showTranslation = userLanguage !== videoLanguage;
 
   // Group words into display sentences
   const sentences = useMemo(() => groupIntoSentences(wordTimings, maxWordsPerSentence), [wordTimings, maxWordsPerSentence]);
+
+  // Filter translations for user's language
+  const userTranslations = useMemo(() => {
+    if (!translations) return [];
+    return translations.filter(t => t.language === userLanguage);
+  }, [translations, userLanguage]);
 
   useEffect(() => {
     const adjustedTime = currentTime + offset;
@@ -123,18 +137,27 @@ export function SubtitleOverlay({ wordTimings, currentTime, offset = DEFAULT_OFF
       }
     }
 
+    // Find active translation based on current time
+    let foundTranslation: string | null = null;
+    for (const trans of userTranslations) {
+      if (adjustedTime >= trans.start && adjustedTime < trans.end) {
+        foundTranslation = trans.text;
+        break;
+      }
+    }
+
     setActiveSentenceIndex(foundSentence);
     setActiveWordIndex(foundWord);
-  }, [currentTime, sentences, offset]);
+    setActiveTranslation(foundTranslation);
+  }, [currentTime, sentences, offset, userTranslations]);
 
   if (activeSentenceIndex === -1) return null;
 
   const currentSentence = sentences[activeSentenceIndex];
   if (!currentSentence) return null;
 
-  // Get sentence translation from first word's word_ja (stores full sentence translation)
-  const firstWord = currentSentence.words[0];
-  const translatedSentence = showTranslation && firstWord?.word_ja ? firstWord.word_ja : null;
+  // Use the active translation from clip_translations table
+  const translatedSentence = showTranslation ? activeTranslation : null;
 
   return (
     <div className='absolute top-[60%] left-0 right-0 flex flex-col items-center px-4 z-20 pointer-events-none'>

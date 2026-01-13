@@ -11,7 +11,13 @@ import Link from "next/link";
 
 type WordTiming = {
   word: string;
-  word_ja?: string;
+  start: number;
+  end: number;
+};
+
+type SentenceTranslation = {
+  language: string;
+  text: string;
   start: number;
   end: number;
 };
@@ -26,6 +32,7 @@ type Clip = {
   has_voted: boolean;
   language: 'en' | 'ja';
   wordTimings?: WordTiming[];
+  translations?: SentenceTranslation[];
   clip_verses: {
     book: string;
     book_ja: string;
@@ -115,7 +122,14 @@ function ReelCard({
       </div>
 
       {/* Subtitle Overlay */}
-      {isActive && clip.wordTimings && clip.wordTimings.length > 0 && <SubtitleOverlay wordTimings={clip.wordTimings} currentTime={currentTime} videoLanguage={clip.language} />}
+      {isActive && clip.wordTimings && clip.wordTimings.length > 0 && (
+        <SubtitleOverlay
+          wordTimings={clip.wordTimings}
+          translations={clip.translations}
+          currentTime={currentTime}
+          videoLanguage={clip.language}
+        />
+      )}
 
       {/* Bottom Info */}
       <div className='absolute bottom-0 left-0 right-0 z-10 p-4 bg-gradient-to-t from-black/70 to-transparent'>

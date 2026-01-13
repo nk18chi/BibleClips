@@ -35,7 +35,13 @@ type ClipFromDb = {
 
 type WordTiming = {
   word: string;
-  word_ja?: string;
+  start: number;
+  end: number;
+};
+
+type SentenceTranslation = {
+  language: string;
+  text: string;
   start: number;
   end: number;
 };
@@ -50,6 +56,7 @@ type Clip = {
   has_voted: boolean;
   language: 'en' | 'ja';
   wordTimings?: WordTiming[];
+  translations?: SentenceTranslation[];
   clip_verses: {
     book: string;
     book_ja: string;
@@ -80,7 +87,8 @@ async function getApprovedClips(userId?: string): Promise<Clip[]> {
       language,
       clip_verses (book, book_ja, chapter, verse_start, verse_end),
       clip_categories (categories (slug, name_en)),
-      clip_subtitles (word, word_ja, start_time, end_time, sequence)
+      clip_subtitles (word, start_time, end_time, sequence),
+      clip_translations (language, text, start_time, end_time, sequence)
     `)
     .eq('status', 'APPROVED')
     .order('created_at', { ascending: false })
@@ -88,7 +96,8 @@ async function getApprovedClips(userId?: string): Promise<Clip[]> {
 
   const clips = (data || []) as unknown as (ClipFromDb & {
     language: string | null;
-    clip_subtitles: { word: string; word_ja: string | null; start_time: number; end_time: number; sequence: number }[];
+    clip_subtitles: { word: string; start_time: number; end_time: number; sequence: number }[];
+    clip_translations: { language: string; text: string; start_time: number; end_time: number; sequence: number }[];
   })[];
 
   // Convert DB subtitles to WordTiming format
@@ -98,9 +107,18 @@ async function getApprovedClips(userId?: string): Promise<Clip[]> {
       .sort((a, b) => a.sequence - b.sequence)
       .map((sub) => ({
         word: sub.word,
-        word_ja: sub.word_ja || undefined,
         start: Number(sub.start_time),
         end: Number(sub.end_time),
+      }));
+
+    // Convert translations
+    const translations: SentenceTranslation[] = (clip.clip_translations || [])
+      .sort((a, b) => a.sequence - b.sequence)
+      .map((trans) => ({
+        language: trans.language,
+        text: trans.text,
+        start: Number(trans.start_time),
+        end: Number(trans.end_time),
       }));
 
     return {
@@ -113,6 +131,7 @@ async function getApprovedClips(userId?: string): Promise<Clip[]> {
       has_voted: false,
       language: (clip.language === 'ja' ? 'ja' : 'en') as 'en' | 'ja',
       wordTimings,
+      translations,
       clip_verses: clip.clip_verses,
       clip_categories: clip.clip_categories,
     };
