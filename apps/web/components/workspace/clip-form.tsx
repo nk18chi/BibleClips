@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { saveClip } from '@/app/workspace/actions';
+import { saveClip, generateClipSubtitles } from '@/app/workspace/actions';
 import { useSupabase } from '@/components/providers/supabase-provider';
 
 const BIBLE_BOOKS = [
@@ -50,7 +50,9 @@ export function ClipForm({
   const [verseEnd, setVerseEnd] = useState('');
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const [saving, setSaving] = useState(false);
+  const [generatingSubtitles, setGeneratingSubtitles] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [subtitleResult, setSubtitleResult] = useState<string | null>(null);
 
   const handleCategoryToggle = (catId: string) => {
     setSelectedCategories((prev) =>
@@ -73,9 +75,10 @@ export function ClipForm({
     }
 
     setSaving(true);
+    setSubtitleResult(null);
 
     try {
-      await saveClip({
+      const { clipId } = await saveClip({
         youtubeVideoId,
         startTime,
         endTime,
@@ -87,6 +90,18 @@ export function ClipForm({
         categoryIds: selectedCategories,
         userId: user?.id,
       });
+
+      setSaving(false);
+      setGeneratingSubtitles(true);
+
+      // Generate subtitles with Whisper and translate
+      try {
+        const result = await generateClipSubtitles(clipId);
+        setSubtitleResult(`${result.wordCount} words transcribed`);
+      } catch (subtitleErr) {
+        console.error('Subtitle generation failed:', subtitleErr);
+        setSubtitleResult('Subtitle generation failed (clip saved)');
+      }
 
       // Reset form
       setTitle('');
@@ -100,6 +115,7 @@ export function ClipForm({
       setError(err instanceof Error ? err.message : 'Failed to save clip');
     } finally {
       setSaving(false);
+      setGeneratingSubtitles(false);
     }
   };
 
@@ -210,11 +226,28 @@ export function ClipForm({
       {/* Submit */}
       <button
         type="submit"
-        disabled={saving || startTime === 0 || endTime === 0}
+        disabled={saving || generatingSubtitles || startTime === 0 || endTime === 0}
         className="w-full py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium"
       >
-        {saving ? 'Saving...' : 'Save Clip'}
+        {saving
+          ? 'Saving...'
+          : generatingSubtitles
+            ? 'Generating subtitles...'
+            : 'Save Clip'}
       </button>
+
+      {/* Subtitle result */}
+      {subtitleResult && (
+        <div
+          className={`text-sm p-2 rounded ${
+            subtitleResult.includes('failed')
+              ? 'text-amber-600 bg-amber-50'
+              : 'text-green-600 bg-green-50'
+          }`}
+        >
+          {subtitleResult}
+        </div>
+      )}
     </form>
   );
 }

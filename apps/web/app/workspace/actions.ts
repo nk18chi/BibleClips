@@ -2,7 +2,9 @@
 
 import { createClient } from '@supabase/supabase-js';
 import { revalidatePath } from 'next/cache';
+import OpenAI from 'openai';
 import type { WorkQueueVideo, ClipWithVerse, SaveClipInput } from '@/types/workspace';
+import { transcribeClipWithWhisper, type WordTiming } from '@/lib/whisper-transcribe';
 
 // Use service role for workspace actions (admin tool)
 function createAdminClient() {
@@ -188,4 +190,162 @@ export async function updateVideoStatus(
   if (error) throw error;
 
   revalidatePath('/workspace');
+}
+
+// Helper: Group words into sentences for translation
+type WordWithId = WordTiming & { id?: string };
+
+function groupWordsIntoSentences(
+  words: WordWithId[],
+  maxWords = 10,
+  pauseThreshold = 0.5
+): { words: WordWithId[]; text: string; firstIndex: number }[] {
+  if (words.length === 0) return [];
+
+  const sentences: { words: WordWithId[]; text: string; firstIndex: number }[] = [];
+  let currentWords: WordWithId[] = [];
+  let firstIndex = 0;
+
+  const hasPunctuationAhead = (startIndex: number, lookAhead: number): boolean => {
+    for (let j = startIndex; j < Math.min(startIndex + lookAhead, words.length); j++) {
+      const w = words[j];
+      if (w && /[.!?,;]$/.test(w.word)) return true;
+    }
+    return false;
+  };
+
+  for (let i = 0; i < words.length; i++) {
+    const word = words[i];
+    if (!word) continue;
+
+    if (currentWords.length === 0) {
+      firstIndex = i;
+    }
+
+    const nextWord = words[i + 1];
+    currentWords.push(word);
+
+    const endsPunctuation = /[.!?]$/.test(word.word);
+    const endsClause = /[,;]$/.test(word.word);
+    const hasLongPause = nextWord && nextWord.start - word.end > pauseThreshold;
+    const reachedMaxWords = currentWords.length >= maxWords && !hasPunctuationAhead(i + 1, 4);
+    const splitOnClause = endsClause && currentWords.length >= 6;
+
+    if (endsPunctuation || hasLongPause || reachedMaxWords || splitOnClause || !nextWord) {
+      sentences.push({
+        words: [...currentWords],
+        text: currentWords.map((w) => w.word).join(' '),
+        firstIndex,
+      });
+      currentWords = [];
+    }
+  }
+
+  return sentences;
+}
+
+// Helper: Translate sentences to Japanese
+async function translateSentences(sentences: string[]): Promise<string[]> {
+  if (sentences.length === 0) return [];
+
+  const openai = new OpenAI();
+
+  const prompt = `Translate the following English sentences to natural Japanese. Return ONLY the translations, one per line, in the same order. Keep them concise for subtitles.
+
+${sentences.map((s, i) => `${i + 1}. ${s}`).join('\n')}`;
+
+  const response = await openai.chat.completions.create({
+    model: 'gpt-4o-mini',
+    messages: [
+      {
+        role: 'system',
+        content:
+          'You are a professional translator. Translate English to natural, conversational Japanese suitable for video subtitles.',
+      },
+      { role: 'user', content: prompt },
+    ],
+    temperature: 0.3,
+  });
+
+  const content = response.choices[0]?.message?.content || '';
+
+  return content
+    .split('\n')
+    .map((line) => line.replace(/^\d+\.\s*/, '').trim())
+    .filter((line) => line.length > 0);
+}
+
+export async function generateClipSubtitles(clipId: string): Promise<{ wordCount: number }> {
+  const supabase = createAdminClient();
+
+  // Get clip details
+  const { data: clip, error: clipError } = await supabase
+    .from('clips')
+    .select('id, youtube_video_id, start_time, end_time')
+    .eq('id', clipId)
+    .single();
+
+  if (clipError || !clip) {
+    throw new Error('Clip not found');
+  }
+
+  // Check if subtitles already exist
+  const { count } = await supabase
+    .from('clip_subtitles')
+    .select('*', { count: 'exact', head: true })
+    .eq('clip_id', clipId);
+
+  if (count && count > 0) {
+    return { wordCount: count };
+  }
+
+  // Transcribe with Whisper
+  console.log(`Transcribing clip ${clipId}...`);
+  const words = await transcribeClipWithWhisper(
+    clip.youtube_video_id,
+    clip.start_time,
+    clip.end_time
+  );
+
+  if (words.length === 0) {
+    throw new Error('No words transcribed');
+  }
+
+  // Insert subtitles into database
+  console.log(`Saving ${words.length} words...`);
+  const subtitleRows = words.map((word, index) => ({
+    clip_id: clipId,
+    word: word.word,
+    start_time: word.start,
+    end_time: word.end,
+    sequence: index,
+  }));
+
+  const { error: insertError } = await supabase.from('clip_subtitles').insert(subtitleRows);
+
+  if (insertError) {
+    throw new Error(`Failed to save subtitles: ${insertError.message}`);
+  }
+
+  // Group into sentences and translate
+  console.log('Translating to Japanese...');
+  const sentences = groupWordsIntoSentences(words);
+  const translations = await translateSentences(sentences.map((s) => s.text));
+
+  // Update first word of each sentence with translation
+  for (let i = 0; i < sentences.length; i++) {
+    const sentence = sentences[i];
+    const translation = translations[i];
+
+    if (!sentence || !translation) continue;
+
+    await supabase
+      .from('clip_subtitles')
+      .update({ word_ja: translation })
+      .eq('clip_id', clipId)
+      .eq('sequence', sentence.firstIndex);
+  }
+
+  console.log(`Generated ${words.length} subtitles with ${translations.length} translations`);
+  return { wordCount: words.length };
 }
