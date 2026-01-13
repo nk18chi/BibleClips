@@ -171,14 +171,15 @@ export function ClipHistory({ clips, onDeleted, isAdmin }: ClipHistoryProps) {
 
                   {isAdmin && (
                     <div className="flex items-center gap-1">
-                      {confirmId === clip.id ? (
+                      {deletingId === clip.id ? (
+                        <span className="text-xs text-gray-500">Deleting...</span>
+                      ) : confirmId === clip.id ? (
                         <>
                           <button
                             onClick={() => handleDelete(clip.id)}
-                            disabled={deletingId === clip.id}
-                            className="px-2 py-1 bg-red-600 text-white text-xs rounded hover:bg-red-700 disabled:opacity-50"
+                            className="px-2 py-1 bg-red-600 text-white text-xs rounded hover:bg-red-700"
                           >
-                            {deletingId === clip.id ? '...' : 'Yes'}
+                            Yes
                           </button>
                           <button
                             onClick={() => setConfirmId(null)}
