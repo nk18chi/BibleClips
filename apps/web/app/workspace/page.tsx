@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState, useCallback } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { Header } from '@/components/ui/header';
 import { VideoQueue } from '@/components/workspace/video-queue';
 import { WorkspacePlayer } from '@/components/workspace/workspace-player';
@@ -18,6 +18,7 @@ import type { WorkQueueVideo, YouTubeChannel, ClipWithVerse } from '@/types/work
 
 export default function WorkspacePage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { user, userRole, isAdmin, canAccessWorkspace, loading: authLoading } = useSupabase();
   const [videos, setVideos] = useState<WorkQueueVideo[]>([]);
   const [channels, setChannels] = useState<YouTubeChannel[]>([]);
@@ -72,6 +73,17 @@ export default function WorkspacePage() {
     loadData();
   }, [authLoading, user]);
 
+  // Select video from URL parameter when videos are loaded
+  useEffect(() => {
+    const videoId = searchParams.get('id');
+    if (videoId && videos.length > 0 && !selectedVideo) {
+      const video = videos.find(v => v.youtube_video_id === videoId);
+      if (video) {
+        setSelectedVideo(video);
+      }
+    }
+  }, [searchParams, videos, selectedVideo]);
+
   // Load clips when video selected
   useEffect(() => {
     if (selectedVideo) {
@@ -80,6 +92,16 @@ export default function WorkspacePage() {
       setEndTime(0);
     }
   }, [selectedVideo]);
+
+  // Handle video selection and update URL
+  const handleSelectVideo = useCallback((video: WorkQueueVideo | null) => {
+    setSelectedVideo(video);
+    if (video) {
+      router.replace(`/workspace?id=${video.youtube_video_id}`, { scroll: false });
+    } else {
+      router.replace('/workspace', { scroll: false });
+    }
+  }, [router]);
 
   const handleFilterChange = async (channelId: string | null) => {
     setFilterChannelId(channelId);
@@ -111,6 +133,7 @@ export default function WorkspacePage() {
     await updateVideoStatus(selectedVideo.youtube_video_id, status);
     setSelectedVideo(null);
     setVideoClips([]);
+    router.replace('/workspace', { scroll: false });
 
     // Refresh video list
     const videosData = await getQueueVideos(filterChannelId || undefined);
@@ -142,7 +165,7 @@ export default function WorkspacePage() {
             videos={videos}
             channels={channels}
             selectedVideoId={selectedVideo?.youtube_video_id || null}
-            onSelectVideo={setSelectedVideo}
+            onSelectVideo={handleSelectVideo}
             onFilterChange={handleFilterChange}
           />
         </div>
