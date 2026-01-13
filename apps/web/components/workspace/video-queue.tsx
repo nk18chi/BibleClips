@@ -1,14 +1,17 @@
 'use client';
 
-import { useState } from 'react';
 import type { WorkQueueVideo, YouTubeChannel } from '@/types/workspace';
+
+type VideoStatus = 'pending' | 'completed' | 'skipped';
 
 type VideoQueueProps = {
   videos: WorkQueueVideo[];
   channels: YouTubeChannel[];
   selectedVideoId: string | null;
+  filterChannelId: string | null;
+  filterStatus: VideoStatus;
   onSelectVideo: (video: WorkQueueVideo) => void;
-  onFilterChange: (channelId: string | null) => void;
+  onFilterChange: (channelId: string | null, status: VideoStatus) => void;
 };
 
 function formatNumber(num: number): string {
@@ -17,28 +20,54 @@ function formatNumber(num: number): string {
   return num.toString();
 }
 
+const STATUS_LABELS: Record<VideoStatus, string> = {
+  pending: 'Pending',
+  completed: 'Completed',
+  skipped: 'Skipped',
+};
+
 export function VideoQueue({
   videos,
   channels,
   selectedVideoId,
+  filterChannelId,
+  filterStatus,
   onSelectVideo,
   onFilterChange,
 }: VideoQueueProps) {
-  const [filterChannelId, setFilterChannelId] = useState<string | null>(null);
-
-  const handleFilterChange = (channelId: string) => {
+  const handleChannelChange = (channelId: string) => {
     const newValue = channelId === '' ? null : channelId;
-    setFilterChannelId(newValue);
-    onFilterChange(newValue);
+    onFilterChange(newValue, filterStatus);
+  };
+
+  const handleStatusChange = (status: VideoStatus) => {
+    onFilterChange(filterChannelId, status);
   };
 
   return (
     <div className="flex flex-col h-full">
+      {/* Status Tabs */}
+      <div className="flex border-b">
+        {(['pending', 'completed', 'skipped'] as VideoStatus[]).map((status) => (
+          <button
+            key={status}
+            onClick={() => handleStatusChange(status)}
+            className={`flex-1 px-3 py-2 text-sm font-medium transition-colors ${
+              filterStatus === status
+                ? 'text-blue-600 border-b-2 border-blue-600 bg-blue-50'
+                : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
+            }`}
+          >
+            {STATUS_LABELS[status]}
+          </button>
+        ))}
+      </div>
+
       {/* Channel Filter */}
       <div className="p-3 border-b">
         <select
           value={filterChannelId || ''}
-          onChange={(e) => handleFilterChange(e.target.value)}
+          onChange={(e) => handleChannelChange(e.target.value)}
           className="w-full px-3 py-2 border rounded-lg text-sm"
         >
           <option value="">All Channels</option>

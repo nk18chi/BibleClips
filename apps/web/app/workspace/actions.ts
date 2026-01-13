@@ -38,13 +38,18 @@ const BOOK_JA_MAP: Record<string, string> = {
   '2 John': 'ヨハネ第二', '3 John': 'ヨハネ第三', 'Jude': 'ユダ', 'Revelation': '黙示録',
 };
 
-export async function getQueueVideos(channelId?: string): Promise<WorkQueueVideo[]> {
+export type VideoStatus = 'pending' | 'completed' | 'skipped';
+
+export async function getQueueVideos(
+  channelId?: string,
+  status: VideoStatus = 'pending'
+): Promise<WorkQueueVideo[]> {
   const supabase = createAdminClient();
 
   let query = supabase
     .from('work_queue_videos')
     .select('*, channel:youtube_channels(*)')
-    .eq('status', 'pending')
+    .eq('status', status)
     .order('view_count', { ascending: false });
 
   if (channelId) {

@@ -13,6 +13,7 @@ import {
   getChannels,
   getVideoClips,
   updateVideoStatus,
+  type VideoStatus,
 } from './actions';
 import type { WorkQueueVideo, YouTubeChannel, ClipWithVerse } from '@/types/workspace';
 
@@ -29,6 +30,7 @@ export default function WorkspacePage() {
   const [endTime, setEndTime] = useState(0);
   const [loading, setLoading] = useState(true);
   const [filterChannelId, setFilterChannelId] = useState<string | null>(null);
+  const [filterStatus, setFilterStatus] = useState<VideoStatus>('pending');
 
   // Redirect if not authenticated
   useEffect(() => {
@@ -103,9 +105,10 @@ export default function WorkspacePage() {
     }
   }, [router]);
 
-  const handleFilterChange = async (channelId: string | null) => {
+  const handleFilterChange = async (channelId: string | null, status: VideoStatus) => {
     setFilterChannelId(channelId);
-    const videosData = await getQueueVideos(channelId || undefined);
+    setFilterStatus(status);
+    const videosData = await getQueueVideos(channelId || undefined, status);
     setVideos(videosData);
   };
 
@@ -122,7 +125,7 @@ export default function WorkspacePage() {
       const clips = await getVideoClips(selectedVideo.youtube_video_id);
       setVideoClips(clips);
       // Refresh video list to update clips_created count
-      const videosData = await getQueueVideos(filterChannelId || undefined);
+      const videosData = await getQueueVideos(filterChannelId || undefined, filterStatus);
       setVideos(videosData);
     }
   };
@@ -136,7 +139,7 @@ export default function WorkspacePage() {
     router.replace('/workspace', { scroll: false });
 
     // Refresh video list
-    const videosData = await getQueueVideos(filterChannelId || undefined);
+    const videosData = await getQueueVideos(filterChannelId || undefined, filterStatus);
     setVideos(videosData);
   };
 
@@ -165,6 +168,8 @@ export default function WorkspacePage() {
             videos={videos}
             channels={channels}
             selectedVideoId={selectedVideo?.youtube_video_id || null}
+            filterChannelId={filterChannelId}
+            filterStatus={filterStatus}
             onSelectVideo={handleSelectVideo}
             onFilterChange={handleFilterChange}
           />
