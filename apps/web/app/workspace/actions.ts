@@ -94,6 +94,9 @@ export async function getVideoClips(youtubeVideoId: string): Promise<ClipWithVer
         chapter,
         verse_start,
         verse_end
+      ),
+      clip_categories (
+        category_id
       )
     `)
     .eq('youtube_video_id', youtubeVideoId)
@@ -185,21 +188,68 @@ export type UpdateClipInput = {
   clipId: string;
   startTime: number;
   endTime: number;
+  title?: string;
+  book?: string;
+  chapter?: number;
+  verseStart?: number;
+  verseEnd?: number | null;
+  categoryIds?: string[];
 };
 
 export async function updateClip(input: UpdateClipInput): Promise<{ clipId: string }> {
   const supabase = createAdminClient();
 
-  // Update clip times
+  // Update clip (times and title)
+  const clipUpdate: Record<string, unknown> = {
+    start_time: input.startTime,
+    end_time: input.endTime,
+  };
+  if (input.title !== undefined) {
+    clipUpdate.title = input.title;
+  }
+
   const { error: updateError } = await supabase
     .from('clips')
-    .update({
-      start_time: input.startTime,
-      end_time: input.endTime,
-    })
+    .update(clipUpdate)
     .eq('id', input.clipId);
 
   if (updateError) throw updateError;
+
+  // Update verse if provided
+  if (input.book && input.chapter && input.verseStart) {
+    // Delete existing verses
+    await supabase.from('clip_verses').delete().eq('clip_id', input.clipId);
+
+    // Insert new verse
+    const { error: verseError } = await supabase.from('clip_verses').insert({
+      clip_id: input.clipId,
+      book: input.book,
+      book_ja: BOOK_JA_MAP[input.book] || input.book,
+      chapter: input.chapter,
+      verse_start: input.verseStart,
+      verse_end: input.verseEnd || null,
+    });
+
+    if (verseError) throw verseError;
+  }
+
+  // Update categories if provided
+  if (input.categoryIds !== undefined) {
+    // Delete existing categories
+    await supabase.from('clip_categories').delete().eq('clip_id', input.clipId);
+
+    // Insert new categories
+    if (input.categoryIds.length > 0) {
+      const { error: catError } = await supabase.from('clip_categories').insert(
+        input.categoryIds.map((catId) => ({
+          clip_id: input.clipId,
+          category_id: catId,
+        }))
+      );
+
+      if (catError) throw catError;
+    }
+  }
 
   // Delete existing subtitles (will be regenerated)
   await supabase.from('clip_subtitles').delete().eq('clip_id', input.clipId);

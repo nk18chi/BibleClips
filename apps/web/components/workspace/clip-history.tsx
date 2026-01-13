@@ -4,8 +4,28 @@ import { useState } from 'react';
 import { deleteClip, updateClip, generateClipSubtitles } from '@/app/workspace/actions';
 import type { ClipWithVerse } from '@/types/workspace';
 
+const BIBLE_BOOKS = [
+  'Genesis', 'Exodus', 'Leviticus', 'Numbers', 'Deuteronomy',
+  'Joshua', 'Judges', 'Ruth', '1 Samuel', '2 Samuel',
+  '1 Kings', '2 Kings', '1 Chronicles', '2 Chronicles', 'Ezra',
+  'Nehemiah', 'Esther', 'Job', 'Psalms', 'Proverbs',
+  'Ecclesiastes', 'Song of Solomon', 'Isaiah', 'Jeremiah', 'Lamentations',
+  'Ezekiel', 'Daniel', 'Hosea', 'Joel', 'Amos',
+  'Obadiah', 'Jonah', 'Micah', 'Nahum', 'Habakkuk',
+  'Zephaniah', 'Haggai', 'Zechariah', 'Malachi',
+  'Matthew', 'Mark', 'Luke', 'John', 'Acts',
+  'Romans', '1 Corinthians', '2 Corinthians', 'Galatians', 'Ephesians',
+  'Philippians', 'Colossians', '1 Thessalonians', '2 Thessalonians', '1 Timothy',
+  '2 Timothy', 'Titus', 'Philemon', 'Hebrews', 'James',
+  '1 Peter', '2 Peter', '1 John', '2 John', '3 John',
+  'Jude', 'Revelation',
+];
+
+type Category = { id: string; slug: string; name_en: string };
+
 type ClipHistoryProps = {
   clips: ClipWithVerse[];
+  categories: Category[];
   onDeleted: () => void;
   isAdmin: boolean;
 };
@@ -26,12 +46,18 @@ function parseTime(timeStr: string): number | null {
   return min * 60 + sec;
 }
 
-export function ClipHistory({ clips, onDeleted, isAdmin }: ClipHistoryProps) {
+export function ClipHistory({ clips, categories, onDeleted, isAdmin }: ClipHistoryProps) {
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [confirmId, setConfirmId] = useState<string | null>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editStart, setEditStart] = useState('');
   const [editEnd, setEditEnd] = useState('');
+  const [editTitle, setEditTitle] = useState('');
+  const [editBook, setEditBook] = useState('');
+  const [editChapter, setEditChapter] = useState('');
+  const [editVerseStart, setEditVerseStart] = useState('');
+  const [editVerseEnd, setEditVerseEnd] = useState('');
+  const [editCategories, setEditCategories] = useState<string[]>([]);
   const [saving, setSaving] = useState(false);
   const [editError, setEditError] = useState<string | null>(null);
 
@@ -49,9 +75,16 @@ export function ClipHistory({ clips, onDeleted, isAdmin }: ClipHistoryProps) {
   };
 
   const handleStartEdit = (clip: ClipWithVerse) => {
+    const verse = clip.clip_verses[0];
     setEditingId(clip.id);
     setEditStart(formatTime(clip.start_time));
     setEditEnd(formatTime(clip.end_time));
+    setEditTitle(clip.title || '');
+    setEditBook(verse?.book || '');
+    setEditChapter(verse?.chapter?.toString() || '');
+    setEditVerseStart(verse?.verse_start?.toString() || '');
+    setEditVerseEnd(verse?.verse_end?.toString() || '');
+    setEditCategories(clip.clip_categories?.map((c) => c.category_id) || []);
     setEditError(null);
   };
 
@@ -59,7 +92,19 @@ export function ClipHistory({ clips, onDeleted, isAdmin }: ClipHistoryProps) {
     setEditingId(null);
     setEditStart('');
     setEditEnd('');
+    setEditTitle('');
+    setEditBook('');
+    setEditChapter('');
+    setEditVerseStart('');
+    setEditVerseEnd('');
+    setEditCategories([]);
     setEditError(null);
+  };
+
+  const handleCategoryToggle = (catId: string) => {
+    setEditCategories((prev) =>
+      prev.includes(catId) ? prev.filter((id) => id !== catId) : [...prev, catId]
+    );
   };
 
   const handleSaveEdit = async (clipId: string) => {
@@ -76,11 +121,26 @@ export function ClipHistory({ clips, onDeleted, isAdmin }: ClipHistoryProps) {
       return;
     }
 
+    if (!editBook || !editChapter || !editVerseStart) {
+      setEditError('Please fill in the verse reference');
+      return;
+    }
+
     setSaving(true);
     setEditError(null);
 
     try {
-      await updateClip({ clipId, startTime, endTime });
+      await updateClip({
+        clipId,
+        startTime,
+        endTime,
+        title: editTitle || `${editBook} ${editChapter}:${editVerseStart}`,
+        book: editBook,
+        chapter: parseInt(editChapter),
+        verseStart: parseInt(editVerseStart),
+        verseEnd: editVerseEnd ? parseInt(editVerseEnd) : null,
+        categoryIds: editCategories,
+      });
       await generateClipSubtitles(clipId);
       handleCancelEdit();
       onDeleted(); // Refresh the list
@@ -116,10 +176,65 @@ export function ClipHistory({ clips, onDeleted, isAdmin }: ClipHistoryProps) {
           const isEditing = editingId === clip.id;
 
           return (
-            <div key={clip.id} className="bg-white p-2 rounded border">
+            <div key={clip.id} className="bg-white p-3 rounded border">
               {isEditing ? (
-                <div className="space-y-2">
-                  <div className="text-sm font-medium">{verseRef}</div>
+                <div className="space-y-3">
+                  {/* Title */}
+                  <input
+                    type="text"
+                    value={editTitle}
+                    onChange={(e) => setEditTitle(e.target.value)}
+                    placeholder="Clip title (optional)"
+                    className="w-full px-2 py-1 border rounded text-sm"
+                    disabled={saving}
+                  />
+
+                  {/* Verse reference */}
+                  <div className="grid grid-cols-4 gap-2">
+                    <select
+                      value={editBook}
+                      onChange={(e) => setEditBook(e.target.value)}
+                      className="col-span-2 px-2 py-1 border rounded text-sm"
+                      disabled={saving}
+                    >
+                      <option value="">Select book</option>
+                      {BIBLE_BOOKS.map((b) => (
+                        <option key={b} value={b}>{b}</option>
+                      ))}
+                    </select>
+                    <input
+                      type="number"
+                      value={editChapter}
+                      onChange={(e) => setEditChapter(e.target.value)}
+                      placeholder="Ch"
+                      min="1"
+                      className="px-2 py-1 border rounded text-sm"
+                      disabled={saving}
+                    />
+                    <div className="flex gap-1 items-center">
+                      <input
+                        type="number"
+                        value={editVerseStart}
+                        onChange={(e) => setEditVerseStart(e.target.value)}
+                        placeholder="V"
+                        min="1"
+                        className="w-full px-1 py-1 border rounded text-sm"
+                        disabled={saving}
+                      />
+                      <span className="text-gray-400">-</span>
+                      <input
+                        type="number"
+                        value={editVerseEnd}
+                        onChange={(e) => setEditVerseEnd(e.target.value)}
+                        placeholder="V"
+                        min="1"
+                        className="w-full px-1 py-1 border rounded text-sm"
+                        disabled={saving}
+                      />
+                    </div>
+                  </div>
+
+                  {/* Time */}
                   <div className="flex items-center gap-2">
                     <label className="text-xs text-gray-500">Start:</label>
                     <input
@@ -140,6 +255,26 @@ export function ClipHistory({ clips, onDeleted, isAdmin }: ClipHistoryProps) {
                       disabled={saving}
                     />
                   </div>
+
+                  {/* Categories */}
+                  <div className="flex flex-wrap gap-1">
+                    {categories.map((cat) => (
+                      <button
+                        key={cat.id}
+                        type="button"
+                        onClick={() => handleCategoryToggle(cat.id)}
+                        disabled={saving}
+                        className={`px-2 py-0.5 rounded-full text-xs border transition-colors ${
+                          editCategories.includes(cat.id)
+                            ? 'bg-blue-600 text-white border-blue-600'
+                            : 'bg-white text-gray-700 border-gray-300 hover:border-blue-400'
+                        }`}
+                      >
+                        {cat.name_en}
+                      </button>
+                    ))}
+                  </div>
+
                   {editError && (
                     <div className="text-xs text-red-600">{editError}</div>
                   )}

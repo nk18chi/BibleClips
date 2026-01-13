@@ -200,7 +200,7 @@ export default function WorkspacePage() {
               />
 
               {/* Clip History */}
-              <ClipHistory clips={videoClips} onDeleted={handleClipSaved} isAdmin={isAdmin} />
+              <ClipHistory clips={videoClips} categories={categories} onDeleted={handleClipSaved} isAdmin={isAdmin} />
 
               {/* Video Actions */}
               <div className="flex gap-3 pt-4 border-t">

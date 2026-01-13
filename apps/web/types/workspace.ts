@@ -40,6 +40,9 @@ export type ClipWithVerse = {
     verse_start: number;
     verse_end: number | null;
   }[];
+  clip_categories?: {
+    category_id: string;
+  }[];
 };
 
 export type SaveClipInput = {
