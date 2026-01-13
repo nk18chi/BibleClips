@@ -176,6 +176,33 @@ export async function deleteClip(clipId: string): Promise<void> {
   revalidatePath('/workspace');
 }
 
+export type UpdateClipInput = {
+  clipId: string;
+  startTime: number;
+  endTime: number;
+};
+
+export async function updateClip(input: UpdateClipInput): Promise<{ clipId: string }> {
+  const supabase = createAdminClient();
+
+  // Update clip times
+  const { error: updateError } = await supabase
+    .from('clips')
+    .update({
+      start_time: input.startTime,
+      end_time: input.endTime,
+    })
+    .eq('id', input.clipId);
+
+  if (updateError) throw updateError;
+
+  // Delete existing subtitles (will be regenerated)
+  await supabase.from('clip_subtitles').delete().eq('clip_id', input.clipId);
+
+  revalidatePath('/workspace');
+  return { clipId: input.clipId };
+}
+
 export async function updateVideoStatus(
   youtubeVideoId: string,
   status: 'completed' | 'skipped'
