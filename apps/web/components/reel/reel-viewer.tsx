@@ -5,6 +5,7 @@ import { YouTubePlayer } from "./youtube-player";
 import { ActionButtons } from "./action-buttons";
 import { VerseModal } from "./verse-modal";
 import { SubtitleOverlay } from "./subtitle-overlay";
+import { CommentSection } from "@/components/comment/comment-section";
 import { Header } from "@/components/ui/header";
 import { useLanguage } from "@/components/providers/language-provider";
 import Link from "next/link";
@@ -60,12 +61,14 @@ function ReelCard({
   index,
   total,
   onVerseClick,
+  onCommentClick,
 }: {
   clip: Clip;
   isActive: boolean;
   index: number;
   total: number;
   onVerseClick: () => void;
+  onCommentClick: () => void;
 }) {
   const [currentTime, setCurrentTime] = useState(0);
   const { language } = useLanguage();
@@ -158,6 +161,7 @@ function ReelCard({
           voteCount={clip.vote_count}
           hasVoted={clip.has_voted}
           onVerseClick={onVerseClick}
+          onCommentClick={onCommentClick}
         />
       </div>
     </div>
@@ -167,6 +171,7 @@ function ReelCard({
 export function ReelViewer({ clips, initialIndex = 0, showHeader = false }: ReelViewerProps) {
   const [currentIndex, setCurrentIndex] = useState(initialIndex);
   const [showVerseModal, setShowVerseModal] = useState(false);
+  const [showCommentSection, setShowCommentSection] = useState(false);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const isScrollingRef = useRef(false);
 
@@ -239,6 +244,7 @@ export function ReelViewer({ clips, initialIndex = 0, showHeader = false }: Reel
                 index={index}
                 total={clips.length}
                 onVerseClick={() => setShowVerseModal(true)}
+                onCommentClick={() => setShowCommentSection(true)}
               />
             </div>
           ))}
@@ -254,6 +260,7 @@ export function ReelViewer({ clips, initialIndex = 0, showHeader = false }: Reel
             voteCount={currentClip.vote_count}
             hasVoted={currentClip.has_voted}
             onVerseClick={() => setShowVerseModal(true)}
+            onCommentClick={() => setShowCommentSection(true)}
           />
         </div>
       </div>
@@ -266,6 +273,14 @@ export function ReelViewer({ clips, initialIndex = 0, showHeader = false }: Reel
           verseStart={verse.verse_start}
           verseEnd={verse.verse_end}
           onClose={() => setShowVerseModal(false)}
+        />
+      )}
+
+      {/* Comment Section */}
+      {showCommentSection && currentClip && (
+        <CommentSection
+          clipId={currentClip.id}
+          onClose={() => setShowCommentSection(false)}
         />
       )}
 
