@@ -80,9 +80,10 @@ pnpm dev
 ```bash
 pnpm dev          # Start development server
 pnpm build        # Build for production
-pnpm lint         # Run linting
+pnpm lint         # Run Biome linting
 pnpm type-check   # Run TypeScript checks
-pnpm format       # Format code with Prettier
+pnpm format       # Format code with Biome
+pnpm check        # Run lint + format check together
 ```
 
 ## Database
@@ -107,7 +108,7 @@ Using Supabase PostgreSQL. Key tables:
 
 ### Code Style
 - TypeScript strict mode enabled
-- ESLint + Prettier for formatting
+- Biome for linting and formatting
 - Zod for all input validation
 - Server Components by default, Client Components only when needed
 
