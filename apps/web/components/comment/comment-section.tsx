@@ -68,7 +68,7 @@ export function CommentSection({ clipId, onClose }: CommentSectionProps) {
         like_count: c.like_count,
         created_at: c.created_at,
         updated_at: c.updated_at,
-        user: Array.isArray(c.user) && c.user.length > 0 ? c.user[0] : null,
+        user: Array.isArray(c.user) && c.user.length > 0 ? c.user[0] ?? null : null,
       }));
       setComments(transformed);
     }

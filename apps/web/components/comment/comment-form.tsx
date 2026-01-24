@@ -34,7 +34,7 @@ export function CommentForm({ clipId, onCommentAdded }: CommentFormProps) {
 
     const result = commentContentSchema.safeParse(content);
     if (!result.success) {
-      setError(result.error.errors[0].message);
+      setError(result.error.errors[0]?.message ?? "Invalid comment");
       return;
     }
 
