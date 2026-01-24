@@ -62,6 +62,39 @@ export interface Vote {
   created_at: string;
 }
 
+export type CommentReportReason = 'spam' | 'harassment' | 'inappropriate' | 'other';
+export type CommentReportStatus = 'PENDING' | 'REVIEWED' | 'DISMISSED';
+
+export interface Comment {
+  id: string;
+  clip_id: string;
+  user_id: string;
+  content: string;
+  like_count: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface CommentLike {
+  comment_id: string;
+  user_id: string;
+  created_at: string;
+}
+
+export interface CommentReport {
+  id: string;
+  comment_id: string;
+  user_id: string;
+  reason: CommentReportReason;
+  description: string | null;
+  status: CommentReportStatus;
+  created_at: string;
+}
+
+export interface CommentWithUser extends Comment {
+  user: Pick<User, 'id' | 'display_name'> | null;
+}
+
 export interface ClipSubtitle {
   id: string;
   clip_id: string;
