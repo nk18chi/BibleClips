@@ -274,93 +274,141 @@ export async function updateVideoStatus(
   revalidatePath('/workspace');
 }
 
-// Helper: Group words into sentences for translation
-type SentenceGroup = {
-  text: string;
+// Helper: Translate full text and split into aligned subtitle chunks
+type SubtitleChunk = {
+  en: string;
+  ja: string;
   startTime: number;
   endTime: number;
   sequence: number;
 };
 
-function groupWordsIntoSentences(
-  words: WordTiming[],
-  maxWords = 10,
-  pauseThreshold = 0.5
-): SentenceGroup[] {
+async function translateWithAlignment(
+  words: WordTiming[]
+): Promise<SubtitleChunk[]> {
   if (words.length === 0) return [];
 
-  const sentences: SentenceGroup[] = [];
-  let currentWords: WordTiming[] = [];
-  let sequenceIndex = 0;
-
-  const hasPunctuationAhead = (startIndex: number, lookAhead: number): boolean => {
-    for (let j = startIndex; j < Math.min(startIndex + lookAhead, words.length); j++) {
-      const w = words[j];
-      if (w && /[.!?,;]$/.test(w.word)) return true;
-    }
-    return false;
-  };
-
-  for (let i = 0; i < words.length; i++) {
-    const word = words[i];
-    if (!word) continue;
-
-    const nextWord = words[i + 1];
-    currentWords.push(word);
-
-    const endsPunctuation = /[.!?]$/.test(word.word);
-    const endsClause = /[,;]$/.test(word.word);
-    const hasLongPause = nextWord && nextWord.start - word.end > pauseThreshold;
-    const reachedMaxWords = currentWords.length >= maxWords && !hasPunctuationAhead(i + 1, 4);
-    const splitOnClause = endsClause && currentWords.length >= 6;
-
-    if (endsPunctuation || hasLongPause || reachedMaxWords || splitOnClause || !nextWord) {
-      const firstWord = currentWords[0];
-      const lastWord = currentWords[currentWords.length - 1];
-      if (firstWord && lastWord) {
-        sentences.push({
-          text: currentWords.map((w) => w.word).join(' '),
-          startTime: firstWord.start,
-          endTime: lastWord.end,
-          sequence: sequenceIndex++,
-        });
-      }
-      currentWords = [];
-    }
-  }
-
-  return sentences;
-}
-
-// Helper: Translate sentences to Japanese
-async function translateSentences(sentences: string[]): Promise<string[]> {
-  if (sentences.length === 0) return [];
-
   const openai = new OpenAI();
+  const fullText = words.map((w) => w.word).join(' ');
 
-  const prompt = `Translate the following English sentences to natural Japanese. Return ONLY the translations, one per line, in the same order. Keep them concise for subtitles.
+  const prompt = `Translate this English sermon speech to Japanese for video subtitles.
 
-${sentences.map((s, i) => `${i + 1}. ${s}`).join('\n')}`;
+TEXT:
+${fullText}
+
+Split into 5-12 word chunks. Return JSON with "chunks" array:
+{"chunks":[{"en":"English chunk","ja":"日本語翻訳"},...]}`;
 
   const response = await openai.chat.completions.create({
-    model: 'gpt-4o-mini',
+    model: 'gpt-4o',
     messages: [
       {
         role: 'system',
-        content:
-          'You are a professional translator. Translate English to natural, conversational Japanese suitable for video subtitles.',
+        content: 'You are a translator. Return valid JSON only. The "en" field must be EXACT substring from the input text.',
       },
       { role: 'user', content: prompt },
     ],
-    temperature: 0.3,
+    temperature: 0.2,
+    response_format: { type: 'json_object' },
   });
 
-  const content = response.choices[0]?.message?.content || '';
+  const content = response.choices[0]?.message?.content || '{}';
+  console.log('GPT response length:', content.length);
 
-  return content
-    .split('\n')
-    .map((line) => line.replace(/^\d+\.\s*/, '').trim())
-    .filter((line) => line.length > 0);
+  let parsed: Record<string, unknown>;
+
+  try {
+    parsed = JSON.parse(content);
+  } catch {
+    console.error('Failed to parse GPT response:', content.slice(0, 500));
+    return [];
+  }
+
+  // Find the chunks array
+  let chunks: Array<{ en: string; ja: string }> = [];
+
+  if (parsed.chunks && Array.isArray(parsed.chunks)) {
+    chunks = parsed.chunks as typeof chunks;
+  } else {
+    for (const key of Object.keys(parsed)) {
+      if (Array.isArray(parsed[key])) {
+        chunks = parsed[key] as typeof chunks;
+        break;
+      }
+    }
+  }
+
+  console.log('Parsed chunks count:', chunks.length);
+
+  if (chunks.length === 0) {
+    console.error('No chunks found in response');
+    return [];
+  }
+
+  // Normalize for matching
+  const normalize = (s: string) => s.toLowerCase().replace(/[.,!?;:'"\-]/g, '').replace(/\s+/g, ' ').trim();
+
+  // Build word sequence for matching
+  const wordTexts = words.map((w) => normalize(w.word));
+
+  // Find each chunk in the word sequence
+  const result: SubtitleChunk[] = [];
+  let searchStart = 0;
+
+  for (let i = 0; i < chunks.length; i++) {
+    const chunk = chunks[i];
+    if (!chunk || !chunk.en || !chunk.ja) continue;
+
+    // Split chunk into words
+    const chunkWords = normalize(chunk.en).split(' ').filter(w => w.length > 0);
+    if (chunkWords.length === 0) continue;
+
+    // Find where this chunk starts in the word list
+    let startIdx = -1;
+    const firstWord = chunkWords[0];
+
+    for (let j = searchStart; j < words.length; j++) {
+      if (wordTexts[j] === firstWord) {
+        // Check if subsequent words match
+        let matches = true;
+        for (let k = 1; k < Math.min(chunkWords.length, 3); k++) {
+          if (j + k >= words.length || wordTexts[j + k] !== chunkWords[k]) {
+            matches = false;
+            break;
+          }
+        }
+        if (matches) {
+          startIdx = j;
+          break;
+        }
+      }
+    }
+
+    if (startIdx === -1) {
+      console.warn(`Could not find chunk ${i}: "${chunk.en.slice(0, 30)}..."`);
+      continue;
+    }
+
+    // Find end index
+    const endIdx = Math.min(startIdx + chunkWords.length - 1, words.length - 1);
+
+    const startWord = words[startIdx];
+    const endWord = words[endIdx];
+
+    if (startWord && endWord) {
+      result.push({
+        en: chunk.en,
+        ja: chunk.ja,
+        startTime: startWord.start,
+        endTime: endWord.end,
+        sequence: result.length,
+      });
+      searchStart = endIdx + 1;
+    }
+  }
+
+  console.log(`Aligned ${result.length} chunks out of ${chunks.length}`);
+  return result;
 }
 
 export async function generateClipSubtitles(clipId: string): Promise<{ wordCount: number }> {
@@ -415,31 +463,24 @@ export async function generateClipSubtitles(clipId: string): Promise<{ wordCount
     throw new Error(`Failed to save subtitles: ${insertError.message}`);
   }
 
-  // Group into sentences and translate
-  console.log('Translating to Japanese...');
-  const sentences = groupWordsIntoSentences(words);
-  const translations = await translateSentences(sentences.map((s) => s.text));
+  // Translate full text and get aligned chunks
+  console.log('Translating to Japanese with alignment...');
+  const chunks = await translateWithAlignment(words);
 
   // Delete existing translations for this clip
   await supabase.from('clip_translations').delete().eq('clip_id', clipId);
 
-  // Insert sentence translations into clip_translations table
-  const translationRows = sentences
-    .map((sentence, i) => {
-      const translation = translations[i];
-      if (!translation) return null;
-      return {
-        clip_id: clipId,
-        language: 'ja',
-        text: translation,
-        start_time: sentence.startTime,
-        end_time: sentence.endTime,
-        sequence: sentence.sequence,
-      };
-    })
-    .filter((row): row is NonNullable<typeof row> => row !== null);
+  // Insert aligned translations into clip_translations table
+  if (chunks.length > 0) {
+    const translationRows = chunks.map((chunk) => ({
+      clip_id: clipId,
+      language: 'ja',
+      text: chunk.ja,
+      start_time: chunk.startTime,
+      end_time: chunk.endTime,
+      sequence: chunk.sequence,
+    }));
 
-  if (translationRows.length > 0) {
     const { error: translationError } = await supabase
       .from('clip_translations')
       .insert(translationRows);
@@ -449,6 +490,6 @@ export async function generateClipSubtitles(clipId: string): Promise<{ wordCount
     }
   }
 
-  console.log(`Generated ${words.length} subtitles with ${translationRows.length} translations`);
+  console.log(`Generated ${words.length} subtitles with ${chunks.length} translations`);
   return { wordCount: words.length };
 }
