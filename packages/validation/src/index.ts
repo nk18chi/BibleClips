@@ -52,3 +52,16 @@ export {
   type PreferredLanguage,
   type UserProfile,
 } from "./user";
+
+// Comment
+export {
+  commentContentSchema,
+  createCommentSchema,
+  updateCommentSchema,
+  commentReportReasonSchema,
+  createCommentReportSchema,
+  type CreateComment,
+  type UpdateComment,
+  type CommentReportReason,
+  type CreateCommentReport,
+} from "./comment";
