@@ -1,11 +1,11 @@
-'use client';
+"use client";
 
-import { createContext, useContext, useEffect, useState } from 'react';
-import { createBrowserClient } from '@/lib/supabase/client';
-import { useRouter } from 'next/navigation';
-import type { SupabaseClient, User } from '@supabase/supabase-js';
+import type { SupabaseClient, User } from "@supabase/supabase-js";
+import { useRouter } from "next/navigation";
+import { createContext, useCallback, useContext, useEffect, useState } from "react";
+import { createBrowserClient } from "@/lib/supabase/client";
 
-type UserRole = 'USER' | 'CONTRIBUTOR' | 'ADMIN';
+type UserRole = "USER" | "CONTRIBUTOR" | "ADMIN";
 
 type SupabaseContext = {
   supabase: SupabaseClient;
@@ -26,23 +26,22 @@ export function SupabaseProvider({ children }: { children: React.ReactNode }) {
   const router = useRouter();
 
   // Fetch user role from users table
-  const fetchUserRole = async (userId: string): Promise<UserRole | null> => {
-    try {
-      const { data, error } = await supabase
-        .from('users')
-        .select('role')
-        .eq('id', userId)
-        .single();
+  const fetchUserRole = useCallback(
+    async (userId: string): Promise<UserRole | null> => {
+      try {
+        const { data, error } = await supabase.from("users").select("role").eq("id", userId).single();
 
-      if (error) {
+        if (error) {
+          return null;
+        }
+
+        return (data?.role as UserRole) || "USER";
+      } catch {
         return null;
       }
-
-      return (data?.role as UserRole) || 'USER';
-    } catch {
-      return null;
-    }
-  };
+    },
+    [supabase]
+  );
 
   useEffect(() => {
     let isMounted = true;
@@ -66,7 +65,7 @@ export function SupabaseProvider({ children }: { children: React.ReactNode }) {
 
       setLoading(false);
 
-      if (event === 'SIGNED_IN' || event === 'SIGNED_OUT') {
+      if (event === "SIGNED_IN" || event === "SIGNED_OUT") {
         router.refresh();
       }
     });
@@ -75,10 +74,10 @@ export function SupabaseProvider({ children }: { children: React.ReactNode }) {
       isMounted = false;
       subscription.unsubscribe();
     };
-  }, [supabase, router]);
+  }, [supabase, router, fetchUserRole]);
 
-  const isAdmin = userRole === 'ADMIN';
-  const canAccessWorkspace = userRole === 'ADMIN' || userRole === 'CONTRIBUTOR';
+  const isAdmin = userRole === "ADMIN";
+  const canAccessWorkspace = userRole === "ADMIN" || userRole === "CONTRIBUTOR";
 
   return (
     <Context.Provider value={{ supabase, user, userRole, loading, isAdmin, canAccessWorkspace }}>
@@ -90,7 +89,7 @@ export function SupabaseProvider({ children }: { children: React.ReactNode }) {
 export function useSupabase() {
   const context = useContext(Context);
   if (context === undefined) {
-    throw new Error('useSupabase must be used inside SupabaseProvider');
+    throw new Error("useSupabase must be used inside SupabaseProvider");
   }
   return context;
 }

@@ -1,6 +1,6 @@
-import { createServerClient } from '@/lib/supabase/server';
-import { ReelViewer } from '@/components/reel/reel-viewer';
-import Link from 'next/link';
+import Link from "next/link";
+import { ReelViewer } from "@/components/reel/reel-viewer";
+import { createServerClient } from "@/lib/supabase/server";
 
 type Props = {
   params: { slug: string };
@@ -33,7 +33,7 @@ async function getClipsForCategory(slug: string, userId?: string) {
   const supabase = createServerClient();
 
   const { data: clips } = await supabase
-    .from('clips')
+    .from("clips")
     .select(
       `
       id,
@@ -47,19 +47,19 @@ async function getClipsForCategory(slug: string, userId?: string) {
       clip_categories!inner (categories!inner (slug, name_en))
     `
     )
-    .eq('status', 'APPROVED')
-    .eq('clip_categories.categories.slug', slug)
-    .order('vote_count', { ascending: false });
+    .eq("status", "APPROVED")
+    .eq("clip_categories.categories.slug", slug)
+    .order("vote_count", { ascending: false });
 
   const typedClips = clips as ClipFromDb[] | null;
 
   if (userId && typedClips) {
     const { data: votes } = await supabase
-      .from('votes')
-      .select('clip_id')
-      .eq('user_id', userId)
+      .from("votes")
+      .select("clip_id")
+      .eq("user_id", userId)
       .in(
-        'clip_id',
+        "clip_id",
         typedClips.map((c) => c.id)
       );
 
@@ -68,11 +68,17 @@ async function getClipsForCategory(slug: string, userId?: string) {
     return typedClips.map((clip) => ({
       ...clip,
       has_voted: votedClipIds.has(clip.id),
-      language: (clip.language === 'ja' ? 'ja' : 'en') as 'en' | 'ja',
+      language: (clip.language === "ja" ? "ja" : "en") as "en" | "ja",
     }));
   }
 
-  return typedClips?.map((clip) => ({ ...clip, has_voted: false, language: (clip.language === 'ja' ? 'ja' : 'en') as 'en' | 'ja' })) || [];
+  return (
+    typedClips?.map((clip) => ({
+      ...clip,
+      has_voted: false,
+      language: (clip.language === "ja" ? "ja" : "en") as "en" | "ja",
+    })) || []
+  );
 }
 
 export default async function CategoryPage({ params }: Props) {
@@ -92,10 +98,7 @@ export default async function CategoryPage({ params }: Props) {
           <h1 className="text-2xl font-bold text-gray-900 mb-2">{categoryName}</h1>
           <p className="text-gray-600 mb-4">No clips found in this category yet.</p>
           <div className="space-y-2">
-            <Link
-              href="/submit"
-              className="block bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700"
-            >
+            <Link href="/submit" className="block bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700">
               Submit a clip
             </Link>
             <Link href="/" className="block text-blue-600 hover:text-blue-800">

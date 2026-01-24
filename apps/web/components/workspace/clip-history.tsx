@@ -1,24 +1,76 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import { deleteClip, updateClip, generateClipSubtitles } from '@/app/workspace/actions';
-import type { ClipWithVerse } from '@/types/workspace';
+import { useState } from "react";
+import { deleteClip, generateClipSubtitles, updateClip } from "@/app/workspace/actions";
+import type { ClipWithVerse } from "@/types/workspace";
 
 const BIBLE_BOOKS = [
-  'Genesis', 'Exodus', 'Leviticus', 'Numbers', 'Deuteronomy',
-  'Joshua', 'Judges', 'Ruth', '1 Samuel', '2 Samuel',
-  '1 Kings', '2 Kings', '1 Chronicles', '2 Chronicles', 'Ezra',
-  'Nehemiah', 'Esther', 'Job', 'Psalms', 'Proverbs',
-  'Ecclesiastes', 'Song of Solomon', 'Isaiah', 'Jeremiah', 'Lamentations',
-  'Ezekiel', 'Daniel', 'Hosea', 'Joel', 'Amos',
-  'Obadiah', 'Jonah', 'Micah', 'Nahum', 'Habakkuk',
-  'Zephaniah', 'Haggai', 'Zechariah', 'Malachi',
-  'Matthew', 'Mark', 'Luke', 'John', 'Acts',
-  'Romans', '1 Corinthians', '2 Corinthians', 'Galatians', 'Ephesians',
-  'Philippians', 'Colossians', '1 Thessalonians', '2 Thessalonians', '1 Timothy',
-  '2 Timothy', 'Titus', 'Philemon', 'Hebrews', 'James',
-  '1 Peter', '2 Peter', '1 John', '2 John', '3 John',
-  'Jude', 'Revelation',
+  "Genesis",
+  "Exodus",
+  "Leviticus",
+  "Numbers",
+  "Deuteronomy",
+  "Joshua",
+  "Judges",
+  "Ruth",
+  "1 Samuel",
+  "2 Samuel",
+  "1 Kings",
+  "2 Kings",
+  "1 Chronicles",
+  "2 Chronicles",
+  "Ezra",
+  "Nehemiah",
+  "Esther",
+  "Job",
+  "Psalms",
+  "Proverbs",
+  "Ecclesiastes",
+  "Song of Solomon",
+  "Isaiah",
+  "Jeremiah",
+  "Lamentations",
+  "Ezekiel",
+  "Daniel",
+  "Hosea",
+  "Joel",
+  "Amos",
+  "Obadiah",
+  "Jonah",
+  "Micah",
+  "Nahum",
+  "Habakkuk",
+  "Zephaniah",
+  "Haggai",
+  "Zechariah",
+  "Malachi",
+  "Matthew",
+  "Mark",
+  "Luke",
+  "John",
+  "Acts",
+  "Romans",
+  "1 Corinthians",
+  "2 Corinthians",
+  "Galatians",
+  "Ephesians",
+  "Philippians",
+  "Colossians",
+  "1 Thessalonians",
+  "2 Thessalonians",
+  "1 Timothy",
+  "2 Timothy",
+  "Titus",
+  "Philemon",
+  "Hebrews",
+  "James",
+  "1 Peter",
+  "2 Peter",
+  "1 John",
+  "2 John",
+  "3 John",
+  "Jude",
+  "Revelation",
 ];
 
 type Category = { id: string; slug: string; name_en: string };
@@ -33,16 +85,16 @@ type ClipHistoryProps = {
 function formatTime(seconds: number): string {
   const m = Math.floor(seconds / 60);
   const s = seconds % 60;
-  return `${m}:${s.toString().padStart(2, '0')}`;
+  return `${m}:${s.toString().padStart(2, "0")}`;
 }
 
 function parseTime(timeStr: string): number | null {
-  const parts = timeStr.split(':');
+  const parts = timeStr.split(":");
   if (parts.length !== 2) return null;
   const [minStr, secStr] = parts;
-  const min = parseInt(minStr || '0', 10);
-  const sec = parseInt(secStr || '0', 10);
-  if (isNaN(min) || isNaN(sec)) return null;
+  const min = parseInt(minStr || "0", 10);
+  const sec = parseInt(secStr || "0", 10);
+  if (Number.isNaN(min) || Number.isNaN(sec)) return null;
   return min * 60 + sec;
 }
 
@@ -50,13 +102,13 @@ export function ClipHistory({ clips, categories, onDeleted, isAdmin }: ClipHisto
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [confirmId, setConfirmId] = useState<string | null>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [editStart, setEditStart] = useState('');
-  const [editEnd, setEditEnd] = useState('');
-  const [editTitle, setEditTitle] = useState('');
-  const [editBook, setEditBook] = useState('');
-  const [editChapter, setEditChapter] = useState('');
-  const [editVerseStart, setEditVerseStart] = useState('');
-  const [editVerseEnd, setEditVerseEnd] = useState('');
+  const [editStart, setEditStart] = useState("");
+  const [editEnd, setEditEnd] = useState("");
+  const [editTitle, setEditTitle] = useState("");
+  const [editBook, setEditBook] = useState("");
+  const [editChapter, setEditChapter] = useState("");
+  const [editVerseStart, setEditVerseStart] = useState("");
+  const [editVerseEnd, setEditVerseEnd] = useState("");
   const [editCategories, setEditCategories] = useState<string[]>([]);
   const [saving, setSaving] = useState(false);
   const [editError, setEditError] = useState<string | null>(null);
@@ -67,7 +119,7 @@ export function ClipHistory({ clips, categories, onDeleted, isAdmin }: ClipHisto
       await deleteClip(clipId);
       onDeleted();
     } catch (err) {
-      console.error('Failed to delete clip:', err);
+      console.error("Failed to delete clip:", err);
     } finally {
       setDeletingId(null);
       setConfirmId(null);
@@ -79,32 +131,30 @@ export function ClipHistory({ clips, categories, onDeleted, isAdmin }: ClipHisto
     setEditingId(clip.id);
     setEditStart(formatTime(clip.start_time));
     setEditEnd(formatTime(clip.end_time));
-    setEditTitle(clip.title || '');
-    setEditBook(verse?.book || '');
-    setEditChapter(verse?.chapter?.toString() || '');
-    setEditVerseStart(verse?.verse_start?.toString() || '');
-    setEditVerseEnd(verse?.verse_end?.toString() || '');
+    setEditTitle(clip.title || "");
+    setEditBook(verse?.book || "");
+    setEditChapter(verse?.chapter?.toString() || "");
+    setEditVerseStart(verse?.verse_start?.toString() || "");
+    setEditVerseEnd(verse?.verse_end?.toString() || "");
     setEditCategories(clip.clip_categories?.map((c) => c.category_id) || []);
     setEditError(null);
   };
 
   const handleCancelEdit = () => {
     setEditingId(null);
-    setEditStart('');
-    setEditEnd('');
-    setEditTitle('');
-    setEditBook('');
-    setEditChapter('');
-    setEditVerseStart('');
-    setEditVerseEnd('');
+    setEditStart("");
+    setEditEnd("");
+    setEditTitle("");
+    setEditBook("");
+    setEditChapter("");
+    setEditVerseStart("");
+    setEditVerseEnd("");
     setEditCategories([]);
     setEditError(null);
   };
 
   const handleCategoryToggle = (catId: string) => {
-    setEditCategories((prev) =>
-      prev.includes(catId) ? prev.filter((id) => id !== catId) : [...prev, catId]
-    );
+    setEditCategories((prev) => (prev.includes(catId) ? prev.filter((id) => id !== catId) : [...prev, catId]));
   };
 
   const handleSaveEdit = async (clipId: string) => {
@@ -112,17 +162,17 @@ export function ClipHistory({ clips, categories, onDeleted, isAdmin }: ClipHisto
     const endTime = parseTime(editEnd);
 
     if (startTime === null || endTime === null) {
-      setEditError('Invalid time format (use m:ss)');
+      setEditError("Invalid time format (use m:ss)");
       return;
     }
 
     if (endTime <= startTime) {
-      setEditError('End must be after start');
+      setEditError("End must be after start");
       return;
     }
 
     if (!editBook || !editChapter || !editVerseStart) {
-      setEditError('Please fill in the verse reference');
+      setEditError("Please fill in the verse reference");
       return;
     }
 
@@ -136,17 +186,17 @@ export function ClipHistory({ clips, categories, onDeleted, isAdmin }: ClipHisto
         endTime,
         title: editTitle || `${editBook} ${editChapter}:${editVerseStart}`,
         book: editBook,
-        chapter: parseInt(editChapter),
-        verseStart: parseInt(editVerseStart),
-        verseEnd: editVerseEnd ? parseInt(editVerseEnd) : null,
+        chapter: parseInt(editChapter, 10),
+        verseStart: parseInt(editVerseStart, 10),
+        verseEnd: editVerseEnd ? parseInt(editVerseEnd, 10) : null,
         categoryIds: editCategories,
       });
       await generateClipSubtitles(clipId);
       handleCancelEdit();
       onDeleted(); // Refresh the list
     } catch (err) {
-      console.error('Failed to update clip:', err);
-      setEditError(err instanceof Error ? err.message : 'Failed to save');
+      console.error("Failed to update clip:", err);
+      setEditError(err instanceof Error ? err.message : "Failed to save");
     } finally {
       setSaving(false);
     }
@@ -163,14 +213,12 @@ export function ClipHistory({ clips, categories, onDeleted, isAdmin }: ClipHisto
 
   return (
     <div className="p-4 bg-gray-50 rounded-lg">
-      <h3 className="font-semibold text-gray-900 mb-3">
-        Clips from this video ({clips.length})
-      </h3>
+      <h3 className="font-semibold text-gray-900 mb-3">Clips from this video ({clips.length})</h3>
       <div className="space-y-2">
         {clips.map((clip) => {
           const verse = clip.clip_verses[0];
           const verseRef = verse
-            ? `${verse.book} ${verse.chapter}:${verse.verse_start}${verse.verse_end ? `-${verse.verse_end}` : ''}`
+            ? `${verse.book} ${verse.chapter}:${verse.verse_start}${verse.verse_end ? `-${verse.verse_end}` : ""}`
             : clip.title;
 
           const isEditing = editingId === clip.id;
@@ -199,7 +247,9 @@ export function ClipHistory({ clips, categories, onDeleted, isAdmin }: ClipHisto
                     >
                       <option value="">Select book</option>
                       {BIBLE_BOOKS.map((b) => (
-                        <option key={b} value={b}>{b}</option>
+                        <option key={b} value={b}>
+                          {b}
+                        </option>
                       ))}
                     </select>
                     <input
@@ -266,8 +316,8 @@ export function ClipHistory({ clips, categories, onDeleted, isAdmin }: ClipHisto
                         disabled={saving}
                         className={`px-2 py-0.5 rounded-full text-xs border transition-colors ${
                           editCategories.includes(cat.id)
-                            ? 'bg-blue-600 text-white border-blue-600'
-                            : 'bg-white text-gray-700 border-gray-300 hover:border-blue-400'
+                            ? "bg-blue-600 text-white border-blue-600"
+                            : "bg-white text-gray-700 border-gray-300 hover:border-blue-400"
                         }`}
                       >
                         {cat.name_en}
@@ -275,16 +325,14 @@ export function ClipHistory({ clips, categories, onDeleted, isAdmin }: ClipHisto
                     ))}
                   </div>
 
-                  {editError && (
-                    <div className="text-xs text-red-600">{editError}</div>
-                  )}
+                  {editError && <div className="text-xs text-red-600">{editError}</div>}
                   <div className="flex gap-2">
                     <button
                       onClick={() => handleSaveEdit(clip.id)}
                       disabled={saving}
                       className="px-3 py-1 bg-blue-600 text-white text-xs rounded hover:bg-blue-700 disabled:opacity-50"
                     >
-                      {saving ? 'Saving...' : 'Save'}
+                      {saving ? "Saving..." : "Save"}
                     </button>
                     <button
                       onClick={handleCancelEdit}

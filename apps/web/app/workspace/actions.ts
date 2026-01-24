@@ -1,59 +1,98 @@
-'use server';
+"use server";
 
-import { createClient } from '@supabase/supabase-js';
-import { revalidatePath } from 'next/cache';
-import OpenAI from 'openai';
-import type { WorkQueueVideo, ClipWithVerse, SaveClipInput } from '@/types/workspace';
-import { transcribeClipWithWhisper, type WordTiming } from '@/lib/whisper-transcribe';
+import { createClient } from "@supabase/supabase-js";
+import { revalidatePath } from "next/cache";
+import OpenAI from "openai";
+import { transcribeClipWithWhisper, type WordTiming } from "@/lib/whisper-transcribe";
+import type { ClipWithVerse, SaveClipInput, WorkQueueVideo } from "@/types/workspace";
 
 // Use service role for workspace actions (admin tool)
 function createAdminClient() {
-  return createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SECRET_KEY!
-  );
+  return createClient(process.env.NEXT_PUBLIC_SUPABASE_URL ?? "", process.env.SUPABASE_SECRET_KEY ?? "");
 }
 
 const BOOK_JA_MAP: Record<string, string> = {
-  'Genesis': '創世記', 'Exodus': '出エジプト記', 'Leviticus': 'レビ記',
-  'Numbers': '民数記', 'Deuteronomy': '申命記', 'Joshua': 'ヨシュア記',
-  'Judges': '士師記', 'Ruth': 'ルツ記', '1 Samuel': 'サムエル記上',
-  '2 Samuel': 'サムエル記下', '1 Kings': '列王記上', '2 Kings': '列王記下',
-  '1 Chronicles': '歴代誌上', '2 Chronicles': '歴代誌下', 'Ezra': 'エズラ記',
-  'Nehemiah': 'ネヘミヤ記', 'Esther': 'エステル記', 'Job': 'ヨブ記',
-  'Psalms': '詩篇', 'Proverbs': '箴言', 'Ecclesiastes': '伝道者の書',
-  'Song of Solomon': '雅歌', 'Isaiah': 'イザヤ書', 'Jeremiah': 'エレミヤ書',
-  'Lamentations': '哀歌', 'Ezekiel': 'エゼキエル書', 'Daniel': 'ダニエル書',
-  'Hosea': 'ホセア書', 'Joel': 'ヨエル書', 'Amos': 'アモス書',
-  'Obadiah': 'オバデヤ書', 'Jonah': 'ヨナ書', 'Micah': 'ミカ書',
-  'Nahum': 'ナホム書', 'Habakkuk': 'ハバクク書', 'Zephaniah': 'ゼパニヤ書',
-  'Haggai': 'ハガイ書', 'Zechariah': 'ゼカリヤ書', 'Malachi': 'マラキ書',
-  'Matthew': 'マタイ', 'Mark': 'マルコ', 'Luke': 'ルカ', 'John': 'ヨハネ',
-  'Acts': '使徒', 'Romans': 'ローマ', '1 Corinthians': 'コリント第一',
-  '2 Corinthians': 'コリント第二', 'Galatians': 'ガラテヤ', 'Ephesians': 'エペソ',
-  'Philippians': 'ピリピ', 'Colossians': 'コロサイ', '1 Thessalonians': 'テサロニケ第一',
-  '2 Thessalonians': 'テサロニケ第二', '1 Timothy': 'テモテ第一', '2 Timothy': 'テモテ第二',
-  'Titus': 'テトス', 'Philemon': 'ピレモン', 'Hebrews': 'ヘブル', 'James': 'ヤコブ',
-  '1 Peter': 'ペテロ第一', '2 Peter': 'ペテロ第二', '1 John': 'ヨハネ第一',
-  '2 John': 'ヨハネ第二', '3 John': 'ヨハネ第三', 'Jude': 'ユダ', 'Revelation': '黙示録',
+  Genesis: "創世記",
+  Exodus: "出エジプト記",
+  Leviticus: "レビ記",
+  Numbers: "民数記",
+  Deuteronomy: "申命記",
+  Joshua: "ヨシュア記",
+  Judges: "士師記",
+  Ruth: "ルツ記",
+  "1 Samuel": "サムエル記上",
+  "2 Samuel": "サムエル記下",
+  "1 Kings": "列王記上",
+  "2 Kings": "列王記下",
+  "1 Chronicles": "歴代誌上",
+  "2 Chronicles": "歴代誌下",
+  Ezra: "エズラ記",
+  Nehemiah: "ネヘミヤ記",
+  Esther: "エステル記",
+  Job: "ヨブ記",
+  Psalms: "詩篇",
+  Proverbs: "箴言",
+  Ecclesiastes: "伝道者の書",
+  "Song of Solomon": "雅歌",
+  Isaiah: "イザヤ書",
+  Jeremiah: "エレミヤ書",
+  Lamentations: "哀歌",
+  Ezekiel: "エゼキエル書",
+  Daniel: "ダニエル書",
+  Hosea: "ホセア書",
+  Joel: "ヨエル書",
+  Amos: "アモス書",
+  Obadiah: "オバデヤ書",
+  Jonah: "ヨナ書",
+  Micah: "ミカ書",
+  Nahum: "ナホム書",
+  Habakkuk: "ハバクク書",
+  Zephaniah: "ゼパニヤ書",
+  Haggai: "ハガイ書",
+  Zechariah: "ゼカリヤ書",
+  Malachi: "マラキ書",
+  Matthew: "マタイ",
+  Mark: "マルコ",
+  Luke: "ルカ",
+  John: "ヨハネ",
+  Acts: "使徒",
+  Romans: "ローマ",
+  "1 Corinthians": "コリント第一",
+  "2 Corinthians": "コリント第二",
+  Galatians: "ガラテヤ",
+  Ephesians: "エペソ",
+  Philippians: "ピリピ",
+  Colossians: "コロサイ",
+  "1 Thessalonians": "テサロニケ第一",
+  "2 Thessalonians": "テサロニケ第二",
+  "1 Timothy": "テモテ第一",
+  "2 Timothy": "テモテ第二",
+  Titus: "テトス",
+  Philemon: "ピレモン",
+  Hebrews: "ヘブル",
+  James: "ヤコブ",
+  "1 Peter": "ペテロ第一",
+  "2 Peter": "ペテロ第二",
+  "1 John": "ヨハネ第一",
+  "2 John": "ヨハネ第二",
+  "3 John": "ヨハネ第三",
+  Jude: "ユダ",
+  Revelation: "黙示録",
 };
 
-export type VideoStatus = 'pending' | 'completed' | 'skipped';
+export type VideoStatus = "pending" | "completed" | "skipped";
 
-export async function getQueueVideos(
-  channelId?: string,
-  status: VideoStatus = 'pending'
-): Promise<WorkQueueVideo[]> {
+export async function getQueueVideos(channelId?: string, status: VideoStatus = "pending"): Promise<WorkQueueVideo[]> {
   const supabase = createAdminClient();
 
   let query = supabase
-    .from('work_queue_videos')
-    .select('*, channel:youtube_channels(*)')
-    .eq('status', status)
-    .order('view_count', { ascending: false });
+    .from("work_queue_videos")
+    .select("*, channel:youtube_channels(*)")
+    .eq("status", status)
+    .order("view_count", { ascending: false });
 
   if (channelId) {
-    query = query.eq('channel_id', channelId);
+    query = query.eq("channel_id", channelId);
   }
 
   const { data, error } = await query;
@@ -66,10 +105,10 @@ export async function getChannels() {
   const supabase = createAdminClient();
 
   const { data, error } = await supabase
-    .from('youtube_channels')
-    .select('*')
-    .eq('is_active', true)
-    .order('channel_name');
+    .from("youtube_channels")
+    .select("*")
+    .eq("is_active", true)
+    .order("channel_name");
 
   if (error) throw error;
   return data || [];
@@ -79,7 +118,7 @@ export async function getVideoClips(youtubeVideoId: string): Promise<ClipWithVer
   const supabase = createAdminClient();
 
   const { data, error } = await supabase
-    .from('clips')
+    .from("clips")
     .select(`
       id,
       youtube_video_id,
@@ -99,8 +138,8 @@ export async function getVideoClips(youtubeVideoId: string): Promise<ClipWithVer
         category_id
       )
     `)
-    .eq('youtube_video_id', youtubeVideoId)
-    .order('start_time');
+    .eq("youtube_video_id", youtubeVideoId)
+    .order("start_time");
 
   if (error) throw error;
   return data || [];
@@ -111,14 +150,14 @@ export async function saveClip(input: SaveClipInput): Promise<{ clipId: string }
 
   // Insert clip
   const { data: clip, error: clipError } = await supabase
-    .from('clips')
+    .from("clips")
     .insert({
       youtube_video_id: input.youtubeVideoId,
       start_time: input.startTime,
       end_time: input.endTime,
       title: input.title,
       submitted_by: input.userId || null,
-      status: 'APPROVED', // Auto-approve for workspace
+      status: "APPROVED", // Auto-approve for workspace
     })
     .select()
     .single();
@@ -126,35 +165,33 @@ export async function saveClip(input: SaveClipInput): Promise<{ clipId: string }
   if (clipError) throw clipError;
 
   // Insert verse
-  const { error: verseError } = await supabase
-    .from('clip_verses')
-    .insert({
-      clip_id: clip.id,
-      book: input.book,
-      book_ja: BOOK_JA_MAP[input.book] || input.book,
-      chapter: input.chapter,
-      verse_start: input.verseStart,
-      verse_end: input.verseEnd || null,
-    });
+  const { error: verseError } = await supabase.from("clip_verses").insert({
+    clip_id: clip.id,
+    book: input.book,
+    book_ja: BOOK_JA_MAP[input.book] || input.book,
+    chapter: input.chapter,
+    verse_start: input.verseStart,
+    verse_end: input.verseEnd || null,
+  });
 
   if (verseError) throw verseError;
 
   // Insert categories
   if (input.categoryIds.length > 0) {
-    const { error: catError } = await supabase
-      .from('clip_categories')
-      .insert(input.categoryIds.map(catId => ({
+    const { error: catError } = await supabase.from("clip_categories").insert(
+      input.categoryIds.map((catId) => ({
         clip_id: clip.id,
         category_id: catId,
-      })));
+      }))
+    );
 
     if (catError) throw catError;
   }
 
   // Increment clips_created on work queue video
-  await supabase.rpc('increment_clips_created', { video_id: input.youtubeVideoId });
+  await supabase.rpc("increment_clips_created", { video_id: input.youtubeVideoId });
 
-  revalidatePath('/workspace');
+  revalidatePath("/workspace");
   return { clipId: clip.id };
 }
 
@@ -162,26 +199,19 @@ export async function deleteClip(clipId: string): Promise<void> {
   const supabase = createAdminClient();
 
   // Get clip to find youtube_video_id
-  const { data: clip } = await supabase
-    .from('clips')
-    .select('youtube_video_id')
-    .eq('id', clipId)
-    .single();
+  const { data: clip } = await supabase.from("clips").select("youtube_video_id").eq("id", clipId).single();
 
   // Delete clip (cascades to verses, categories)
-  const { error } = await supabase
-    .from('clips')
-    .delete()
-    .eq('id', clipId);
+  const { error } = await supabase.from("clips").delete().eq("id", clipId);
 
   if (error) throw error;
 
   // Decrement clips_created
   if (clip) {
-    await supabase.rpc('decrement_clips_created', { video_id: clip.youtube_video_id });
+    await supabase.rpc("decrement_clips_created", { video_id: clip.youtube_video_id });
   }
 
-  revalidatePath('/workspace');
+  revalidatePath("/workspace");
 }
 
 export type UpdateClipInput = {
@@ -208,20 +238,17 @@ export async function updateClip(input: UpdateClipInput): Promise<{ clipId: stri
     clipUpdate.title = input.title;
   }
 
-  const { error: updateError } = await supabase
-    .from('clips')
-    .update(clipUpdate)
-    .eq('id', input.clipId);
+  const { error: updateError } = await supabase.from("clips").update(clipUpdate).eq("id", input.clipId);
 
   if (updateError) throw updateError;
 
   // Update verse if provided
   if (input.book && input.chapter && input.verseStart) {
     // Delete existing verses
-    await supabase.from('clip_verses').delete().eq('clip_id', input.clipId);
+    await supabase.from("clip_verses").delete().eq("clip_id", input.clipId);
 
     // Insert new verse
-    const { error: verseError } = await supabase.from('clip_verses').insert({
+    const { error: verseError } = await supabase.from("clip_verses").insert({
       clip_id: input.clipId,
       book: input.book,
       book_ja: BOOK_JA_MAP[input.book] || input.book,
@@ -236,11 +263,11 @@ export async function updateClip(input: UpdateClipInput): Promise<{ clipId: stri
   // Update categories if provided
   if (input.categoryIds !== undefined) {
     // Delete existing categories
-    await supabase.from('clip_categories').delete().eq('clip_id', input.clipId);
+    await supabase.from("clip_categories").delete().eq("clip_id", input.clipId);
 
     // Insert new categories
     if (input.categoryIds.length > 0) {
-      const { error: catError } = await supabase.from('clip_categories').insert(
+      const { error: catError } = await supabase.from("clip_categories").insert(
         input.categoryIds.map((catId) => ({
           clip_id: input.clipId,
           category_id: catId,
@@ -252,26 +279,20 @@ export async function updateClip(input: UpdateClipInput): Promise<{ clipId: stri
   }
 
   // Delete existing subtitles (will be regenerated)
-  await supabase.from('clip_subtitles').delete().eq('clip_id', input.clipId);
+  await supabase.from("clip_subtitles").delete().eq("clip_id", input.clipId);
 
-  revalidatePath('/workspace');
+  revalidatePath("/workspace");
   return { clipId: input.clipId };
 }
 
-export async function updateVideoStatus(
-  youtubeVideoId: string,
-  status: 'completed' | 'skipped'
-): Promise<void> {
+export async function updateVideoStatus(youtubeVideoId: string, status: "completed" | "skipped"): Promise<void> {
   const supabase = createAdminClient();
 
-  const { error } = await supabase
-    .from('work_queue_videos')
-    .update({ status })
-    .eq('youtube_video_id', youtubeVideoId);
+  const { error } = await supabase.from("work_queue_videos").update({ status }).eq("youtube_video_id", youtubeVideoId);
 
   if (error) throw error;
 
-  revalidatePath('/workspace');
+  revalidatePath("/workspace");
 }
 
 // Helper: Translate full text and split into aligned subtitle chunks
@@ -283,13 +304,11 @@ type SubtitleChunk = {
   sequence: number;
 };
 
-async function translateWithAlignment(
-  words: WordTiming[]
-): Promise<SubtitleChunk[]> {
+async function translateWithAlignment(words: WordTiming[]): Promise<SubtitleChunk[]> {
   if (words.length === 0) return [];
 
   const openai = new OpenAI();
-  const fullText = words.map((w) => w.word).join(' ');
+  const fullText = words.map((w) => w.word).join(" ");
 
   const prompt = `Translate this English sermon speech to Japanese for video subtitles.
 
@@ -300,27 +319,28 @@ Split into 5-12 word chunks. Return JSON with "chunks" array:
 {"chunks":[{"en":"English chunk","ja":"日本語翻訳"},...]}`;
 
   const response = await openai.chat.completions.create({
-    model: 'gpt-4o',
+    model: "gpt-4o",
     messages: [
       {
-        role: 'system',
-        content: 'You are a translator. Return valid JSON only. The "en" field must be EXACT substring from the input text.',
+        role: "system",
+        content:
+          'You are a translator. Return valid JSON only. The "en" field must be EXACT substring from the input text.',
       },
-      { role: 'user', content: prompt },
+      { role: "user", content: prompt },
     ],
     temperature: 0.2,
-    response_format: { type: 'json_object' },
+    response_format: { type: "json_object" },
   });
 
-  const content = response.choices[0]?.message?.content || '{}';
-  console.log('GPT response length:', content.length);
+  const content = response.choices[0]?.message?.content || "{}";
+  console.log("GPT response length:", content.length);
 
   let parsed: Record<string, unknown>;
 
   try {
     parsed = JSON.parse(content);
   } catch {
-    console.error('Failed to parse GPT response:', content.slice(0, 500));
+    console.error("Failed to parse GPT response:", content.slice(0, 500));
     return [];
   }
 
@@ -338,15 +358,20 @@ Split into 5-12 word chunks. Return JSON with "chunks" array:
     }
   }
 
-  console.log('Parsed chunks count:', chunks.length);
+  console.log("Parsed chunks count:", chunks.length);
 
   if (chunks.length === 0) {
-    console.error('No chunks found in response');
+    console.error("No chunks found in response");
     return [];
   }
 
   // Normalize for matching
-  const normalize = (s: string) => s.toLowerCase().replace(/[.,!?;:'"\-]/g, '').replace(/\s+/g, ' ').trim();
+  const normalize = (s: string) =>
+    s
+      .toLowerCase()
+      .replace(/[.,!?;:'"-]/g, "")
+      .replace(/\s+/g, " ")
+      .trim();
 
   // Build word sequence for matching
   const wordTexts = words.map((w) => normalize(w.word));
@@ -360,7 +385,9 @@ Split into 5-12 word chunks. Return JSON with "chunks" array:
     if (!chunk || !chunk.en || !chunk.ja) continue;
 
     // Split chunk into words
-    const chunkWords = normalize(chunk.en).split(' ').filter(w => w.length > 0);
+    const chunkWords = normalize(chunk.en)
+      .split(" ")
+      .filter((w) => w.length > 0);
     if (chunkWords.length === 0) continue;
 
     // Find where this chunk starts in the word list
@@ -416,20 +443,20 @@ export async function generateClipSubtitles(clipId: string): Promise<{ wordCount
 
   // Get clip details
   const { data: clip, error: clipError } = await supabase
-    .from('clips')
-    .select('id, youtube_video_id, start_time, end_time')
-    .eq('id', clipId)
+    .from("clips")
+    .select("id, youtube_video_id, start_time, end_time")
+    .eq("id", clipId)
     .single();
 
   if (clipError || !clip) {
-    throw new Error('Clip not found');
+    throw new Error("Clip not found");
   }
 
   // Check if subtitles already exist
   const { count } = await supabase
-    .from('clip_subtitles')
-    .select('*', { count: 'exact', head: true })
-    .eq('clip_id', clipId);
+    .from("clip_subtitles")
+    .select("*", { count: "exact", head: true })
+    .eq("clip_id", clipId);
 
   if (count && count > 0) {
     return { wordCount: count };
@@ -437,14 +464,10 @@ export async function generateClipSubtitles(clipId: string): Promise<{ wordCount
 
   // Transcribe with Whisper
   console.log(`Transcribing clip ${clipId}...`);
-  const words = await transcribeClipWithWhisper(
-    clip.youtube_video_id,
-    clip.start_time,
-    clip.end_time
-  );
+  const words = await transcribeClipWithWhisper(clip.youtube_video_id, clip.start_time, clip.end_time);
 
   if (words.length === 0) {
-    throw new Error('No words transcribed');
+    throw new Error("No words transcribed");
   }
 
   // Insert subtitles into database
@@ -457,36 +480,34 @@ export async function generateClipSubtitles(clipId: string): Promise<{ wordCount
     sequence: index,
   }));
 
-  const { error: insertError } = await supabase.from('clip_subtitles').insert(subtitleRows);
+  const { error: insertError } = await supabase.from("clip_subtitles").insert(subtitleRows);
 
   if (insertError) {
     throw new Error(`Failed to save subtitles: ${insertError.message}`);
   }
 
   // Translate full text and get aligned chunks
-  console.log('Translating to Japanese with alignment...');
+  console.log("Translating to Japanese with alignment...");
   const chunks = await translateWithAlignment(words);
 
   // Delete existing translations for this clip
-  await supabase.from('clip_translations').delete().eq('clip_id', clipId);
+  await supabase.from("clip_translations").delete().eq("clip_id", clipId);
 
   // Insert aligned translations into clip_translations table
   if (chunks.length > 0) {
     const translationRows = chunks.map((chunk) => ({
       clip_id: clipId,
-      language: 'ja',
+      language: "ja",
       text: chunk.ja,
       start_time: chunk.startTime,
       end_time: chunk.endTime,
       sequence: chunk.sequence,
     }));
 
-    const { error: translationError } = await supabase
-      .from('clip_translations')
-      .insert(translationRows);
+    const { error: translationError } = await supabase.from("clip_translations").insert(translationRows);
 
     if (translationError) {
-      console.error('Failed to save translations:', translationError);
+      console.error("Failed to save translations:", translationError);
     }
   }
 

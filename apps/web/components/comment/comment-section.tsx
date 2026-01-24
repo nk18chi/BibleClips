@@ -1,10 +1,10 @@
-'use client';
+"use client";
 
-import { useState, useEffect, useCallback } from 'react';
-import { useSupabase } from '@/components/providers/supabase-provider';
-import { CommentCard } from './comment-card';
-import { CommentForm } from './comment-form';
-import { ReportModal } from './report-modal';
+import { useCallback, useEffect, useState } from "react";
+import { useSupabase } from "@/components/providers/supabase-provider";
+import { CommentCard } from "./comment-card";
+import { CommentForm } from "./comment-form";
+import { ReportModal } from "./report-modal";
 
 type CommentFromDb = {
   id: string;
@@ -44,7 +44,7 @@ export function CommentSection({ clipId, onClose }: CommentSectionProps) {
     setLoading(true);
 
     const { data: commentsData } = await supabase
-      .from('comments')
+      .from("comments")
       .select(`
         id,
         clip_id,
@@ -55,8 +55,8 @@ export function CommentSection({ clipId, onClose }: CommentSectionProps) {
         updated_at,
         user:users(id, display_name)
       `)
-      .eq('clip_id', clipId)
-      .order('created_at', { ascending: false });
+      .eq("clip_id", clipId)
+      .order("created_at", { ascending: false });
 
     if (commentsData) {
       // Transform the data - Supabase returns user as array, we need single object
@@ -68,7 +68,7 @@ export function CommentSection({ clipId, onClose }: CommentSectionProps) {
         like_count: c.like_count,
         created_at: c.created_at,
         updated_at: c.updated_at,
-        user: Array.isArray(c.user) && c.user.length > 0 ? c.user[0] ?? null : null,
+        user: Array.isArray(c.user) && c.user.length > 0 ? (c.user[0] ?? null) : null,
       }));
       setComments(transformed);
     }
@@ -76,10 +76,10 @@ export function CommentSection({ clipId, onClose }: CommentSectionProps) {
     if (user && commentsData && commentsData.length > 0) {
       const commentIds = commentsData.map((c) => c.id);
       const { data: likesData } = await supabase
-        .from('comment_likes')
-        .select('comment_id')
-        .eq('user_id', user.id)
-        .in('comment_id', commentIds);
+        .from("comment_likes")
+        .select("comment_id")
+        .eq("user_id", user.id)
+        .in("comment_id", commentIds);
 
       if (likesData) {
         setUserLikes(new Set(likesData.map((l) => l.comment_id)));
@@ -98,14 +98,10 @@ export function CommentSection({ clipId, onClose }: CommentSectionProps) {
   const handleDelete = async (commentId: string) => {
     if (!user) return;
 
-    const confirmed = window.confirm('Are you sure you want to delete this comment?');
+    const confirmed = window.confirm("Are you sure you want to delete this comment?");
     if (!confirmed) return;
 
-    const { error } = await supabase
-      .from('comments')
-      .delete()
-      .eq('id', commentId)
-      .eq('user_id', user.id);
+    const { error } = await supabase.from("comments").delete().eq("id", commentId).eq("user_id", user.id);
 
     if (!error) {
       setComments((prev) => prev.filter((c) => c.id !== commentId));
@@ -121,13 +117,8 @@ export function CommentSection({ clipId, onClose }: CommentSectionProps) {
       >
         {/* Header */}
         <div className="flex items-center justify-between p-4 border-b border-gray-200">
-          <h2 className="text-lg font-semibold">
-            Comments {comments.length > 0 && `(${comments.length})`}
-          </h2>
-          <button
-            onClick={onClose}
-            className="p-1 text-gray-400 hover:text-gray-600 transition-colors"
-          >
+          <h2 className="text-lg font-semibold">Comments {comments.length > 0 && `(${comments.length})`}</h2>
+          <button onClick={onClose} className="p-1 text-gray-400 hover:text-gray-600 transition-colors">
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <line x1="18" y1="6" x2="6" y2="18" />
               <line x1="6" y1="6" x2="18" y2="18" />
@@ -140,9 +131,7 @@ export function CommentSection({ clipId, onClose }: CommentSectionProps) {
           {loading ? (
             <div className="py-8 text-center text-gray-400">Loading...</div>
           ) : comments.length === 0 ? (
-            <div className="py-8 text-center text-gray-400">
-              No comments yet. Be the first to comment!
-            </div>
+            <div className="py-8 text-center text-gray-400">No comments yet. Be the first to comment!</div>
           ) : (
             comments.map((comment) => (
               <CommentCard
@@ -171,7 +160,7 @@ export function CommentSection({ clipId, onClose }: CommentSectionProps) {
           commentId={reportingCommentId}
           onClose={() => setReportingCommentId(null)}
           onReported={() => {
-            alert('Report submitted. Thank you for helping keep our community safe.');
+            alert("Report submitted. Thank you for helping keep our community safe.");
           }}
         />
       )}

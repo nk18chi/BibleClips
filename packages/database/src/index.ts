@@ -1,2 +1,2 @@
-export { getSupabaseClient, getSupabaseAdminClient, createServerSupabaseClient } from "./client";
+export { createServerSupabaseClient, getSupabaseAdminClient, getSupabaseClient } from "./client";
 export * from "./types";

@@ -1,5 +1,5 @@
-import Link from 'next/link';
-import { createServerClient } from '@/lib/supabase/server';
+import Link from "next/link";
+import { createServerClient } from "@/lib/supabase/server";
 
 type Clip = {
   id: string;
@@ -18,7 +18,7 @@ async function getFeaturedClips(): Promise<Clip[]> {
   const supabase = createServerClient();
 
   const { data } = await supabase
-    .from('clips')
+    .from("clips")
     .select(`
       id,
       title,
@@ -26,17 +26,18 @@ async function getFeaturedClips(): Promise<Clip[]> {
       vote_count,
       clip_verses (book, chapter, verse_start, verse_end)
     `)
-    .eq('status', 'APPROVED')
-    .eq('is_featured', true)
-    .order('vote_count', { ascending: false })
+    .eq("status", "APPROVED")
+    .eq("is_featured", true)
+    .order("vote_count", { ascending: false })
     .limit(6);
 
   return (data as Clip[]) || [];
 }
 
-function formatVerseRef(verses: Clip['clip_verses']): string {
-  if (!verses || verses.length === 0) return '';
-  const v = verses[0]!;
+function formatVerseRef(verses: Clip["clip_verses"]): string {
+  if (!verses || verses.length === 0) return "";
+  const v = verses[0];
+  if (!v) return "";
   const verseRange = v.verse_end ? `${v.verse_start}-${v.verse_end}` : `${v.verse_start}`;
   return `${v.book} ${v.chapter}:${verseRange}`;
 }
@@ -45,11 +46,7 @@ export async function FeaturedClips() {
   const clips = await getFeaturedClips();
 
   if (clips.length === 0) {
-    return (
-      <div className="text-center py-8 text-gray-500">
-        No featured clips yet. Be the first to contribute!
-      </div>
-    );
+    return <div className="text-center py-8 text-gray-500">No featured clips yet. Be the first to contribute!</div>;
   }
 
   return (

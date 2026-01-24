@@ -1,4 +1,4 @@
-import { formatCaptionsWithAI } from './caption-formatter';
+import { formatCaptionsWithAI } from "./caption-formatter";
 
 type CaptionCue = {
   start: number;
@@ -18,15 +18,15 @@ type TranscriptItem = {
  */
 function decodeHtmlEntities(text: string): string {
   let decoded = text;
-  let prev = '';
+  let prev = "";
 
   // Loop until no more changes (handles double/triple encoding)
   while (decoded !== prev) {
     prev = decoded;
     decoded = decoded
-      .replace(/&amp;/gi, '&')
-      .replace(/&lt;/gi, '<')
-      .replace(/&gt;/gi, '>')
+      .replace(/&amp;/gi, "&")
+      .replace(/&lt;/gi, "<")
+      .replace(/&gt;/gi, ">")
       .replace(/&quot;/gi, '"')
       .replace(/&#39;/gi, "'")
       .replace(/&apos;/gi, "'")
@@ -43,7 +43,7 @@ function decodeHtmlEntities(text: string): string {
  */
 export async function fetchYouTubeCaptions(videoId: string): Promise<CaptionCue[]> {
   try {
-    const { fetchTranscript } = await import('youtube-transcript-plus');
+    const { fetchTranscript } = await import("youtube-transcript-plus");
     const transcript: TranscriptItem[] = await fetchTranscript(videoId);
 
     const rawCues = transcript.map((item) => ({
@@ -55,7 +55,7 @@ export async function fetchYouTubeCaptions(videoId: string): Promise<CaptionCue[
     // Use AI to format into proper sentences
     return formatCaptionsWithAI(rawCues);
   } catch (error) {
-    console.error('Failed to fetch YouTube captions:', error);
+    console.error("Failed to fetch YouTube captions:", error);
     return [];
   }
 }

@@ -1,6 +1,6 @@
-'use client';
+"use client";
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState } from "react";
 
 type VerseModalProps = {
   book: string;
@@ -15,24 +15,22 @@ type VerseData = {
 };
 
 export function VerseModal({ book, chapter, verseStart, verseEnd, onClose }: VerseModalProps) {
-  const [verseText, setVerseText] = useState<string>('');
-  const [verseTextJa, setVerseTextJa] = useState<string>('');
+  const [verseText, setVerseText] = useState<string>("");
+  const [verseTextJa, setVerseTextJa] = useState<string>("");
   const [loading, setLoading] = useState(true);
 
-  const verseRef = verseEnd
-    ? `${book} ${chapter}:${verseStart}-${verseEnd}`
-    : `${book} ${chapter}:${verseStart}`;
+  const verseRef = verseEnd ? `${book} ${chapter}:${verseStart}-${verseEnd}` : `${book} ${chapter}:${verseStart}`;
 
   useEffect(() => {
     async function fetchVerse() {
       try {
         // Fetch English (KJV)
-        const bookSlug = book.toLowerCase().replace(/\s+/g, '');
+        const bookSlug = book.toLowerCase().replace(/\s+/g, "");
         const enUrl = `https://cdn.jsdelivr.net/gh/wldeh/bible-api/bibles/en-kjv/books/${bookSlug}/chapters/${chapter}/verses/${verseStart}.json`;
         const enRes = await fetch(enUrl);
         if (enRes.ok) {
           const enData: VerseData = await enRes.json();
-          setVerseText(enData.text || '');
+          setVerseText(enData.text || "");
         }
 
         // Fetch Japanese
@@ -40,10 +38,10 @@ export function VerseModal({ book, chapter, verseStart, verseEnd, onClose }: Ver
         const jaRes = await fetch(jaUrl);
         if (jaRes.ok) {
           const jaData: VerseData = await jaRes.json();
-          setVerseTextJa(jaData.text || '');
+          setVerseTextJa(jaData.text || "");
         }
       } catch (error) {
-        console.error('Failed to fetch verse:', error);
+        console.error("Failed to fetch verse:", error);
       } finally {
         setLoading(false);
       }
@@ -77,9 +75,7 @@ export function VerseModal({ book, chapter, verseStart, verseEnd, onClose }: Ver
                   <p className="text-gray-600 leading-relaxed">{verseTextJa}</p>
                 </div>
               )}
-              {!verseText && !verseTextJa && (
-                <p className="text-gray-500">Verse text not available.</p>
-              )}
+              {!verseText && !verseTextJa && <p className="text-gray-500">Verse text not available.</p>}
             </>
           )}
         </div>

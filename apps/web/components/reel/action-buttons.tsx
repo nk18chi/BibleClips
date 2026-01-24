@@ -1,7 +1,7 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import { useSupabase } from '@/components/providers/supabase-provider';
+import { useState } from "react";
+import { useSupabase } from "@/components/providers/supabase-provider";
 
 type ActionButtonsProps = {
   clipId: string;
@@ -14,7 +14,14 @@ type ActionButtonsProps = {
 
 // Simple SVG icons (Instagram-style outlines)
 const HeartIcon = ({ filled }: { filled: boolean }) => (
-  <svg width="28" height="28" viewBox="0 0 24 24" fill={filled ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2">
+  <svg
+    width="28"
+    height="28"
+    viewBox="0 0 24 24"
+    fill={filled ? "currentColor" : "none"}
+    stroke="currentColor"
+    strokeWidth="2"
+  >
     <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
   </svg>
 );
@@ -67,11 +74,7 @@ export function ActionButtons({
 
     if (hasVoted) {
       // Remove vote
-      const { error } = await supabase
-        .from('votes')
-        .delete()
-        .eq('user_id', user.id)
-        .eq('clip_id', clipId);
+      const { error } = await supabase.from("votes").delete().eq("user_id", user.id).eq("clip_id", clipId);
 
       if (!error) {
         setVoteCount((v) => v - 1);
@@ -79,9 +82,7 @@ export function ActionButtons({
       }
     } else {
       // Add vote
-      const { error } = await supabase
-        .from('votes')
-        .insert({ user_id: user.id, clip_id: clipId });
+      const { error } = await supabase.from("votes").insert({ user_id: user.id, clip_id: clipId });
 
       if (!error) {
         setVoteCount((v) => v + 1);
@@ -95,10 +96,10 @@ export function ActionButtons({
   const handleShare = async () => {
     const url = `${window.location.origin}/clip/${clipId}`;
     if (navigator.share) {
-      await navigator.share({ url, title: 'Check out this clip on BibleClips' });
+      await navigator.share({ url, title: "Check out this clip on BibleClips" });
     } else {
       await navigator.clipboard.writeText(url);
-      alert('Link copied to clipboard!');
+      alert("Link copied to clipboard!");
     }
   };
 
@@ -108,10 +109,10 @@ export function ActionButtons({
       <button
         onClick={handleVote}
         disabled={!user || voting}
-        className={`flex flex-col items-center gap-1 ${hasVoted ? 'text-red-500' : 'text-gray-700'} disabled:opacity-50 hover:scale-110 transition-transform`}
+        className={`flex flex-col items-center gap-1 ${hasVoted ? "text-red-500" : "text-gray-700"} disabled:opacity-50 hover:scale-110 transition-transform`}
       >
         <HeartIcon filled={hasVoted} />
-        <span className="text-sm font-medium">{voteCount > 0 ? voteCount : ''}</span>
+        <span className="text-sm font-medium">{voteCount > 0 ? voteCount : ""}</span>
       </button>
 
       {/* Comment */}

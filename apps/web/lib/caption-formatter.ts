@@ -1,4 +1,4 @@
-import Anthropic from '@anthropic-ai/sdk';
+import Anthropic from "@anthropic-ai/sdk";
 
 type CaptionCue = {
   start: number;
@@ -15,7 +15,7 @@ export async function formatCaptionsWithAI(cues: CaptionCue[]): Promise<CaptionC
   if (cues.length === 0) return [];
 
   // Combine all text with markers for timing reference
-  const markedText = cues.map((cue, i) => `[${i}]${cue.text}`).join(' ');
+  const markedText = cues.map((cue, i) => `[${i}]${cue.text}`).join(" ");
 
   const prompt = `You are a transcript formatter. Given a raw auto-generated transcript with timing markers [0], [1], etc., format it into proper sentences with correct punctuation and capitalization.
 
@@ -34,18 +34,18 @@ Output the formatted sentences, one per line. Keep all [N] markers exactly as th
 
   try {
     const response = await client.messages.create({
-      model: 'claude-sonnet-4-20250514',
+      model: "claude-sonnet-4-20250514",
       max_tokens: 2000,
-      messages: [{ role: 'user', content: prompt }],
+      messages: [{ role: "user", content: prompt }],
     });
 
     const content = response.content[0];
-    if (!content || content.type !== 'text') return fallbackMerge(cues);
+    if (!content || content.type !== "text") return fallbackMerge(cues);
 
     const formattedText = content.text;
     return parseFormattedCaptions(formattedText, cues);
   } catch (error) {
-    console.error('AI caption formatting failed:', error);
+    console.error("AI caption formatting failed:", error);
     return fallbackMerge(cues);
   }
 }
@@ -54,7 +54,7 @@ Output the formatted sentences, one per line. Keep all [N] markers exactly as th
  * Parse AI-formatted text back into timed caption cues.
  */
 function parseFormattedCaptions(formattedText: string, originalCues: CaptionCue[]): CaptionCue[] {
-  const lines = formattedText.split('\n').filter((line) => line.trim());
+  const lines = formattedText.split("\n").filter((line) => line.trim());
   const result: CaptionCue[] = [];
 
   for (const line of lines) {
@@ -71,7 +71,7 @@ function parseFormattedCaptions(formattedText: string, originalCues: CaptionCue[
     const endIdx = Math.max(...markers);
 
     // Remove markers from text
-    const cleanText = line.replace(/\[\d+\]/g, '').trim();
+    const cleanText = line.replace(/\[\d+\]/g, "").trim();
 
     const startCue = originalCues[startIdx];
     const endCue = originalCues[endIdx];
@@ -96,11 +96,11 @@ function fallbackMerge(cues: CaptionCue[], maxChars = 60): CaptionCue[] {
 
   const merged: CaptionCue[] = [];
   let currentGroup: CaptionCue[] = [];
-  let currentText = '';
+  let currentText = "";
 
   for (const cue of cues) {
     const text = cue.text.trim();
-    const wouldBe = currentText + (currentText ? ' ' : '') + text;
+    const wouldBe = currentText + (currentText ? " " : "") + text;
 
     const firstCue = currentGroup[0];
     const lastCue = currentGroup[currentGroup.length - 1];

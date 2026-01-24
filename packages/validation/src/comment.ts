@@ -18,12 +18,7 @@ export const updateCommentSchema = z.object({
 
 export type UpdateComment = z.infer<typeof updateCommentSchema>;
 
-export const commentReportReasonSchema = z.enum([
-  "spam",
-  "harassment",
-  "inappropriate",
-  "other",
-]);
+export const commentReportReasonSchema = z.enum(["spam", "harassment", "inappropriate", "other"]);
 
 export type CommentReportReason = z.infer<typeof commentReportReasonSchema>;
 

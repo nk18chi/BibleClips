@@ -1,6 +1,6 @@
-import { createServerClient } from '@/lib/supabase/server';
-import { ReelViewer } from '@/components/reel/reel-viewer';
-import Link from 'next/link';
+import Link from "next/link";
+import { ReelViewer } from "@/components/reel/reel-viewer";
+import { createServerClient } from "@/lib/supabase/server";
 
 type Props = {
   params: { book: string; chapter: string; verse: string };
@@ -34,12 +34,12 @@ async function getClipsForVerse(book: string, chapter: number, verse: number, us
 
   // Normalize book name (e.g., "john" -> "John", "1-john" -> "1 John")
   const normalizedBook = book
-    .split('-')
+    .split("-")
     .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
-    .join(' ');
+    .join(" ");
 
   const { data: clips } = await supabase
-    .from('clips')
+    .from("clips")
     .select(
       `
       id,
@@ -53,22 +53,22 @@ async function getClipsForVerse(book: string, chapter: number, verse: number, us
       clip_categories (categories (slug, name_en))
     `
     )
-    .eq('status', 'APPROVED')
-    .ilike('clip_verses.book', normalizedBook)
-    .eq('clip_verses.chapter', chapter)
-    .lte('clip_verses.verse_start', verse)
-    .order('vote_count', { ascending: false });
+    .eq("status", "APPROVED")
+    .ilike("clip_verses.book", normalizedBook)
+    .eq("clip_verses.chapter", chapter)
+    .lte("clip_verses.verse_start", verse)
+    .order("vote_count", { ascending: false });
 
   const typedClips = clips as ClipFromDb[] | null;
 
   // Check if user has voted on each clip
   if (userId && typedClips) {
     const { data: votes } = await supabase
-      .from('votes')
-      .select('clip_id')
-      .eq('user_id', userId)
+      .from("votes")
+      .select("clip_id")
+      .eq("user_id", userId)
       .in(
-        'clip_id',
+        "clip_id",
         typedClips.map((c) => c.id)
       );
 
@@ -77,11 +77,17 @@ async function getClipsForVerse(book: string, chapter: number, verse: number, us
     return typedClips.map((clip) => ({
       ...clip,
       has_voted: votedClipIds.has(clip.id),
-      language: (clip.language === 'ja' ? 'ja' : 'en') as 'en' | 'ja',
+      language: (clip.language === "ja" ? "ja" : "en") as "en" | "ja",
     }));
   }
 
-  return typedClips?.map((clip) => ({ ...clip, has_voted: false, language: (clip.language === 'ja' ? 'ja' : 'en') as 'en' | 'ja' })) || [];
+  return (
+    typedClips?.map((clip) => ({
+      ...clip,
+      has_voted: false,
+      language: (clip.language === "ja" ? "ja" : "en") as "en" | "ja",
+    })) || []
+  );
 }
 
 export default async function VersePage({ params }: Props) {
@@ -90,16 +96,16 @@ export default async function VersePage({ params }: Props) {
     data: { session },
   } = await supabase.auth.getSession();
 
-  const chapter = parseInt(params.chapter);
-  const verse = parseInt(params.verse);
+  const chapter = parseInt(params.chapter, 10);
+  const verse = parseInt(params.verse, 10);
 
   const clips = await getClipsForVerse(params.book, chapter, verse, session?.user?.id);
 
   if (clips.length === 0) {
     const bookDisplay = params.book
-      .split('-')
+      .split("-")
       .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
-      .join(' ');
+      .join(" ");
 
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
@@ -109,10 +115,7 @@ export default async function VersePage({ params }: Props) {
           </h1>
           <p className="text-gray-600 mb-4">No clips found for this verse yet.</p>
           <div className="space-y-2">
-            <Link
-              href="/submit"
-              className="block bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700"
-            >
+            <Link href="/submit" className="block bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700">
               Submit a clip
             </Link>
             <Link href="/" className="block text-blue-600 hover:text-blue-800">

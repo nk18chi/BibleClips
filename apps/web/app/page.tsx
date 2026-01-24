@@ -1,14 +1,11 @@
-import { createClient } from '@supabase/supabase-js';
-import { ReelViewer } from '@/components/reel/reel-viewer';
-import { Header } from '@/components/ui/header';
-import Link from 'next/link';
+import { createClient } from "@supabase/supabase-js";
+import Link from "next/link";
+import { ReelViewer } from "@/components/reel/reel-viewer";
+import { Header } from "@/components/ui/header";
 
 // Use service role to bypass RLS issues
 function createAdminClient() {
-  return createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SECRET_KEY!
-  );
+  return createClient(process.env.NEXT_PUBLIC_SUPABASE_URL ?? "", process.env.SUPABASE_SECRET_KEY ?? "");
 }
 
 type ClipFromDb = {
@@ -54,7 +51,7 @@ type Clip = {
   end_time: number;
   vote_count: number;
   has_voted: boolean;
-  language: 'en' | 'ja';
+  language: "en" | "ja";
   wordTimings?: WordTiming[];
   translations?: SentenceTranslation[];
   clip_verses: {
@@ -75,8 +72,8 @@ type Clip = {
 async function getApprovedClips(userId?: string): Promise<Clip[]> {
   const supabase = createAdminClient();
 
-  const { data, error } = await supabase
-    .from('clips')
+  const { data } = await supabase
+    .from("clips")
     .select(`
       id,
       title,
@@ -90,8 +87,8 @@ async function getApprovedClips(userId?: string): Promise<Clip[]> {
       clip_subtitles (word, start_time, end_time, sequence),
       clip_translations (language, text, start_time, end_time, sequence)
     `)
-    .eq('status', 'APPROVED')
-    .order('created_at', { ascending: false })
+    .eq("status", "APPROVED")
+    .order("created_at", { ascending: false })
     .limit(50);
 
   const clips = (data || []) as unknown as (ClipFromDb & {
@@ -129,7 +126,7 @@ async function getApprovedClips(userId?: string): Promise<Clip[]> {
       end_time: clip.end_time,
       vote_count: clip.vote_count,
       has_voted: false,
-      language: (clip.language === 'ja' ? 'ja' : 'en') as 'en' | 'ja',
+      language: (clip.language === "ja" ? "ja" : "en") as "en" | "ja",
       wordTimings,
       translations,
       clip_verses: clip.clip_verses,
@@ -139,14 +136,17 @@ async function getApprovedClips(userId?: string): Promise<Clip[]> {
 
   if (userId && clipsWithTimings.length > 0) {
     const { data: votes } = await supabase
-      .from('votes')
-      .select('clip_id')
-      .eq('user_id', userId)
-      .in('clip_id', clipsWithTimings.map(c => c.id));
+      .from("votes")
+      .select("clip_id")
+      .eq("user_id", userId)
+      .in(
+        "clip_id",
+        clipsWithTimings.map((c) => c.id)
+      );
 
-    const votedClipIds = new Set(votes?.map(v => v.clip_id) || []);
+    const votedClipIds = new Set(votes?.map((v) => v.clip_id) || []);
 
-    return clipsWithTimings.map(clip => ({
+    return clipsWithTimings.map((clip) => ({
       ...clip,
       has_voted: votedClipIds.has(clip.id),
     }));
@@ -170,9 +170,7 @@ export default async function HomePage() {
       <Header />
       <main className="flex flex-col items-center justify-center min-h-[80vh] px-4 text-center">
         <div className="max-w-md">
-          <h1 className="text-3xl font-bold text-gray-900 mb-4">
-            Welcome to BibleClips
-          </h1>
+          <h1 className="text-3xl font-bold text-gray-900 mb-4">Welcome to BibleClips</h1>
           <p className="text-gray-600 mb-6">
             Discover sermon clips connected to Bible verses. Be the first to contribute!
           </p>

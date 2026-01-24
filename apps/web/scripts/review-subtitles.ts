@@ -2,13 +2,14 @@
  * Review all subtitles with translations
  * Usage: pnpm exec tsx scripts/review-subtitles.ts <clip_id>
  */
-import { config } from 'dotenv';
-config({ path: '.env.local' });
+import { config } from "dotenv";
 
-import { createClient } from '@supabase/supabase-js';
+config({ path: ".env.local" });
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const supabaseSecretKey = process.env.SUPABASE_SECRET_KEY!;
+import { createClient } from "@supabase/supabase-js";
+
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL ?? "";
+const supabaseSecretKey = process.env.SUPABASE_SECRET_KEY ?? "";
 
 type WordTiming = {
   id: string;
@@ -57,7 +58,7 @@ function groupIntoSentences(words: WordTiming[], maxWords = 10, pauseThreshold =
       if (firstWord) {
         sentences.push({
           words: [...currentWords],
-          text: currentWords.map(w => w.word).join(' '),
+          text: currentWords.map((w) => w.word).join(" "),
           translation: firstWord.word_ja,
         });
       }
@@ -73,30 +74,30 @@ async function reviewSubtitles(clipId: string) {
 
   // Get clip info
   const { data: clip } = await supabase
-    .from('clips')
-    .select('title, youtube_video_id, start_time, end_time')
-    .eq('id', clipId)
+    .from("clips")
+    .select("title, youtube_video_id, start_time, end_time")
+    .eq("id", clipId)
     .single();
 
   if (!clip) {
-    console.error('Clip not found');
+    console.error("Clip not found");
     process.exit(1);
   }
 
-  console.log(`\n${'='.repeat(60)}`);
+  console.log(`\n${"=".repeat(60)}`);
   console.log(`Clip: ${clip.title}`);
   console.log(`Video: https://youtube.com/watch?v=${clip.youtube_video_id}&t=${clip.start_time}`);
-  console.log(`${'='.repeat(60)}\n`);
+  console.log(`${"=".repeat(60)}\n`);
 
   // Get all subtitles
   const { data: subtitles } = await supabase
-    .from('clip_subtitles')
-    .select('id, word, word_ja, start_time, end_time, sequence')
-    .eq('clip_id', clipId)
-    .order('sequence', { ascending: true });
+    .from("clip_subtitles")
+    .select("id, word, word_ja, start_time, end_time, sequence")
+    .eq("clip_id", clipId)
+    .order("sequence", { ascending: true });
 
   if (!subtitles || subtitles.length === 0) {
-    console.log('No subtitles found');
+    console.log("No subtitles found");
     return;
   }
 
@@ -104,13 +105,13 @@ async function reviewSubtitles(clipId: string) {
 
   console.log(`Total words: ${subtitles.length}`);
   console.log(`Total sentences: ${sentences.length}\n`);
-  console.log(`${'─'.repeat(60)}\n`);
+  console.log(`${"─".repeat(60)}\n`);
 
   sentences.forEach((sentence, i) => {
-    const num = String(i + 1).padStart(2, ' ');
+    const num = String(i + 1).padStart(2, " ");
     console.log(`${num}. EN: ${sentence.text}`);
-    console.log(`    JA: ${sentence.translation || '(no translation)'}`);
-    console.log('');
+    console.log(`    JA: ${sentence.translation || "(no translation)"}`);
+    console.log("");
   });
 }
 
@@ -121,14 +122,14 @@ if (!clipId) {
   // List all clips
   const supabase = createClient(supabaseUrl, supabaseSecretKey);
   supabase
-    .from('clips')
-    .select('id, title')
+    .from("clips")
+    .select("id, title")
     .then(({ data }) => {
-      console.log('Available clips:');
+      console.log("Available clips:");
       data?.forEach((c, i) => {
         console.log(`  ${i + 1}. ${c.id} - ${c.title}`);
       });
-      console.log('\nUsage: pnpm exec tsx scripts/review-subtitles.ts <clip_id>');
+      console.log("\nUsage: pnpm exec tsx scripts/review-subtitles.ts <clip_id>");
     });
 } else {
   reviewSubtitles(clipId).catch(console.error);

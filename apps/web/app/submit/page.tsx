@@ -1,44 +1,96 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
-import { useSupabase } from '@/components/providers/supabase-provider';
-import { Header } from '@/components/ui/header';
+import { useRouter } from "next/navigation";
+import { useState } from "react";
+import { useSupabase } from "@/components/providers/supabase-provider";
+import { Header } from "@/components/ui/header";
 
 const CATEGORIES = [
-  { slug: 'love', name: 'Love' },
-  { slug: 'anxiety', name: 'Anxiety' },
-  { slug: 'anger', name: 'Anger' },
-  { slug: 'hope', name: 'Hope' },
-  { slug: 'depression', name: 'Depression' },
-  { slug: 'peace', name: 'Peace' },
-  { slug: 'fear', name: 'Fear' },
-  { slug: 'stress', name: 'Stress' },
-  { slug: 'patience', name: 'Patience' },
-  { slug: 'temptation', name: 'Temptation' },
-  { slug: 'pride', name: 'Pride' },
-  { slug: 'doubt', name: 'Doubt' },
-  { slug: 'joy', name: 'Joy' },
-  { slug: 'jealousy', name: 'Jealousy' },
-  { slug: 'loss', name: 'Loss' },
-  { slug: 'healing', name: 'Healing' },
+  { slug: "love", name: "Love" },
+  { slug: "anxiety", name: "Anxiety" },
+  { slug: "anger", name: "Anger" },
+  { slug: "hope", name: "Hope" },
+  { slug: "depression", name: "Depression" },
+  { slug: "peace", name: "Peace" },
+  { slug: "fear", name: "Fear" },
+  { slug: "stress", name: "Stress" },
+  { slug: "patience", name: "Patience" },
+  { slug: "temptation", name: "Temptation" },
+  { slug: "pride", name: "Pride" },
+  { slug: "doubt", name: "Doubt" },
+  { slug: "joy", name: "Joy" },
+  { slug: "jealousy", name: "Jealousy" },
+  { slug: "loss", name: "Loss" },
+  { slug: "healing", name: "Healing" },
 ];
 
 const BIBLE_BOOKS = [
-  'Genesis', 'Exodus', 'Leviticus', 'Numbers', 'Deuteronomy',
-  'Joshua', 'Judges', 'Ruth', '1 Samuel', '2 Samuel',
-  '1 Kings', '2 Kings', '1 Chronicles', '2 Chronicles', 'Ezra',
-  'Nehemiah', 'Esther', 'Job', 'Psalms', 'Proverbs',
-  'Ecclesiastes', 'Song of Solomon', 'Isaiah', 'Jeremiah', 'Lamentations',
-  'Ezekiel', 'Daniel', 'Hosea', 'Joel', 'Amos',
-  'Obadiah', 'Jonah', 'Micah', 'Nahum', 'Habakkuk',
-  'Zephaniah', 'Haggai', 'Zechariah', 'Malachi',
-  'Matthew', 'Mark', 'Luke', 'John', 'Acts',
-  'Romans', '1 Corinthians', '2 Corinthians', 'Galatians', 'Ephesians',
-  'Philippians', 'Colossians', '1 Thessalonians', '2 Thessalonians', '1 Timothy',
-  '2 Timothy', 'Titus', 'Philemon', 'Hebrews', 'James',
-  '1 Peter', '2 Peter', '1 John', '2 John', '3 John',
-  'Jude', 'Revelation',
+  "Genesis",
+  "Exodus",
+  "Leviticus",
+  "Numbers",
+  "Deuteronomy",
+  "Joshua",
+  "Judges",
+  "Ruth",
+  "1 Samuel",
+  "2 Samuel",
+  "1 Kings",
+  "2 Kings",
+  "1 Chronicles",
+  "2 Chronicles",
+  "Ezra",
+  "Nehemiah",
+  "Esther",
+  "Job",
+  "Psalms",
+  "Proverbs",
+  "Ecclesiastes",
+  "Song of Solomon",
+  "Isaiah",
+  "Jeremiah",
+  "Lamentations",
+  "Ezekiel",
+  "Daniel",
+  "Hosea",
+  "Joel",
+  "Amos",
+  "Obadiah",
+  "Jonah",
+  "Micah",
+  "Nahum",
+  "Habakkuk",
+  "Zephaniah",
+  "Haggai",
+  "Zechariah",
+  "Malachi",
+  "Matthew",
+  "Mark",
+  "Luke",
+  "John",
+  "Acts",
+  "Romans",
+  "1 Corinthians",
+  "2 Corinthians",
+  "Galatians",
+  "Ephesians",
+  "Philippians",
+  "Colossians",
+  "1 Thessalonians",
+  "2 Thessalonians",
+  "1 Timothy",
+  "2 Timothy",
+  "Titus",
+  "Philemon",
+  "Hebrews",
+  "James",
+  "1 Peter",
+  "2 Peter",
+  "1 John",
+  "2 John",
+  "3 John",
+  "Jude",
+  "Revelation",
 ];
 
 function parseYouTubeUrl(url: string): string | null {
@@ -49,15 +101,15 @@ function parseYouTubeUrl(url: string): string | null {
 
   for (const pattern of patterns) {
     const match = url.match(pattern);
-    if (match && match[1]) return match[1];
+    if (match?.[1]) return match[1];
   }
   return null;
 }
 
 function parseTime(time: string): number {
   // Parse "1:30" or "90" to seconds
-  if (time.includes(':')) {
-    const parts = time.split(':').map(Number);
+  if (time.includes(":")) {
+    const parts = time.split(":").map(Number);
     if (parts.length === 2 && parts[0] !== undefined && parts[1] !== undefined) {
       return parts[0] * 60 + parts[1];
     }
@@ -65,21 +117,21 @@ function parseTime(time: string): number {
       return parts[0] * 3600 + parts[1] * 60 + parts[2];
     }
   }
-  return parseInt(time) || 0;
+  return parseInt(time, 10) || 0;
 }
 
 export default function SubmitPage() {
   const { supabase, user } = useSupabase();
   const router = useRouter();
 
-  const [youtubeUrl, setYoutubeUrl] = useState('');
-  const [startTime, setStartTime] = useState('');
-  const [endTime, setEndTime] = useState('');
-  const [title, setTitle] = useState('');
-  const [book, setBook] = useState('');
-  const [chapter, setChapter] = useState('');
-  const [verseStart, setVerseStart] = useState('');
-  const [verseEnd, setVerseEnd] = useState('');
+  const [youtubeUrl, setYoutubeUrl] = useState("");
+  const [startTime, setStartTime] = useState("");
+  const [endTime, setEndTime] = useState("");
+  const [title, setTitle] = useState("");
+  const [book, setBook] = useState("");
+  const [chapter, setChapter] = useState("");
+  const [verseStart, setVerseStart] = useState("");
+  const [verseEnd, setVerseEnd] = useState("");
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -87,11 +139,7 @@ export default function SubmitPage() {
   const videoId = parseYouTubeUrl(youtubeUrl);
 
   const handleCategoryToggle = (slug: string) => {
-    setSelectedCategories(prev =>
-      prev.includes(slug)
-        ? prev.filter(s => s !== slug)
-        : [...prev, slug]
-    );
+    setSelectedCategories((prev) => (prev.includes(slug) ? prev.filter((s) => s !== slug) : [...prev, slug]));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -99,12 +147,12 @@ export default function SubmitPage() {
     setError(null);
 
     if (!videoId) {
-      setError('Please enter a valid YouTube URL');
+      setError("Please enter a valid YouTube URL");
       return;
     }
 
     if (!user) {
-      setError('You must be logged in to submit a clip');
+      setError("You must be logged in to submit a clip");
       return;
     }
 
@@ -112,12 +160,12 @@ export default function SubmitPage() {
     const endSeconds = parseTime(endTime);
 
     if (endSeconds <= startSeconds) {
-      setError('End time must be after start time');
+      setError("End time must be after start time");
       return;
     }
 
     if (selectedCategories.length === 0) {
-      setError('Please select at least one category');
+      setError("Please select at least one category");
       return;
     }
 
@@ -126,23 +174,32 @@ export default function SubmitPage() {
     try {
       // Get book_ja from a simple mapping (you can expand this)
       const bookJaMap: Record<string, string> = {
-        'Genesis': '創世記', 'Exodus': '出エジプト記', 'Matthew': 'マタイ',
-        'Mark': 'マルコ', 'Luke': 'ルカ', 'John': 'ヨハネ', 'Acts': '使徒',
-        'Romans': 'ローマ', 'Philippians': 'ピリピ', 'Psalms': '詩篇',
-        'Proverbs': '箴言', 'Isaiah': 'イザヤ', 'Revelation': '黙示録',
+        Genesis: "創世記",
+        Exodus: "出エジプト記",
+        Matthew: "マタイ",
+        Mark: "マルコ",
+        Luke: "ルカ",
+        John: "ヨハネ",
+        Acts: "使徒",
+        Romans: "ローマ",
+        Philippians: "ピリピ",
+        Psalms: "詩篇",
+        Proverbs: "箴言",
+        Isaiah: "イザヤ",
+        Revelation: "黙示録",
         // Add more as needed
       };
 
       // Insert clip
       const { data: clip, error: clipError } = await supabase
-        .from('clips')
+        .from("clips")
         .insert({
           youtube_video_id: videoId,
           start_time: startSeconds,
           end_time: endSeconds,
           title,
           submitted_by: user.id,
-          status: 'PENDING',
+          status: "PENDING",
         })
         .select()
         .single();
@@ -151,42 +208,35 @@ export default function SubmitPage() {
 
       // Insert verse
       if (book && chapter && verseStart) {
-        const { error: verseError } = await supabase
-          .from('clip_verses')
-          .insert({
-            clip_id: clip.id,
-            book,
-            book_ja: bookJaMap[book] || book,
-            chapter: parseInt(chapter),
-            verse_start: parseInt(verseStart),
-            verse_end: verseEnd ? parseInt(verseEnd) : null,
-          });
+        const { error: verseError } = await supabase.from("clip_verses").insert({
+          clip_id: clip.id,
+          book,
+          book_ja: bookJaMap[book] || book,
+          chapter: parseInt(chapter, 10),
+          verse_start: parseInt(verseStart, 10),
+          verse_end: verseEnd ? parseInt(verseEnd, 10) : null,
+        });
 
         if (verseError) throw verseError;
       }
 
       // Get category IDs and insert clip_categories
-      const { data: categories } = await supabase
-        .from('categories')
-        .select('id, slug')
-        .in('slug', selectedCategories);
+      const { data: categories } = await supabase.from("categories").select("id, slug").in("slug", selectedCategories);
 
       if (categories && categories.length > 0) {
-        const { error: catError } = await supabase
-          .from('clip_categories')
-          .insert(
-            categories.map(cat => ({
-              clip_id: clip.id,
-              category_id: cat.id,
-            }))
-          );
+        const { error: catError } = await supabase.from("clip_categories").insert(
+          categories.map((cat) => ({
+            clip_id: clip.id,
+            category_id: cat.id,
+          }))
+        );
 
         if (catError) throw catError;
       }
 
-      router.push('/my-clips?submitted=true');
+      router.push("/my-clips?submitted=true");
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to submit clip');
+      setError(err instanceof Error ? err.message : "Failed to submit clip");
     } finally {
       setLoading(false);
     }
@@ -200,17 +250,11 @@ export default function SubmitPage() {
         <h1 className="text-2xl font-bold text-gray-900 mb-6">Submit a Clip</h1>
 
         <form onSubmit={handleSubmit} className="space-y-6">
-          {error && (
-            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">
-              {error}
-            </div>
-          )}
+          {error && <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">{error}</div>}
 
           {/* YouTube URL */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              YouTube URL *
-            </label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">YouTube URL *</label>
             <input
               type="text"
               value={youtubeUrl}
@@ -233,9 +277,7 @@ export default function SubmitPage() {
           {/* Time Range */}
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Start Time * (e.g., 1:30)
-              </label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Start Time * (e.g., 1:30)</label>
               <input
                 type="text"
                 value={startTime}
@@ -246,9 +288,7 @@ export default function SubmitPage() {
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                End Time * (e.g., 2:45)
-              </label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">End Time * (e.g., 2:45)</label>
               <input
                 type="text"
                 value={endTime}
@@ -262,9 +302,7 @@ export default function SubmitPage() {
 
           {/* Title */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Clip Title *
-            </label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Clip Title *</label>
             <input
               type="text"
               value={title}
@@ -277,9 +315,7 @@ export default function SubmitPage() {
 
           {/* Bible Verse */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Bible Verse *
-            </label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Bible Verse *</label>
             <div className="grid grid-cols-4 gap-2">
               <select
                 value={book}
@@ -288,8 +324,10 @@ export default function SubmitPage() {
                 required
               >
                 <option value="">Select book</option>
-                {BIBLE_BOOKS.map(b => (
-                  <option key={b} value={b}>{b}</option>
+                {BIBLE_BOOKS.map((b) => (
+                  <option key={b} value={b}>
+                    {b}
+                  </option>
                 ))}
               </select>
               <input
@@ -326,19 +364,17 @@ export default function SubmitPage() {
 
           {/* Categories */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Categories * (select at least one)
-            </label>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Categories * (select at least one)</label>
             <div className="flex flex-wrap gap-2">
-              {CATEGORIES.map(cat => (
+              {CATEGORIES.map((cat) => (
                 <button
                   key={cat.slug}
                   type="button"
                   onClick={() => handleCategoryToggle(cat.slug)}
                   className={`px-3 py-1 rounded-full text-sm border transition-colors ${
                     selectedCategories.includes(cat.slug)
-                      ? 'bg-blue-600 text-white border-blue-600'
-                      : 'bg-white text-gray-700 border-gray-300 hover:border-blue-400'
+                      ? "bg-blue-600 text-white border-blue-600"
+                      : "bg-white text-gray-700 border-gray-300 hover:border-blue-400"
                   }`}
                 >
                   {cat.name}
@@ -353,7 +389,7 @@ export default function SubmitPage() {
             disabled={loading}
             className="w-full py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {loading ? 'Submitting...' : 'Submit Clip for Review'}
+            {loading ? "Submitting..." : "Submit Clip for Review"}
           </button>
 
           <p className="text-sm text-gray-500 text-center">

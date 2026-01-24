@@ -1,13 +1,13 @@
-'use client';
+"use client";
 
-import { useEffect, useState } from 'react';
-import { useSupabase } from '@/components/providers/supabase-provider';
+import { useEffect, useState } from "react";
+import { useSupabase } from "@/components/providers/supabase-provider";
 
 type UserProfile = {
   id: string;
   display_name: string | null;
-  preferred_language: 'en' | 'ja';
-  role: 'USER' | 'ADMIN';
+  preferred_language: "en" | "ja";
+  role: "USER" | "ADMIN";
   created_at: string;
 };
 
@@ -24,11 +24,7 @@ export function useUserProfile() {
         return;
       }
 
-      const { data, error } = await supabase
-        .from('users')
-        .select('*')
-        .eq('id', user.id)
-        .single();
+      const { data, error } = await supabase.from("users").select("*").eq("id", user.id).single();
 
       if (!error && data) {
         setProfile(data as UserProfile);
@@ -41,5 +37,5 @@ export function useUserProfile() {
     }
   }, [user, authLoading, supabase]);
 
-  return { profile, loading: loading || authLoading, isAdmin: profile?.role === 'ADMIN' };
+  return { profile, loading: loading || authLoading, isAdmin: profile?.role === "ADMIN" };
 }

@@ -3,23 +3,24 @@
  * Groups words into sentences and translates each sentence.
  * Usage: npx tsx scripts/add-translations.ts <clip_id>
  */
-import { config } from 'dotenv';
-config({ path: '.env.local' });
+import { config } from "dotenv";
 
-import { createClient } from '@supabase/supabase-js';
-import OpenAI from 'openai';
+config({ path: ".env.local" });
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const supabaseSecretKey = process.env.SUPABASE_SECRET_KEY!;
-const openaiApiKey = process.env.OPENAI_API_KEY!;
+import { createClient } from "@supabase/supabase-js";
+import OpenAI from "openai";
+
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL ?? "";
+const supabaseSecretKey = process.env.SUPABASE_SECRET_KEY ?? "";
+const openaiApiKey = process.env.OPENAI_API_KEY ?? "";
 
 if (!supabaseUrl || !supabaseSecretKey) {
-  console.error('Missing NEXT_PUBLIC_SUPABASE_URL or SUPABASE_SECRET_KEY in .env.local');
+  console.error("Missing NEXT_PUBLIC_SUPABASE_URL or SUPABASE_SECRET_KEY in .env.local");
   process.exit(1);
 }
 
 if (!openaiApiKey) {
-  console.error('Missing OPENAI_API_KEY in .env.local');
+  console.error("Missing OPENAI_API_KEY in .env.local");
   process.exit(1);
 }
 
@@ -79,7 +80,7 @@ function groupIntoSentences(words: WordTiming[], maxWords = 10, pauseThreshold =
       if (firstWord) {
         sentences.push({
           words: [...currentWords],
-          text: currentWords.map(w => w.word).join(' '),
+          text: currentWords.map((w) => w.word).join(" "),
           firstWordId: firstWord.id,
         });
       }
@@ -97,24 +98,28 @@ async function translateSentences(sentences: string[]): Promise<string[]> {
 
   const prompt = `Translate the following English sentences to natural Japanese. Return ONLY the translations, one per line, in the same order. Keep them concise for subtitles.
 
-${sentences.map((s, i) => `${i + 1}. ${s}`).join('\n')}`;
+${sentences.map((s, i) => `${i + 1}. ${s}`).join("\n")}`;
 
   const response = await openai.chat.completions.create({
-    model: 'gpt-4o-mini',
+    model: "gpt-4o-mini",
     messages: [
-      { role: 'system', content: 'You are a professional translator. Translate English to natural, conversational Japanese suitable for video subtitles.' },
-      { role: 'user', content: prompt }
+      {
+        role: "system",
+        content:
+          "You are a professional translator. Translate English to natural, conversational Japanese suitable for video subtitles.",
+      },
+      { role: "user", content: prompt },
     ],
     temperature: 0.3,
   });
 
-  const content = response.choices[0]?.message?.content || '';
+  const content = response.choices[0]?.message?.content || "";
 
   // Parse translations (remove numbering if present)
   const translations = content
-    .split('\n')
-    .map(line => line.replace(/^\d+\.\s*/, '').trim())
-    .filter(line => line.length > 0);
+    .split("\n")
+    .map((line) => line.replace(/^\d+\.\s*/, "").trim())
+    .filter((line) => line.length > 0);
 
   if (translations.length !== sentences.length) {
     console.warn(`Warning: Got ${translations.length} translations for ${sentences.length} sentences`);
@@ -129,21 +134,18 @@ async function addTranslations(clipId: string) {
   console.log(`Fetching subtitles for clip ${clipId}...`);
 
   // Clear existing translations first
-  console.log('Clearing existing translations...');
-  await supabase
-    .from('clip_subtitles')
-    .update({ word_ja: null })
-    .eq('clip_id', clipId);
+  console.log("Clearing existing translations...");
+  await supabase.from("clip_subtitles").update({ word_ja: null }).eq("clip_id", clipId);
 
   // Get all subtitles for the clip
   const { data: subtitles, error } = await supabase
-    .from('clip_subtitles')
-    .select('id, word, start_time, end_time, sequence')
-    .eq('clip_id', clipId)
-    .order('sequence', { ascending: true });
+    .from("clip_subtitles")
+    .select("id, word, start_time, end_time, sequence")
+    .eq("clip_id", clipId)
+    .order("sequence", { ascending: true });
 
   if (error || !subtitles) {
-    console.error('Failed to fetch subtitles:', error);
+    console.error("Failed to fetch subtitles:", error);
     process.exit(1);
   }
 
@@ -154,21 +156,21 @@ async function addTranslations(clipId: string) {
   console.log(`Grouped into ${sentences.length} sentences`);
 
   // Print sentences for review
-  console.log('\nSentences:');
+  console.log("\nSentences:");
   sentences.forEach((s, i) => {
     console.log(`  ${i + 1}. "${s.text}"`);
   });
 
   // Translate sentences
-  const translations = await translateSentences(sentences.map(s => s.text));
+  const translations = await translateSentences(sentences.map((s) => s.text));
 
-  console.log('\nTranslations:');
+  console.log("\nTranslations:");
   translations.forEach((t, i) => {
     console.log(`  ${i + 1}. ${t}`);
   });
 
   // Update first word of each sentence with translation
-  console.log('\nUpdating database...');
+  console.log("\nUpdating database...");
 
   for (let i = 0; i < sentences.length; i++) {
     const sentence = sentences[i];
@@ -177,9 +179,9 @@ async function addTranslations(clipId: string) {
     if (!sentence || !translation) continue;
 
     const { error: updateError } = await supabase
-      .from('clip_subtitles')
+      .from("clip_subtitles")
       .update({ word_ja: translation })
-      .eq('id', sentence.firstWordId);
+      .eq("id", sentence.firstWordId);
 
     if (updateError) {
       console.error(`Failed to update word ${sentence.firstWordId}:`, updateError);
@@ -193,7 +195,7 @@ async function addTranslations(clipId: string) {
 const clipId = process.argv[2];
 
 if (!clipId) {
-  console.error('Usage: npx tsx scripts/add-translations.ts <clip_id>');
+  console.error("Usage: npx tsx scripts/add-translations.ts <clip_id>");
   process.exit(1);
 }
 

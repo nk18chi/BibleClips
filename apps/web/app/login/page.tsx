@@ -1,18 +1,18 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
-import Link from 'next/link';
-import { useSupabase } from '@/components/providers/supabase-provider';
+import Link from "next/link";
+import { useRouter, useSearchParams } from "next/navigation";
+import { useState } from "react";
+import { useSupabase } from "@/components/providers/supabase-provider";
 
 export default function LoginPage() {
   const { supabase } = useSupabase();
   const router = useRouter();
   const searchParams = useSearchParams();
-  const redirectTo = searchParams.get('redirectTo') || '/';
+  const redirectTo = searchParams.get("redirectTo") || "/";
 
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -45,11 +45,7 @@ export default function LoginPage() {
         </div>
 
         <form className="mt-8 space-y-6" onSubmit={handleLogin}>
-          {error && (
-            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">
-              {error}
-            </div>
-          )}
+          {error && <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">{error}</div>}
 
           <div className="space-y-4">
             <div>
@@ -88,12 +84,12 @@ export default function LoginPage() {
             disabled={loading}
             className="w-full flex justify-center py-3 px-4 border border-transparent rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {loading ? 'Signing in...' : 'Sign in'}
+            {loading ? "Signing in..." : "Sign in"}
           </button>
         </form>
 
         <p className="text-center text-sm text-gray-600">
-          Don&apos;t have an account?{' '}
+          Don&apos;t have an account?{" "}
           <Link href="/register" className="text-blue-600 hover:text-blue-500 font-medium">
             Sign up
           </Link>

@@ -55,4 +55,3 @@ export function interpolateWordTimings(cues: CaptionCue[]): SentenceWithWords[] 
     };
   });
 }
-

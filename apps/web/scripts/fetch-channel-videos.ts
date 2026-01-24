@@ -2,26 +2,27 @@
  * Fetch videos from YouTube channels and add to work queue
  * Usage: pnpm exec tsx scripts/fetch-channel-videos.ts
  */
-import { config } from 'dotenv';
-config({ path: '.env.local' });
+import { config } from "dotenv";
 
-import { createClient } from '@supabase/supabase-js';
-import { getChannelId, fetchChannelVideos, getVideoStats } from '../lib/youtube-api';
+config({ path: ".env.local" });
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const supabaseSecretKey = process.env.SUPABASE_SECRET_KEY!;
+import { createClient } from "@supabase/supabase-js";
+import { fetchChannelVideos, getChannelId, getVideoStats } from "../lib/youtube-api";
+
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL ?? "";
+const supabaseSecretKey = process.env.SUPABASE_SECRET_KEY ?? "";
 
 async function fetchAndStoreVideos() {
   const supabase = createClient(supabaseUrl, supabaseSecretKey);
 
   // Get all active channels
   const { data: channels, error: channelsError } = await supabase
-    .from('youtube_channels')
-    .select('*')
-    .eq('is_active', true);
+    .from("youtube_channels")
+    .select("*")
+    .eq("is_active", true);
 
   if (channelsError) {
-    console.error('Failed to fetch channels:', channelsError);
+    console.error("Failed to fetch channels:", channelsError);
     return;
   }
 
@@ -53,24 +54,22 @@ async function fetchAndStoreVideos() {
       for (const video of videos) {
         const videoStats = stats.get(video.videoId);
 
-        const { error: upsertError } = await supabase
-          .from('work_queue_videos')
-          .upsert(
-            {
-              youtube_video_id: video.videoId,
-              channel_id: channel.id,
-              title: video.title,
-              thumbnail_url: video.thumbnailUrl,
-              published_at: video.publishedAt,
-              view_count: videoStats?.viewCount || 0,
-              like_count: videoStats?.likeCount || 0,
-              duration_seconds: videoStats?.durationSeconds || 0,
-            },
-            {
-              onConflict: 'youtube_video_id',
-              ignoreDuplicates: false,
-            }
-          );
+        const { error: upsertError } = await supabase.from("work_queue_videos").upsert(
+          {
+            youtube_video_id: video.videoId,
+            channel_id: channel.id,
+            title: video.title,
+            thumbnail_url: video.thumbnailUrl,
+            published_at: video.publishedAt,
+            view_count: videoStats?.viewCount || 0,
+            like_count: videoStats?.likeCount || 0,
+            duration_seconds: videoStats?.durationSeconds || 0,
+          },
+          {
+            onConflict: "youtube_video_id",
+            ignoreDuplicates: false,
+          }
+        );
 
         if (!upsertError) added++;
       }
@@ -80,10 +79,10 @@ async function fetchAndStoreVideos() {
       console.error(`  Error processing channel:`, err);
     }
 
-    console.log('');
+    console.log("");
   }
 
-  console.log('Done!');
+  console.log("Done!");
 }
 
 fetchAndStoreVideos().catch(console.error);

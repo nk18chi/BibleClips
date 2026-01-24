@@ -1,5 +1,5 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { YoutubeTranscript } from 'youtube-transcript';
+import { type NextRequest, NextResponse } from "next/server";
+import { YoutubeTranscript } from "youtube-transcript";
 
 type TranscriptItem = {
   text: string;
@@ -9,12 +9,12 @@ type TranscriptItem = {
 
 export async function GET(request: NextRequest) {
   const searchParams = request.nextUrl.searchParams;
-  const videoId = searchParams.get('videoId');
-  const startTime = searchParams.get('startTime');
-  const endTime = searchParams.get('endTime');
+  const videoId = searchParams.get("videoId");
+  const startTime = searchParams.get("startTime");
+  const endTime = searchParams.get("endTime");
 
   if (!videoId) {
-    return NextResponse.json({ error: 'videoId is required' }, { status: 400 });
+    return NextResponse.json({ error: "videoId is required" }, { status: 400 });
   }
 
   try {
@@ -24,7 +24,7 @@ export async function GET(request: NextRequest) {
     const subtitles = transcript.map((item: TranscriptItem) => ({
       start: item.offset / 1000, // Convert ms to seconds
       end: (item.offset + item.duration) / 1000,
-      text: item.text.replace(/\n/g, ' ').trim(),
+      text: item.text.replace(/\n/g, " ").trim(),
     }));
 
     // Filter by start/end time if provided
@@ -32,19 +32,16 @@ export async function GET(request: NextRequest) {
       const start = parseFloat(startTime);
       const end = parseFloat(endTime);
 
-      const filtered = subtitles.filter(
-        (sub: { start: number; end: number }) =>
-          sub.end > start && sub.start < end
-      );
+      const filtered = subtitles.filter((sub: { start: number; end: number }) => sub.end > start && sub.start < end);
 
       return NextResponse.json({ subtitles: filtered });
     }
 
     return NextResponse.json({ subtitles });
   } catch (error) {
-    console.error('Failed to fetch transcript:', error);
+    console.error("Failed to fetch transcript:", error);
     return NextResponse.json(
-      { error: 'Failed to fetch transcript. The video may not have captions available.' },
+      { error: "Failed to fetch transcript. The video may not have captions available." },
       { status: 500 }
     );
   }

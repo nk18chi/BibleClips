@@ -1,8 +1,8 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import { useSupabase } from '@/components/providers/supabase-provider';
-import { formatDistanceToNow } from 'date-fns';
+import { formatDistanceToNow } from "date-fns";
+import { useState } from "react";
+import { useSupabase } from "@/components/providers/supabase-provider";
 
 type CommentCardProps = {
   id: string;
@@ -17,20 +17,28 @@ type CommentCardProps = {
 };
 
 const HeartIcon = ({ filled }: { filled: boolean }) => (
-  <svg width="16" height="16" viewBox="0 0 24 24" fill={filled ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2">
+  <svg
+    width="16"
+    height="16"
+    viewBox="0 0 24 24"
+    fill={filled ? "currentColor" : "none"}
+    stroke="currentColor"
+    strokeWidth="2"
+    aria-hidden="true"
+  >
     <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
   </svg>
 );
 
 const FlagIcon = () => (
-  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
     <path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z" />
     <line x1="4" y1="22" x2="4" y2="15" />
   </svg>
 );
 
 const TrashIcon = () => (
-  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
     <polyline points="3 6 5 6 21 6" />
     <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
   </svg>
@@ -53,7 +61,7 @@ export function CommentCard({
   const [liking, setLiking] = useState(false);
 
   const isOwner = user?.id === authorId;
-  const displayName = authorName || 'Anonymous';
+  const displayName = authorName || "Anonymous";
   const timeAgo = formatDistanceToNow(new Date(createdAt), { addSuffix: true });
 
   const handleLike = async () => {
@@ -62,20 +70,14 @@ export function CommentCard({
     setLiking(true);
 
     if (hasLiked) {
-      const { error } = await supabase
-        .from('comment_likes')
-        .delete()
-        .eq('comment_id', id)
-        .eq('user_id', user.id);
+      const { error } = await supabase.from("comment_likes").delete().eq("comment_id", id).eq("user_id", user.id);
 
       if (!error) {
         setLikeCount((c) => c - 1);
         setHasLiked(false);
       }
     } else {
-      const { error } = await supabase
-        .from('comment_likes')
-        .insert({ comment_id: id, user_id: user.id });
+      const { error } = await supabase.from("comment_likes").insert({ comment_id: id, user_id: user.id });
 
       if (!error) {
         setLikeCount((c) => c + 1);
@@ -100,9 +102,10 @@ export function CommentCard({
 
       <div className="flex items-center gap-4 mt-2">
         <button
+          type="button"
           onClick={handleLike}
           disabled={!user || liking}
-          className={`flex items-center gap-1 text-xs ${hasLiked ? 'text-red-500' : 'text-gray-400'} hover:text-red-500 disabled:opacity-50 transition-colors`}
+          className={`flex items-center gap-1 text-xs ${hasLiked ? "text-red-500" : "text-gray-400"} hover:text-red-500 disabled:opacity-50 transition-colors`}
         >
           <HeartIcon filled={hasLiked} />
           {likeCount > 0 && <span>{likeCount}</span>}
@@ -110,6 +113,7 @@ export function CommentCard({
 
         {!isOwner && user && (
           <button
+            type="button"
             onClick={onReport}
             className="flex items-center gap-1 text-xs text-gray-400 hover:text-orange-500 transition-colors"
           >
@@ -120,6 +124,7 @@ export function CommentCard({
 
         {isOwner && (
           <button
+            type="button"
             onClick={onDelete}
             className="flex items-center gap-1 text-xs text-gray-400 hover:text-red-500 transition-colors"
           >

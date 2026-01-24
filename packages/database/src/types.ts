@@ -62,8 +62,8 @@ export interface Vote {
   created_at: string;
 }
 
-export type CommentReportReason = 'spam' | 'harassment' | 'inappropriate' | 'other';
-export type CommentReportStatus = 'PENDING' | 'REVIEWED' | 'DISMISSED';
+export type CommentReportReason = "spam" | "harassment" | "inappropriate" | "other";
+export type CommentReportStatus = "PENDING" | "REVIEWED" | "DISMISSED";
 
 export interface Comment {
   id: string;
@@ -92,7 +92,7 @@ export interface CommentReport {
 }
 
 export interface CommentWithUser extends Comment {
-  user: Pick<User, 'id' | 'display_name'> | null;
+  user: Pick<User, "id" | "display_name"> | null;
 }
 
 export interface ClipSubtitle {
@@ -100,8 +100,8 @@ export interface ClipSubtitle {
   clip_id: string;
   word: string;
   start_time: number; // seconds from video start
-  end_time: number;   // seconds from video start
-  sequence: number;   // word order (0, 1, 2, ...)
+  end_time: number; // seconds from video start
+  sequence: number; // word order (0, 1, 2, ...)
   created_at: string;
 }
 

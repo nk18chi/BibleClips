@@ -1,6 +1,6 @@
-'use client';
+"use client";
 
-import { useState, useEffect } from 'react';
+import { useEffect, useState } from "react";
 
 type CaptionCue = {
   start: number;
@@ -25,7 +25,7 @@ export function useYouTubeCaptions(videoId: string, startTime: number, endTime: 
           setCaptions(data.subtitles || []);
         }
       } catch (error) {
-        console.error('Failed to fetch captions:', error);
+        console.error("Failed to fetch captions:", error);
       } finally {
         setLoading(false);
       }

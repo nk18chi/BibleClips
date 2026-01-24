@@ -1,8 +1,8 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import { useSupabase } from '@/components/providers/supabase-provider';
-import { z } from 'zod';
+import { useState } from "react";
+import { z } from "zod";
+import { useSupabase } from "@/components/providers/supabase-provider";
 
 const commentContentSchema = z
   .string()
@@ -23,7 +23,7 @@ const SendIcon = () => (
 
 export function CommentForm({ clipId, onCommentAdded }: CommentFormProps) {
   const { supabase, user } = useSupabase();
-  const [content, setContent] = useState('');
+  const [content, setContent] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -41,21 +41,19 @@ export function CommentForm({ clipId, onCommentAdded }: CommentFormProps) {
     setSubmitting(true);
     setError(null);
 
-    const { error: insertError } = await supabase
-      .from('comments')
-      .insert({
-        clip_id: clipId,
-        user_id: user.id,
-        content: content.trim(),
-      });
+    const { error: insertError } = await supabase.from("comments").insert({
+      clip_id: clipId,
+      user_id: user.id,
+      content: content.trim(),
+    });
 
     if (insertError) {
-      setError('Failed to post comment. Please try again.');
+      setError("Failed to post comment. Please try again.");
       setSubmitting(false);
       return;
     }
 
-    setContent('');
+    setContent("");
     setSubmitting(false);
     onCommentAdded();
   };
@@ -63,16 +61,17 @@ export function CommentForm({ clipId, onCommentAdded }: CommentFormProps) {
   if (!user) {
     return (
       <div className="p-4 bg-gray-50 text-center text-sm text-gray-500">
-        <a href="/login" className="text-blue-600 hover:underline">Sign in</a> to leave a comment
+        <a href="/login" className="text-blue-600 hover:underline">
+          Sign in
+        </a>{" "}
+        to leave a comment
       </div>
     );
   }
 
   return (
     <form onSubmit={handleSubmit} className="p-4 border-t border-gray-200 bg-white">
-      {error && (
-        <p className="text-red-500 text-xs mb-2">{error}</p>
-      )}
+      {error && <p className="text-red-500 text-xs mb-2">{error}</p>}
       <div className="flex items-end gap-2">
         <textarea
           value={content}
@@ -82,7 +81,7 @@ export function CommentForm({ clipId, onCommentAdded }: CommentFormProps) {
           maxLength={2000}
           className="flex-1 resize-none border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
           onKeyDown={(e) => {
-            if (e.key === 'Enter' && !e.shiftKey) {
+            if (e.key === "Enter" && !e.shiftKey) {
               e.preventDefault();
               handleSubmit(e);
             }

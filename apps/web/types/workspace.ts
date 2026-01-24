@@ -16,7 +16,7 @@ export type WorkQueueVideo = {
   view_count: number;
   like_count: number;
   duration_seconds: number | null;
-  status: 'pending' | 'in_progress' | 'completed' | 'skipped';
+  status: "pending" | "in_progress" | "completed" | "skipped";
   assigned_to: string | null;
   clips_created: number;
   created_at: string;

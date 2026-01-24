@@ -90,16 +90,15 @@ export function getBookByJapaneseName(name: string): BibleBookValue | undefined 
   return Object.values(BibleBook).find((b) => b.ja === name);
 }
 
-export const verseSchema = z.object({
-  book: z.string().min(1),
-  bookJa: z.string().min(1),
-  chapter: z.number().int().min(1).max(150),
-  verseStart: z.number().int().min(1).max(176),
-  verseEnd: z.number().int().min(1).max(176).optional(),
-}).refine(
-  (data) => !data.verseEnd || data.verseEnd >= data.verseStart,
-  { message: "verseEnd must be >= verseStart" }
-);
+export const verseSchema = z
+  .object({
+    book: z.string().min(1),
+    bookJa: z.string().min(1),
+    chapter: z.number().int().min(1).max(150),
+    verseStart: z.number().int().min(1).max(176),
+    verseEnd: z.number().int().min(1).max(176).optional(),
+  })
+  .refine((data) => !data.verseEnd || data.verseEnd >= data.verseStart, { message: "verseEnd must be >= verseStart" });
 
 export type Verse = z.infer<typeof verseSchema>;
 

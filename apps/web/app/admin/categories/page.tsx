@@ -1,6 +1,6 @@
-import { createServerClient } from '@/lib/supabase/server';
-import { Header } from '@/components/ui/header';
-import { redirect } from 'next/navigation';
+import { redirect } from "next/navigation";
+import { Header } from "@/components/ui/header";
+import { createServerClient } from "@/lib/supabase/server";
 
 type Category = {
   id: string;
@@ -16,23 +16,21 @@ async function getCategories(): Promise<Category[]> {
 
   // Get categories with clip counts
   const { data: categories } = await supabase
-    .from('categories')
-    .select('id, slug, name_en, name_ja, sort_order')
-    .order('sort_order');
+    .from("categories")
+    .select("id, slug, name_en, name_ja, sort_order")
+    .order("sort_order");
 
   if (!categories) return [];
 
   // Get clip counts per category
-  const { data: clipCounts } = await supabase
-    .from('clip_categories')
-    .select('category_id');
+  const { data: clipCounts } = await supabase.from("clip_categories").select("category_id");
 
   const countMap = new Map<string, number>();
-  clipCounts?.forEach(cc => {
+  clipCounts?.forEach((cc) => {
     countMap.set(cc.category_id, (countMap.get(cc.category_id) || 0) + 1);
   });
 
-  return categories.map(cat => ({
+  return categories.map((cat) => ({
     ...cat,
     clip_count: countMap.get(cat.id) || 0,
   }));
@@ -40,26 +38,24 @@ async function getCategories(): Promise<Category[]> {
 
 async function isAdmin(userId: string): Promise<boolean> {
   const supabase = createServerClient();
-  const { data } = await supabase
-    .from('users')
-    .select('role')
-    .eq('id', userId)
-    .single();
+  const { data } = await supabase.from("users").select("role").eq("id", userId).single();
 
-  return data?.role === 'ADMIN';
+  return data?.role === "ADMIN";
 }
 
 export default async function AdminCategoriesPage() {
   const supabase = createServerClient();
-  const { data: { session } } = await supabase.auth.getSession();
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
 
   if (!session) {
-    redirect('/login?redirectTo=/admin/categories');
+    redirect("/login?redirectTo=/admin/categories");
   }
 
   const admin = await isAdmin(session.user.id);
   if (!admin) {
-    redirect('/');
+    redirect("/");
   }
 
   const categories = await getCategories();

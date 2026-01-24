@@ -1,10 +1,10 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter } from "next/navigation";
+import { useState } from "react";
 
 export function VerseSearch() {
-  const [query, setQuery] = useState('');
+  const [query, setQuery] = useState("");
   const router = useRouter();
 
   const handleSearch = (e: React.FormEvent) => {
@@ -13,9 +13,9 @@ export function VerseSearch() {
     // Parse verse reference (e.g., "John 3:16" -> /verse/john/3/16)
     const match = query.match(/^(\d?\s*\w+)\s+(\d+):(\d+)(?:-(\d+))?$/i);
     if (match) {
-      const book = match[1]!.toLowerCase().replace(/\s+/g, '-');
-      const chapter = match[2]!;
-      const verse = match[3]!;
+      const book = match[1]?.toLowerCase().replace(/\s+/g, "-");
+      const chapter = match[2] ?? "";
+      const verse = match[3] ?? "";
       router.push(`/verse/${book}/${chapter}/${verse}`);
     }
   };

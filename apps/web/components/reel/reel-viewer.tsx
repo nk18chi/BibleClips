@@ -1,14 +1,14 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
-import { YouTubePlayer } from "./youtube-player";
-import { ActionButtons } from "./action-buttons";
-import { VerseModal } from "./verse-modal";
-import { SubtitleOverlay } from "./subtitle-overlay";
-import { CommentSection } from "@/components/comment/comment-section";
-import { Header } from "@/components/ui/header";
-import { useLanguage } from "@/components/providers/language-provider";
 import Link from "next/link";
+import { useEffect, useRef, useState } from "react";
+import { CommentSection } from "@/components/comment/comment-section";
+import { useLanguage } from "@/components/providers/language-provider";
+import { Header } from "@/components/ui/header";
+import { ActionButtons } from "./action-buttons";
+import { SubtitleOverlay } from "./subtitle-overlay";
+import { VerseModal } from "./verse-modal";
+import { YouTubePlayer } from "./youtube-player";
 
 type WordTiming = {
   word: string;
@@ -31,7 +31,7 @@ type Clip = {
   end_time: number;
   vote_count: number;
   has_voted: boolean;
-  language: 'en' | 'ja';
+  language: "en" | "ja";
   wordTimings?: WordTiming[];
   translations?: SentenceTranslation[];
   clip_verses: {
@@ -76,7 +76,7 @@ function ReelCard({
   const verse = clip.clip_verses[0];
 
   // Use Japanese book name when Japanese is selected
-  const bookName = language === 'ja' && verse?.book_ja ? verse.book_ja : verse?.book;
+  const bookName = language === "ja" && verse?.book_ja ? verse.book_ja : verse?.book;
   const verseRef = verse
     ? verse.verse_end
       ? `${bookName} ${verse.chapter}:${verse.verse_start}-${verse.verse_end}`
@@ -89,18 +89,20 @@ function ReelCard({
       ? `${verse.book} ${verse.chapter}:${verse.verse_start}-${verse.verse_end}`
       : `${verse.book} ${verse.chapter}:${verse.verse_start}`
     : "";
-  const bibleGatewayUrl = verse ? `https://www.biblegateway.com/passage/?search=${encodeURIComponent(verseRefEn)}&version=NIV` : "";
+  const bibleGatewayUrl = verse
+    ? `https://www.biblegateway.com/passage/?search=${encodeURIComponent(verseRefEn)}&version=NIV`
+    : "";
 
   return (
-    <div className='relative w-full h-full rounded-lg overflow-hidden bg-black'>
+    <div className="relative w-full h-full rounded-lg overflow-hidden bg-black">
       {/* Verse reference overlay */}
       {verse && (
-        <div className='absolute top-24 left-0 right-0 z-10 flex justify-center'>
+        <div className="absolute top-24 left-0 right-0 z-10 flex justify-center">
           <a
             href={bibleGatewayUrl}
-            target='_blank'
-            rel='noopener noreferrer'
-            className='bg-white text-black text-2xl sm:text-4xl font-semibold px-5 sm:px-8 py-2 sm:py-4 rounded-full shadow-lg hover:bg-gray-100 transition-colors'
+            target="_blank"
+            rel="noopener noreferrer"
+            className="bg-white text-black text-2xl sm:text-4xl font-semibold px-5 sm:px-8 py-2 sm:py-4 rounded-full shadow-lg hover:bg-gray-100 transition-colors"
           >
             {verseRef}
           </a>
@@ -108,7 +110,7 @@ function ReelCard({
       )}
 
       {/* Video Player - only render if active */}
-      <div className='h-full'>
+      <div className="h-full">
         {isActive ? (
           <YouTubePlayer
             key={clip.id}
@@ -118,8 +120,8 @@ function ReelCard({
             onTimeUpdate={setCurrentTime}
           />
         ) : (
-          <div className='h-full flex items-center justify-center bg-gray-900'>
-            <span className='text-white text-lg'>{clip.title}</span>
+          <div className="h-full flex items-center justify-center bg-gray-900">
+            <span className="text-white text-lg">{clip.title}</span>
           </div>
         )}
       </div>
@@ -135,12 +137,16 @@ function ReelCard({
       )}
 
       {/* Bottom Info */}
-      <div className='absolute bottom-0 left-0 right-0 z-10 p-4 bg-gradient-to-t from-black/70 to-transparent'>
-        <h3 className='text-white font-medium mb-1'>{clip.title}</h3>
-        <div className='flex flex-wrap gap-2'>
+      <div className="absolute bottom-0 left-0 right-0 z-10 p-4 bg-gradient-to-t from-black/70 to-transparent">
+        <h3 className="text-white font-medium mb-1">{clip.title}</h3>
+        <div className="flex flex-wrap gap-2">
           {clip.clip_categories?.map((cc) =>
             cc.categories ? (
-              <Link key={cc.categories.slug} href={`/category/${cc.categories.slug}`} className='text-blue-400 text-sm hover:underline'>
+              <Link
+                key={cc.categories.slug}
+                href={`/category/${cc.categories.slug}`}
+                className="text-blue-400 text-sm hover:underline"
+              >
                 #{cc.categories.name_en.toLowerCase()}
               </Link>
             ) : null
@@ -148,13 +154,13 @@ function ReelCard({
         </div>
 
         {/* Clip counter */}
-        <div className='mt-2 text-white/50 text-xs'>
+        <div className="mt-2 text-white/50 text-xs">
           {index + 1} / {total}
         </div>
       </div>
 
       {/* Action Buttons - Inside video on right */}
-      <div className='absolute right-3 bottom-24 z-10'>
+      <div className="absolute right-3 bottom-24 z-10">
         <ActionButtons
           clipId={clip.id}
           youtubeVideoId={clip.youtube_video_id}
@@ -205,11 +211,11 @@ export function ReelViewer({ clips, initialIndex = 0, showHeader = false }: Reel
 
     const itemHeight = container.clientHeight;
     container.scrollTop = initialIndex * itemHeight;
-  }, []);
+  }, [initialIndex]);
 
   if (!currentClip) {
     return (
-      <div className='h-screen flex items-center justify-center bg-black text-white'>
+      <div className="h-screen flex items-center justify-center bg-black text-white">
         <p>No clips available</p>
       </div>
     );
@@ -218,26 +224,33 @@ export function ReelViewer({ clips, initialIndex = 0, showHeader = false }: Reel
   const verse = currentClip.clip_verses[0];
 
   return (
-    <div className='h-screen bg-white relative overflow-hidden flex flex-col'>
+    <div className="h-screen bg-white relative overflow-hidden flex flex-col">
       {/* Header */}
       {showHeader ? (
         <Header />
       ) : (
-        <Link href='/' className='absolute top-4 right-4 z-20 bg-white/20 hover:bg-white/30 text-white p-2 rounded-full'>
+        <Link
+          href="/"
+          className="absolute top-4 right-4 z-20 bg-white/20 hover:bg-white/30 text-white p-2 rounded-full"
+        >
           X
         </Link>
       )}
 
       {/* Main content area */}
-      <div className='flex-1 flex items-center justify-center overflow-hidden'>
+      <div className="flex-1 flex items-center justify-center overflow-hidden">
         {/* Scroll container with snap */}
         <div
           ref={scrollContainerRef}
-          className='h-full w-full max-w-[500px] overflow-y-scroll snap-y snap-mandatory scrollbar-hide'
+          className="h-full w-full max-w-[500px] overflow-y-scroll snap-y snap-mandatory scrollbar-hide"
           style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
         >
           {clips.map((clip, index) => (
-            <div key={clip.id} className='w-full snap-start snap-always flex-shrink-0 p-2' style={{ height: "calc(100% - 40px)" }}>
+            <div
+              key={clip.id}
+              className="w-full snap-start snap-always flex-shrink-0 p-2"
+              style={{ height: "calc(100% - 40px)" }}
+            >
               <ReelCard
                 clip={clip}
                 isActive={index === currentIndex}
@@ -249,11 +262,11 @@ export function ReelViewer({ clips, initialIndex = 0, showHeader = false }: Reel
             </div>
           ))}
           {/* Spacer at the end so last video can scroll to show peek */}
-          <div className='h-10 flex-shrink-0' />
+          <div className="h-10 flex-shrink-0" />
         </div>
 
         {/* Action Buttons - Right side outside video (desktop only) */}
-        <div className='hidden sm:flex flex-col items-center justify-end pb-24 h-full ml-4'>
+        <div className="hidden sm:flex flex-col items-center justify-end pb-24 h-full ml-4">
           <ActionButtons
             clipId={currentClip.id}
             youtubeVideoId={currentClip.youtube_video_id}
@@ -278,10 +291,7 @@ export function ReelViewer({ clips, initialIndex = 0, showHeader = false }: Reel
 
       {/* Comment Section */}
       {showCommentSection && currentClip && (
-        <CommentSection
-          clipId={currentClip.id}
-          onClose={() => setShowCommentSection(false)}
-        />
+        <CommentSection clipId={currentClip.id} onClose={() => setShowCommentSection(false)} />
       )}
 
       {/* Hide scrollbar */}

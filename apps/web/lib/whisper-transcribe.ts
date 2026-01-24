@@ -1,9 +1,9 @@
-import { exec } from 'child_process';
-import { promisify } from 'util';
-import { readFile, unlink } from 'fs/promises';
-import { tmpdir } from 'os';
-import { join } from 'path';
-import OpenAI from 'openai';
+import { exec } from "node:child_process";
+import { readFile, unlink } from "node:fs/promises";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
+import { promisify } from "node:util";
+import OpenAI from "openai";
 
 const execAsync = promisify(exec);
 
@@ -39,20 +39,20 @@ export async function transcribeClipWithWhisper(
     const duration = endTime - startTime;
     const ytdlpCmd = `yt-dlp -x --audio-format mp3 --postprocessor-args "ffmpeg:-ss ${startTime} -t ${duration}" -o "${audioPath}" "https://www.youtube.com/watch?v=${videoId}"`;
 
-    console.log('Downloading audio...');
+    console.log("Downloading audio...");
     await execAsync(ytdlpCmd, { timeout: 120000 });
 
     // Read the audio file
     const audioBuffer = await readFile(audioPath);
-    const audioFile = new File([audioBuffer], 'audio.mp3', { type: 'audio/mpeg' });
+    const audioFile = new File([audioBuffer], "audio.mp3", { type: "audio/mpeg" });
 
-    console.log('Transcribing with Whisper...');
+    console.log("Transcribing with Whisper...");
     // Use Whisper API with word-level timestamps
     const transcription = await getOpenAI().audio.transcriptions.create({
       file: audioFile,
-      model: 'whisper-1',
-      response_format: 'verbose_json',
-      timestamp_granularities: ['word'],
+      model: "whisper-1",
+      response_format: "verbose_json",
+      timestamp_granularities: ["word"],
     });
 
     // Extract word timings and adjust to video time
@@ -103,7 +103,7 @@ export function groupWordsIntoSentences(
 
     // Check if we should end the sentence
     const endsPunctuation = /[.!?]$/.test(word.word);
-    const hasLongPause = nextWord && (nextWord.start - word.end) > pauseThreshold;
+    const hasLongPause = nextWord && nextWord.start - word.end > pauseThreshold;
     const reachedMaxWords = currentWords.length >= maxWordsPerSentence;
 
     if (endsPunctuation || hasLongPause || reachedMaxWords || !nextWord) {
@@ -114,7 +114,7 @@ export function groupWordsIntoSentences(
         sentences.push({
           start: firstWord.start,
           end: lastWord.end,
-          text: currentWords.map((w) => w.word).join(' '),
+          text: currentWords.map((w) => w.word).join(" "),
           words: [...currentWords],
         });
       }

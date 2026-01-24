@@ -1,10 +1,10 @@
-'use client';
+"use client";
 
-import { useEffect, useRef, useState, useCallback } from 'react';
+import { useCallback, useEffect, useRef, useState } from "react";
 
 type WorkspacePlayerProps = {
   videoId: string;
-  onTimeCapture: (type: 'start' | 'end', time: number) => void;
+  onTimeCapture: (type: "start" | "end", time: number) => void;
 };
 
 // Extended YTPlayer interface for workspace (superset of reel player)
@@ -21,9 +21,9 @@ function formatTime(seconds: number): string {
   const m = Math.floor((seconds % 3600) / 60);
   const s = Math.floor(seconds % 60);
   if (h > 0) {
-    return `${h}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+    return `${h}:${m.toString().padStart(2, "0")}:${s.toString().padStart(2, "0")}`;
   }
-  return `${m}:${s.toString().padStart(2, '0')}`;
+  return `${m}:${s.toString().padStart(2, "0")}`;
 }
 
 export function WorkspacePlayer({ videoId, onTimeCapture }: WorkspacePlayerProps) {
@@ -35,9 +35,9 @@ export function WorkspacePlayer({ videoId, onTimeCapture }: WorkspacePlayerProps
   useEffect(() => {
     // Load YouTube IFrame API
     if (!window.YT) {
-      const tag = document.createElement('script');
-      tag.src = 'https://www.youtube.com/iframe_api';
-      const firstScriptTag = document.getElementsByTagName('script')[0];
+      const tag = document.createElement("script");
+      tag.src = "https://www.youtube.com/iframe_api";
+      const firstScriptTag = document.getElementsByTagName("script")[0];
       if (firstScriptTag?.parentNode) {
         firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
       }
@@ -86,13 +86,13 @@ export function WorkspacePlayer({ videoId, onTimeCapture }: WorkspacePlayerProps
 
   const handleSetStart = useCallback(() => {
     if (playerRef.current) {
-      onTimeCapture('start', Math.floor(playerRef.current.getCurrentTime()));
+      onTimeCapture("start", Math.floor(playerRef.current.getCurrentTime()));
     }
   }, [onTimeCapture]);
 
   const handleSetEnd = useCallback(() => {
     if (playerRef.current) {
-      onTimeCapture('end', Math.floor(playerRef.current.getCurrentTime()));
+      onTimeCapture("end", Math.floor(playerRef.current.getCurrentTime()));
     }
   }, [onTimeCapture]);
 
@@ -101,17 +101,17 @@ export function WorkspacePlayer({ videoId, onTimeCapture }: WorkspacePlayerProps
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.target instanceof HTMLInputElement || e.target instanceof HTMLSelectElement) return;
 
-      if (e.key === 's' || e.key === 'S') {
+      if (e.key === "s" || e.key === "S") {
         e.preventDefault();
         handleSetStart();
-      } else if (e.key === 'e' || e.key === 'E') {
+      } else if (e.key === "e" || e.key === "E") {
         e.preventDefault();
         handleSetEnd();
       }
     };
 
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
   }, [handleSetStart, handleSetEnd]);
 
   return (
@@ -123,11 +123,10 @@ export function WorkspacePlayer({ videoId, onTimeCapture }: WorkspacePlayerProps
 
       {/* Time controls */}
       <div className="flex items-center justify-between bg-gray-100 rounded-lg p-3">
-        <div className="text-lg font-mono">
-          {formatTime(currentTime)}
-        </div>
+        <div className="text-lg font-mono">{formatTime(currentTime)}</div>
         <div className="flex gap-2">
           <button
+            type="button"
             onClick={handleSetStart}
             disabled={!isReady}
             className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 text-sm font-medium"
@@ -135,6 +134,7 @@ export function WorkspacePlayer({ videoId, onTimeCapture }: WorkspacePlayerProps
             Set Start (S)
           </button>
           <button
+            type="button"
             onClick={handleSetEnd}
             disabled={!isReady}
             className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50 text-sm font-medium"

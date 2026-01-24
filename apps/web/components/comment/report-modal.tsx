@@ -1,10 +1,10 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import { useSupabase } from '@/components/providers/supabase-provider';
-import { z } from 'zod';
+import { useState } from "react";
+import { z } from "zod";
+import { useSupabase } from "@/components/providers/supabase-provider";
 
-const commentReportReasonSchema = z.enum(['spam', 'harassment', 'inappropriate', 'other']);
+const commentReportReasonSchema = z.enum(["spam", "harassment", "inappropriate", "other"]);
 type CommentReportReason = z.infer<typeof commentReportReasonSchema>;
 
 type ReportModalProps = {
@@ -14,16 +14,16 @@ type ReportModalProps = {
 };
 
 const reasons: { value: CommentReportReason; label: string }[] = [
-  { value: 'spam', label: 'Spam' },
-  { value: 'harassment', label: 'Harassment' },
-  { value: 'inappropriate', label: 'Inappropriate content' },
-  { value: 'other', label: 'Other' },
+  { value: "spam", label: "Spam" },
+  { value: "harassment", label: "Harassment" },
+  { value: "inappropriate", label: "Inappropriate content" },
+  { value: "other", label: "Other" },
 ];
 
 export function ReportModal({ commentId, onClose, onReported }: ReportModalProps) {
   const { supabase, user } = useSupabase();
-  const [reason, setReason] = useState<CommentReportReason | ''>('');
-  const [description, setDescription] = useState('');
+  const [reason, setReason] = useState<CommentReportReason | "">("");
+  const [description, setDescription] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -34,27 +34,25 @@ export function ReportModal({ commentId, onClose, onReported }: ReportModalProps
 
     const reasonResult = commentReportReasonSchema.safeParse(reason);
     if (!reasonResult.success) {
-      setError('Please select a reason');
+      setError("Please select a reason");
       return;
     }
 
     setSubmitting(true);
     setError(null);
 
-    const { error: insertError } = await supabase
-      .from('comment_reports')
-      .insert({
-        comment_id: commentId,
-        user_id: user.id,
-        reason,
-        description: description.trim() || null,
-      });
+    const { error: insertError } = await supabase.from("comment_reports").insert({
+      comment_id: commentId,
+      user_id: user.id,
+      reason,
+      description: description.trim() || null,
+    });
 
     if (insertError) {
-      if (insertError.code === '23505') {
-        setError('You have already reported this comment.');
+      if (insertError.code === "23505") {
+        setError("You have already reported this comment.");
       } else {
-        setError('Failed to submit report. Please try again.');
+        setError("Failed to submit report. Please try again.");
       }
       setSubmitting(false);
       return;
@@ -66,18 +64,13 @@ export function ReportModal({ commentId, onClose, onReported }: ReportModalProps
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={onClose}>
-      <div
-        className="bg-white rounded-lg w-full max-w-md mx-4 overflow-hidden"
-        onClick={(e) => e.stopPropagation()}
-      >
+      <div className="bg-white rounded-lg w-full max-w-md mx-4 overflow-hidden" onClick={(e) => e.stopPropagation()}>
         <div className="p-4 border-b border-gray-200">
           <h2 className="text-lg font-semibold">Report Comment</h2>
         </div>
 
         <form onSubmit={handleSubmit} className="p-4">
-          {error && (
-            <p className="text-red-500 text-sm mb-4">{error}</p>
-          )}
+          {error && <p className="text-red-500 text-sm mb-4">{error}</p>}
 
           <div className="space-y-3 mb-4">
             <p className="text-sm text-gray-600">Why are you reporting this comment?</p>
@@ -96,7 +89,7 @@ export function ReportModal({ commentId, onClose, onReported }: ReportModalProps
             ))}
           </div>
 
-          {reason === 'other' && (
+          {reason === "other" && (
             <textarea
               value={description}
               onChange={(e) => setDescription(e.target.value)}
@@ -120,7 +113,7 @@ export function ReportModal({ commentId, onClose, onReported }: ReportModalProps
               disabled={!reason || submitting}
               className="px-4 py-2 text-sm text-white bg-red-600 hover:bg-red-700 rounded-lg disabled:opacity-50 transition-colors"
             >
-              {submitting ? 'Submitting...' : 'Submit Report'}
+              {submitting ? "Submitting..." : "Submit Report"}
             </button>
           </div>
         </form>

@@ -1,18 +1,9 @@
-const YOUTUBE_API_BASE = 'https://www.googleapis.com/youtube/v3';
+const YOUTUBE_API_BASE = "https://www.googleapis.com/youtube/v3";
 
 // Read API key at call time (not module load time) to support dotenv
 function getApiKey(): string {
-  return process.env.YOUTUBE_API_KEY || '';
+  return process.env.YOUTUBE_API_KEY || "";
 }
-
-type YouTubeSearchResult = {
-  id: { videoId: string };
-  snippet: {
-    title: string;
-    publishedAt: string;
-    thumbnails: { medium: { url: string } };
-  };
-};
 
 type YouTubeVideoStats = {
   id: string;
@@ -29,15 +20,15 @@ type YouTubeVideoStats = {
 function parseDuration(duration: string): number {
   const match = duration.match(/PT(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?/);
   if (!match) return 0;
-  const hours = parseInt(match[1] || '0');
-  const minutes = parseInt(match[2] || '0');
-  const seconds = parseInt(match[3] || '0');
+  const hours = parseInt(match[1] || "0", 10);
+  const minutes = parseInt(match[2] || "0", 10);
+  const seconds = parseInt(match[3] || "0", 10);
   return hours * 3600 + minutes * 60 + seconds;
 }
 
 // Get channel info including uploads playlist ID
 export async function getChannelInfo(handle: string): Promise<{ channelId: string; uploadsPlaylistId: string } | null> {
-  const cleanHandle = handle.replace('@', '');
+  const cleanHandle = handle.replace("@", "");
   const url = `${YOUTUBE_API_BASE}/channels?forHandle=${cleanHandle}&part=id,contentDetails&key=${getApiKey()}`;
 
   const res = await fetch(url);
@@ -62,12 +53,14 @@ export async function getChannelId(handle: string): Promise<string | null> {
 export async function fetchChannelVideos(
   channelId: string,
   maxResults = 200
-): Promise<{
-  videoId: string;
-  title: string;
-  thumbnailUrl: string;
-  publishedAt: string;
-}[]> {
+): Promise<
+  {
+    videoId: string;
+    title: string;
+    thumbnailUrl: string;
+    publishedAt: string;
+  }[]
+> {
   // First get the uploads playlist ID
   const channelUrl = `${YOUTUBE_API_BASE}/channels?id=${channelId}&part=contentDetails&key=${getApiKey()}`;
   const channelRes = await fetch(channelUrl);
@@ -78,7 +71,7 @@ export async function fetchChannelVideos(
 
   // Fetch videos from uploads playlist with pagination
   const videos: { videoId: string; title: string; thumbnailUrl: string; publishedAt: string }[] = [];
-  let pageToken = '';
+  let pageToken = "";
 
   while (videos.length < maxResults) {
     const remaining = maxResults - videos.length;
@@ -98,7 +91,7 @@ export async function fetchChannelVideos(
         videos.push({
           videoId: snippet.resourceId.videoId,
           title: snippet.title,
-          thumbnailUrl: snippet.thumbnails?.medium?.url || snippet.thumbnails?.default?.url || '',
+          thumbnailUrl: snippet.thumbnails?.medium?.url || snippet.thumbnails?.default?.url || "",
           publishedAt: snippet.publishedAt,
         });
       }
@@ -120,7 +113,7 @@ export async function getVideoStats(
   // YouTube API allows max 50 IDs per request
   for (let i = 0; i < videoIds.length; i += 50) {
     const batch = videoIds.slice(i, i + 50);
-    const url = `${YOUTUBE_API_BASE}/videos?id=${batch.join(',')}&part=statistics,contentDetails&key=${getApiKey()}`;
+    const url = `${YOUTUBE_API_BASE}/videos?id=${batch.join(",")}&part=statistics,contentDetails&key=${getApiKey()}`;
 
     const res = await fetch(url);
     const data = await res.json();
@@ -128,8 +121,8 @@ export async function getVideoStats(
     for (const item of data.items || []) {
       const v = item as YouTubeVideoStats;
       stats.set(v.id, {
-        viewCount: parseInt(v.statistics.viewCount || '0'),
-        likeCount: parseInt(v.statistics.likeCount || '0'),
+        viewCount: parseInt(v.statistics.viewCount || "0", 10),
+        likeCount: parseInt(v.statistics.likeCount || "0", 10),
         durationSeconds: parseDuration(v.contentDetails.duration),
       });
     }

@@ -1,6 +1,6 @@
-'use client';
+"use client";
 
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef } from "react";
 
 type YouTubePlayerProps = {
   videoId: string;
@@ -40,10 +40,10 @@ export function YouTubePlayer({ videoId, startTime, endTime, onEnded, onTimeUpda
   useEffect(() => {
     // Load YouTube IFrame API
     if (!window.YT) {
-      const tag = document.createElement('script');
-      tag.src = 'https://www.youtube.com/iframe_api';
-      const firstScriptTag = document.getElementsByTagName('script')[0];
-      if (firstScriptTag && firstScriptTag.parentNode) {
+      const tag = document.createElement("script");
+      tag.src = "https://www.youtube.com/iframe_api";
+      const firstScriptTag = document.getElementsByTagName("script")[0];
+      if (firstScriptTag?.parentNode) {
         firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
       }
     }
@@ -101,10 +101,7 @@ export function YouTubePlayer({ videoId, startTime, endTime, onEnded, onTimeUpda
 
   return (
     <div className="w-full h-full bg-black relative overflow-hidden">
-      <div
-        ref={containerRef}
-        className="absolute inset-0 w-full h-full [&>iframe]:w-full [&>iframe]:h-full"
-      />
+      <div ref={containerRef} className="absolute inset-0 w-full h-full [&>iframe]:w-full [&>iframe]:h-full" />
     </div>
   );
 }

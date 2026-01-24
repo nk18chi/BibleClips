@@ -1,7 +1,7 @@
-import { createServerClient } from '@/lib/supabase/server';
-import { Header } from '@/components/ui/header';
-import { redirect } from 'next/navigation';
-import { AdminClipActions } from './admin-clip-actions';
+import { redirect } from "next/navigation";
+import { Header } from "@/components/ui/header";
+import { createServerClient } from "@/lib/supabase/server";
+import { AdminClipActions } from "./admin-clip-actions";
 
 type PendingClip = {
   id: string;
@@ -32,7 +32,7 @@ async function getPendingClips(): Promise<PendingClip[]> {
   const supabase = createServerClient();
 
   const { data } = await supabase
-    .from('clips')
+    .from("clips")
     .select(`
       id,
       title,
@@ -46,27 +46,23 @@ async function getPendingClips(): Promise<PendingClip[]> {
       clip_verses (book, chapter, verse_start, verse_end),
       clip_categories (categories (name_en))
     `)
-    .eq('status', 'PENDING')
-    .order('created_at', { ascending: true });
+    .eq("status", "PENDING")
+    .order("created_at", { ascending: true });
 
   return (data as PendingClip[]) || [];
 }
 
 async function isAdmin(userId: string): Promise<boolean> {
   const supabase = createServerClient();
-  const { data } = await supabase
-    .from('users')
-    .select('role')
-    .eq('id', userId)
-    .single();
+  const { data } = await supabase.from("users").select("role").eq("id", userId).single();
 
-  return data?.role === 'ADMIN';
+  return data?.role === "ADMIN";
 }
 
-function formatVerseRef(verses: PendingClip['clip_verses']): string {
-  if (!verses || verses.length === 0) return 'No verse';
+function formatVerseRef(verses: PendingClip["clip_verses"]): string {
+  if (!verses || verses.length === 0) return "No verse";
   const v = verses[0];
-  if (!v) return 'No verse';
+  if (!v) return "No verse";
   const verseRange = v.verse_end ? `${v.verse_start}-${v.verse_end}` : `${v.verse_start}`;
   return `${v.book} ${v.chapter}:${verseRange}`;
 }
@@ -74,20 +70,22 @@ function formatVerseRef(verses: PendingClip['clip_verses']): string {
 function formatTime(seconds: number): string {
   const mins = Math.floor(seconds / 60);
   const secs = seconds % 60;
-  return `${mins}:${secs.toString().padStart(2, '0')}`;
+  return `${mins}:${secs.toString().padStart(2, "0")}`;
 }
 
 export default async function AdminPendingPage() {
   const supabase = createServerClient();
-  const { data: { session } } = await supabase.auth.getSession();
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
 
   if (!session) {
-    redirect('/login?redirectTo=/admin/pending');
+    redirect("/login?redirectTo=/admin/pending");
   }
 
   const admin = await isAdmin(session.user.id);
   if (!admin) {
-    redirect('/');
+    redirect("/");
   }
 
   const clips = await getPendingClips();
@@ -99,9 +97,7 @@ export default async function AdminPendingPage() {
       <main className="max-w-6xl mx-auto px-4 py-8">
         <div className="flex items-center justify-between mb-6">
           <h1 className="text-2xl font-bold text-gray-900">Pending Clips</h1>
-          <span className="bg-yellow-100 text-yellow-800 px-3 py-1 rounded-full text-sm">
-            {clips.length} pending
-          </span>
+          <span className="bg-yellow-100 text-yellow-800 px-3 py-1 rounded-full text-sm">{clips.length} pending</span>
         </div>
 
         {clips.length === 0 ? (
@@ -111,10 +107,7 @@ export default async function AdminPendingPage() {
         ) : (
           <div className="space-y-4">
             {clips.map((clip) => (
-              <div
-                key={clip.id}
-                className="bg-white border border-gray-200 rounded-lg p-4"
-              >
+              <div key={clip.id} className="bg-white border border-gray-200 rounded-lg p-4">
                 <div className="flex gap-4">
                   <div className="flex-shrink-0">
                     <img
@@ -129,25 +122,25 @@ export default async function AdminPendingPage() {
 
                   <div className="flex-1">
                     <h3 className="font-semibold text-gray-900">{clip.title}</h3>
-                    <p className="text-sm text-gray-600 mt-1">
-                      {formatVerseRef(clip.clip_verses)}
-                    </p>
+                    <p className="text-sm text-gray-600 mt-1">{formatVerseRef(clip.clip_verses)}</p>
 
                     <div className="flex flex-wrap gap-1 mt-2">
-                      {clip.clip_categories?.map((cc, i) => (
-                        cc.categories?.[0] && (
-                          <span
-                            key={i}
-                            className="px-2 py-0.5 bg-gray-100 text-gray-600 text-xs rounded"
-                          >
-                            {cc.categories[0].name_en}
-                          </span>
-                        )
-                      ))}
+                      {clip.clip_categories?.map(
+                        (cc) =>
+                          cc.categories?.[0] && (
+                            <span
+                              key={cc.categories[0].name_en}
+                              className="px-2 py-0.5 bg-gray-100 text-gray-600 text-xs rounded"
+                            >
+                              {cc.categories[0].name_en}
+                            </span>
+                          )
+                      )}
                     </div>
 
                     <div className="mt-3 text-xs text-gray-500">
-                      Submitted by: {clip.users?.[0]?.display_name || 'Unknown'} • {new Date(clip.created_at).toLocaleDateString()}
+                      Submitted by: {clip.users?.[0]?.display_name || "Unknown"} •{" "}
+                      {new Date(clip.created_at).toLocaleDateString()}
                     </div>
 
                     <div className="mt-3 flex gap-2">
