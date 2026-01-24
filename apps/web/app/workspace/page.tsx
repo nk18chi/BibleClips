@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter, useSearchParams } from "next/navigation";
-import { useCallback, useEffect, useState } from "react";
+import { Suspense, useCallback, useEffect, useState } from "react";
 import { useSupabase } from "@/components/providers/supabase-provider";
 import { Header } from "@/components/ui/header";
 import { ClipForm } from "@/components/workspace/clip-form";
@@ -11,7 +11,7 @@ import { WorkspacePlayer } from "@/components/workspace/workspace-player";
 import type { ClipWithVerse, WorkQueueVideo, YouTubeChannel } from "@/types/workspace";
 import { getChannels, getQueueVideos, getVideoClips, updateVideoStatus, type VideoStatus } from "./actions";
 
-export default function WorkspacePage() {
+function WorkspaceContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { user, userRole, isAdmin, canAccessWorkspace, loading: authLoading } = useSupabase();
@@ -213,5 +213,22 @@ export default function WorkspacePage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function WorkspacePage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen bg-gray-100">
+          <Header />
+          <div className="flex items-center justify-center h-[calc(100vh-64px)]">
+            <div className="text-gray-500">Loading workspace...</div>
+          </div>
+        </div>
+      }
+    >
+      <WorkspaceContent />
+    </Suspense>
   );
 }
