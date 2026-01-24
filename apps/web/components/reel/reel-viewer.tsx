@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useEffect, useRef } from "react";
+import { useState, useEffect, useRef } from "react";
 import { YouTubePlayer } from "./youtube-player";
 import { ActionButtons } from "./action-buttons";
 import { VerseModal } from "./verse-modal";
