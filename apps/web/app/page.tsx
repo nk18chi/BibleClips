@@ -3,8 +3,8 @@ import Link from "next/link";
 import { ReelViewer } from "@/components/reel/reel-viewer";
 import { Header } from "@/components/ui/header";
 
-// Force dynamic rendering - this page fetches from database
-export const dynamic = "force-dynamic";
+// Revalidate every 60 seconds - balances freshness with performance
+export const revalidate = 60;
 
 // Use service role to bypass RLS issues
 function createAdminClient() {
