@@ -3,6 +3,9 @@ import Link from "next/link";
 import { ReelViewer } from "@/components/reel/reel-viewer";
 import { Header } from "@/components/ui/header";
 
+// Force dynamic rendering - this page fetches from database
+export const dynamic = "force-dynamic";
+
 // Use service role to bypass RLS issues
 function createAdminClient() {
   return createClient(process.env.NEXT_PUBLIC_SUPABASE_URL ?? "", process.env.SUPABASE_SECRET_KEY ?? "");
@@ -72,7 +75,7 @@ type Clip = {
 async function getApprovedClips(userId?: string): Promise<Clip[]> {
   const supabase = createAdminClient();
 
-  const { data } = await supabase
+  const { data, error } = await supabase
     .from("clips")
     .select(`
       id,
@@ -90,6 +93,10 @@ async function getApprovedClips(userId?: string): Promise<Clip[]> {
     .eq("status", "APPROVED")
     .order("created_at", { ascending: false })
     .limit(50);
+
+  if (error) {
+    console.error("Failed to fetch clips:", error.message);
+  }
 
   const clips = (data || []) as unknown as (ClipFromDb & {
     language: string | null;
