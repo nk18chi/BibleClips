@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useLanguage } from "@/components/providers/language-provider";
+import { useStyle } from "@/components/providers/style-provider";
 
 type WordTiming = {
   word: string;
@@ -98,6 +99,7 @@ export function SubtitleOverlay({
   videoLanguage = "en",
 }: SubtitleOverlayProps) {
   const { language: userLanguage } = useLanguage();
+  const { style } = useStyle();
   const [activeSentenceIndex, setActiveSentenceIndex] = useState<number>(-1);
   const [activeWordIndex, setActiveWordIndex] = useState<number>(-1);
   const [activeTranslation, setActiveTranslation] = useState<string | null>(null);
@@ -176,12 +178,18 @@ export function SubtitleOverlay({
         {currentSentence.words.map((wordObj, index) => (
           <span
             key={index}
-            className={`font-bold text-4xl uppercase tracking-wide transition-all duration-75 ${
-              index === activeWordIndex ? "text-yellow-400" : "text-white"
-            }`}
             style={{
-              textShadow: "3px 3px 6px rgba(0,0,0,0.9)",
+              fontWeight: style.subtitle.fontWeight,
+              fontSize: style.subtitle.fontSize,
+              textTransform: style.subtitle.textTransform,
+              letterSpacing: style.subtitle.letterSpacing,
+              color: index === activeWordIndex ? style.subtitle.activeColor : style.subtitle.color,
+              textShadow: style.subtitle.textShadow,
+              backgroundColor: style.subtitle.backgroundColor,
+              padding: style.subtitle.padding,
+              borderRadius: style.subtitle.borderRadius,
               transform: index === activeWordIndex ? "scale(1.15)" : "scale(1)",
+              transition: "all 75ms",
             }}
           >
             {wordObj.word}
@@ -191,7 +199,14 @@ export function SubtitleOverlay({
 
       {/* Translation in parentheses */}
       {translatedSentence && (
-        <div className="mt-2 text-white/80 text-xl" style={{ textShadow: "2px 2px 4px rgba(0,0,0,0.9)" }}>
+        <div
+          style={{
+            color: style.translation.color,
+            fontSize: style.translation.fontSize,
+            textShadow: style.translation.textShadow,
+            marginTop: "0.5rem",
+          }}
+        >
           ({translatedSentence})
         </div>
       )}
