@@ -15,6 +15,7 @@ export function Header() {
   const [searchQuery, setSearchQuery] = useState("");
   const [showSearch, setShowSearch] = useState(false);
   const [showLanguageMenu, setShowLanguageMenu] = useState(false);
+  const [showMobileMenu, setShowMobileMenu] = useState(false);
 
   const handleSignOut = async () => {
     await supabase.auth.signOut();
@@ -41,7 +42,7 @@ export function Header() {
   };
 
   return (
-    <header className="sticky top-0 z-50 bg-white border-b border-gray-200">
+    <header className="sticky top-0 z-50 bg-white border-b border-gray-200 relative">
       <div className="max-w-7xl mx-auto px-4 h-14 flex items-center justify-between">
         <Link href="/" className="flex items-center gap-2 text-xl font-bold text-blue-600">
           <svg width="32" height="32" viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg" className="rounded-lg">
@@ -172,6 +173,16 @@ export function Header() {
               <Link href="/my-clips" className="text-sm text-gray-600 hover:text-gray-900 hidden sm:block">
                 {t("header.myClips")}
               </Link>
+              {/* Mobile menu button - only show when user is logged in */}
+              <button
+                onClick={() => setShowMobileMenu(!showMobileMenu)}
+                className="p-2 text-gray-600 hover:text-gray-900 sm:hidden"
+                aria-label="Menu"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                </svg>
+              </button>
               <button onClick={handleSignOut} className="text-sm text-gray-600 hover:text-gray-900 hidden sm:block">
                 {t("header.signOut")}
               </button>
@@ -183,6 +194,50 @@ export function Header() {
           )}
         </div>
       </div>
+      {/* Mobile menu dropdown */}
+      {showMobileMenu && user && (
+        <>
+          <div className="fixed inset-0 z-40 sm:hidden" onClick={() => setShowMobileMenu(false)} />
+          <div className="absolute top-full left-0 right-0 bg-white border-b border-gray-200 shadow-lg z-50 sm:hidden">
+            <div className="px-4 py-3 space-y-3">
+              {canAccessWorkspace && (
+                <Link
+                  href="/workspace"
+                  className="block text-sm text-gray-700 hover:text-gray-900"
+                  onClick={() => setShowMobileMenu(false)}
+                >
+                  {t("header.workspace")}
+                </Link>
+              )}
+              {isAdmin && (
+                <Link
+                  href="/admin/pending"
+                  className="block text-sm text-gray-700 hover:text-gray-900"
+                  onClick={() => setShowMobileMenu(false)}
+                >
+                  {t("header.admin")}
+                </Link>
+              )}
+              <Link
+                href="/my-clips"
+                className="block text-sm text-gray-700 hover:text-gray-900"
+                onClick={() => setShowMobileMenu(false)}
+              >
+                {t("header.myClips")}
+              </Link>
+              <button
+                onClick={() => {
+                  handleSignOut();
+                  setShowMobileMenu(false);
+                }}
+                className="block w-full text-left text-sm text-gray-700 hover:text-gray-900"
+              >
+                {t("header.signOut")}
+              </button>
+            </div>
+          </div>
+        </>
+      )}
     </header>
   );
 }
