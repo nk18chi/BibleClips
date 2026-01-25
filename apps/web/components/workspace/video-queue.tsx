@@ -88,13 +88,13 @@ export function VideoQueue({
             <button
               key={video.id}
               onClick={() => onSelectVideo(video)}
-              className={`w-full p-3 border-b hover:bg-gray-50 text-left transition-colors ${
+              className={`w-full p-4 md:p-3 border-b hover:bg-gray-50 text-left transition-colors ${
                 selectedVideoId === video.youtube_video_id ? "bg-blue-50 border-l-4 border-l-blue-500" : ""
               }`}
             >
               <div className="flex gap-3">
                 {video.thumbnail_url && (
-                  <img src={video.thumbnail_url} alt="" className="w-24 h-14 object-cover rounded" />
+                  <img src={video.thumbnail_url} alt="" className="w-20 md:w-24 h-12 md:h-14 object-cover rounded" />
                 )}
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-medium text-gray-900 line-clamp-2">{video.title}</p>
