@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
 import { LanguageProvider } from "@/components/providers/language-provider";
+import { StyleProvider } from "@/components/providers/style-provider";
 import { SupabaseProvider } from "@/components/providers/supabase-provider";
 
 const inter = Inter({ subsets: ["latin"] });
@@ -20,7 +21,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="en">
       <body className={inter.className}>
         <SupabaseProvider>
-          <LanguageProvider>{children}</LanguageProvider>
+          <LanguageProvider>
+            <StyleProvider>{children}</StyleProvider>
+          </LanguageProvider>
         </SupabaseProvider>
       </body>
     </html>
