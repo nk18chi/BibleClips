@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { CommentSection } from "@/components/comment/comment-section";
 import { useLanguage } from "@/components/providers/language-provider";
+import { useStyle } from "@/components/providers/style-provider";
 import { Header } from "@/components/ui/header";
 import { ActionButtons } from "./action-buttons";
 import { SubtitleOverlay } from "./subtitle-overlay";
@@ -72,6 +73,7 @@ function ReelCard({
 }) {
   const [currentTime, setCurrentTime] = useState(0);
   const { language } = useLanguage();
+  const { style } = useStyle();
 
   const verse = clip.clip_verses[0];
 
@@ -102,7 +104,16 @@ function ReelCard({
             href={bibleGatewayUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="bg-white text-black text-2xl sm:text-4xl font-semibold px-5 sm:px-8 py-2 sm:py-4 rounded-full shadow-lg hover:bg-gray-100 transition-colors"
+            style={{
+              background: style.verse.background,
+              color: style.verse.textColor,
+              fontSize: style.verse.fontSize,
+              fontWeight: style.verse.fontWeight,
+              padding: style.verse.padding,
+              borderRadius: style.verse.borderRadius,
+              boxShadow: style.verse.boxShadow,
+            }}
+            className="hover:opacity-90 transition-opacity"
           >
             {verseRef}
           </a>
