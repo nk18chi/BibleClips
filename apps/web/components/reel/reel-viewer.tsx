@@ -5,6 +5,7 @@ import { useEffect, useRef, useState } from "react";
 import { CommentSection } from "@/components/comment/comment-section";
 import { useLanguage } from "@/components/providers/language-provider";
 import { useStyle } from "@/components/providers/style-provider";
+import { StylePickerModal } from "@/components/style-picker/style-picker-modal";
 import { Header } from "@/components/ui/header";
 import { ActionButtons } from "./action-buttons";
 import { SubtitleOverlay } from "./subtitle-overlay";
@@ -63,6 +64,7 @@ function ReelCard({
   total,
   onVerseClick,
   onCommentClick,
+  onStyleClick,
 }: {
   clip: Clip;
   isActive: boolean;
@@ -70,6 +72,7 @@ function ReelCard({
   total: number;
   onVerseClick: () => void;
   onCommentClick: () => void;
+  onStyleClick: () => void;
 }) {
   const [currentTime, setCurrentTime] = useState(0);
   const { language } = useLanguage();
@@ -179,6 +182,7 @@ function ReelCard({
           hasVoted={clip.has_voted}
           onVerseClick={onVerseClick}
           onCommentClick={onCommentClick}
+          onStyleClick={onStyleClick}
         />
       </div>
     </div>
@@ -189,6 +193,7 @@ export function ReelViewer({ clips, initialIndex = 0, showHeader = false }: Reel
   const [currentIndex, setCurrentIndex] = useState(initialIndex);
   const [showVerseModal, setShowVerseModal] = useState(false);
   const [showCommentSection, setShowCommentSection] = useState(false);
+  const [showStylePicker, setShowStylePicker] = useState(false);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const isScrollingRef = useRef(false);
 
@@ -269,6 +274,7 @@ export function ReelViewer({ clips, initialIndex = 0, showHeader = false }: Reel
                 total={clips.length}
                 onVerseClick={() => setShowVerseModal(true)}
                 onCommentClick={() => setShowCommentSection(true)}
+                onStyleClick={() => setShowStylePicker(true)}
               />
             </div>
           ))}
@@ -285,6 +291,7 @@ export function ReelViewer({ clips, initialIndex = 0, showHeader = false }: Reel
             hasVoted={currentClip.has_voted}
             onVerseClick={() => setShowVerseModal(true)}
             onCommentClick={() => setShowCommentSection(true)}
+            onStyleClick={() => setShowStylePicker(true)}
           />
         </div>
       </div>
@@ -303,6 +310,11 @@ export function ReelViewer({ clips, initialIndex = 0, showHeader = false }: Reel
       {/* Comment Section */}
       {showCommentSection && currentClip && (
         <CommentSection clipId={currentClip.id} onClose={() => setShowCommentSection(false)} />
+      )}
+
+      {/* Style Picker Modal */}
+      {showStylePicker && (
+        <StylePickerModal onClose={() => setShowStylePicker(false)} />
       )}
 
       {/* Hide scrollbar */}
