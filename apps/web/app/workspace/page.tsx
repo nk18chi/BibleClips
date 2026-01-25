@@ -25,6 +25,7 @@ function WorkspaceContent() {
   const [loading, setLoading] = useState(true);
   const [filterChannelId, setFilterChannelId] = useState<string | null>(null);
   const [filterStatus, setFilterStatus] = useState<VideoStatus>("pending");
+  const [showMobileQueue, setShowMobileQueue] = useState(!searchParams.get("id"));
 
   // Redirect if not authenticated
   useEffect(() => {
@@ -91,8 +92,10 @@ function WorkspaceContent() {
     (video: WorkQueueVideo | null) => {
       setSelectedVideo(video);
       if (video) {
+        setShowMobileQueue(false);
         router.replace(`/workspace?id=${video.youtube_video_id}`, { scroll: false });
       } else {
+        setShowMobileQueue(true);
         router.replace("/workspace", { scroll: false });
       }
     },
@@ -153,9 +156,13 @@ function WorkspaceContent() {
     <div className="min-h-screen bg-gray-100">
       <Header />
 
-      <div className="flex h-[calc(100vh-64px)]">
+      <div className="flex flex-col md:flex-row h-[calc(100vh-64px)]">
         {/* Left Panel - Video Queue */}
-        <div className="w-80 bg-white border-r flex-shrink-0">
+        <div className={`
+          ${selectedVideo && !showMobileQueue ? 'hidden md:block' : 'block'}
+          w-full md:w-80 bg-white border-r flex-shrink-0
+          ${!selectedVideo ? 'flex-1 md:flex-initial' : ''}
+        `}>
           <VideoQueue
             videos={videos}
             channels={channels}
@@ -168,9 +175,23 @@ function WorkspaceContent() {
         </div>
 
         {/* Right Panel - Player & Form */}
-        <div className="flex-1 overflow-y-auto p-6">
+        <div className={`
+          ${showMobileQueue && !selectedVideo ? 'hidden md:block' : 'block'}
+          flex-1 overflow-y-auto p-4 md:p-6
+        `}>
           {selectedVideo ? (
-            <div className="max-w-4xl mx-auto space-y-6">
+            <>
+              {/* Mobile back button */}
+              <button
+                onClick={() => setShowMobileQueue(true)}
+                className="md:hidden flex items-center gap-2 text-sm text-gray-600 mb-4"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                </svg>
+                Back to Queue
+              </button>
+              <div className="max-w-4xl mx-auto space-y-6">
               {/* Video Title */}
               <h2 className="text-xl font-semibold text-gray-900 line-clamp-2">{selectedVideo.title}</h2>
 
@@ -205,6 +226,7 @@ function WorkspaceContent() {
                 </button>
               </div>
             </div>
+            </>
           ) : (
             <div className="flex items-center justify-center h-full text-gray-500">
               Select a video from the queue to start creating clips
