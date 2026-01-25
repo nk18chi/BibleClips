@@ -122,14 +122,14 @@ export function WorkspacePlayer({ videoId, onTimeCapture }: WorkspacePlayerProps
       </div>
 
       {/* Time controls */}
-      <div className="flex items-center justify-between bg-gray-100 rounded-lg p-3">
+      <div className="flex flex-col sm:flex-row items-center justify-between gap-3 bg-gray-100 rounded-lg p-3">
         <div className="text-lg font-mono">{formatTime(currentTime)}</div>
-        <div className="flex gap-2">
+        <div className="flex gap-2 w-full sm:w-auto">
           <button
             type="button"
             onClick={handleSetStart}
             disabled={!isReady}
-            className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 text-sm font-medium"
+            className="flex-1 sm:flex-initial px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 text-sm font-medium"
           >
             Set Start (S)
           </button>
@@ -137,7 +137,7 @@ export function WorkspacePlayer({ videoId, onTimeCapture }: WorkspacePlayerProps
             type="button"
             onClick={handleSetEnd}
             disabled={!isReady}
-            className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50 text-sm font-medium"
+            className="flex-1 sm:flex-initial px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50 text-sm font-medium"
           >
             Set End (E)
           </button>

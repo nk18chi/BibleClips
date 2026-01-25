@@ -8,7 +8,7 @@ import { useSupabase } from "@/components/providers/supabase-provider";
 import { useUserProfile } from "@/hooks/use-user-profile";
 
 export function Header() {
-  const { supabase, user } = useSupabase();
+  const { supabase, user, canAccessWorkspace } = useSupabase();
   const { isAdmin } = useUserProfile();
   const { language, setLanguage, t } = useLanguage();
   const router = useRouter();
@@ -157,6 +157,11 @@ export function Header() {
               {isAdmin && (
                 <Link href="/admin/pending" className="text-sm text-gray-600 hover:text-gray-900 hidden sm:block">
                   {t("header.admin")}
+                </Link>
+              )}
+              {canAccessWorkspace && (
+                <Link href="/workspace" className="text-sm text-gray-600 hover:text-gray-900 hidden sm:block">
+                  {t("header.workspace")}
                 </Link>
               )}
               <Link href="/submit" className="p-2 text-gray-600 hover:text-gray-900" aria-label="Submit clip">
