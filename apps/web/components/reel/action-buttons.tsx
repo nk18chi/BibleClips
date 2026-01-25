@@ -10,6 +10,7 @@ type ActionButtonsProps = {
   hasVoted: boolean;
   onVerseClick: () => void;
   onCommentClick: () => void;
+  onStyleClick?: () => void;
 };
 
 // Simple SVG icons (Instagram-style outlines)
@@ -54,6 +55,14 @@ const CommentIcon = () => (
   </svg>
 );
 
+const StyleIcon = () => (
+  <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+    <path d="M12 2L2 7l10 5 10-5-10-5z" />
+    <path d="M2 17l10 5 10-5" />
+    <path d="M2 12l10 5 10-5" />
+  </svg>
+);
+
 export function ActionButtons({
   clipId,
   youtubeVideoId,
@@ -61,6 +70,7 @@ export function ActionButtons({
   hasVoted: initialHasVoted,
   onVerseClick,
   onCommentClick,
+  onStyleClick,
 }: ActionButtonsProps) {
   const { supabase, user } = useSupabase();
   const [voteCount, setVoteCount] = useState(initialVoteCount);
@@ -122,6 +132,17 @@ export function ActionButtons({
       >
         <CommentIcon />
       </button>
+
+      {/* Style */}
+      {onStyleClick && (
+        <button
+          type="button"
+          onClick={onStyleClick}
+          className="flex flex-col items-center text-gray-700 hover:scale-110 transition-transform"
+        >
+          <StyleIcon />
+        </button>
+      )}
 
       {/* Share */}
       <button
