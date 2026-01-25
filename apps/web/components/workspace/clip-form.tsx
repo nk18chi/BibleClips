@@ -176,7 +176,7 @@ export function ClipForm({ youtubeVideoId, startTime, endTime, onSaved, categori
       {error && <div className="text-sm text-red-600 bg-red-50 p-2 rounded">{error}</div>}
 
       {/* Time display */}
-      <div className="flex gap-4 text-sm">
+      <div className="flex flex-wrap gap-2 md:gap-4 text-sm">
         <div>
           <span className="text-gray-500">Start:</span>{" "}
           <span className="font-mono font-medium">{formatTime(startTime)}</span>
@@ -201,7 +201,7 @@ export function ClipForm({ youtubeVideoId, startTime, endTime, onSaved, categori
       />
 
       {/* Verse reference */}
-      <div className="grid grid-cols-4 gap-2">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
         <select
           value={book}
           onChange={(e) => setBook(e.target.value)}
