@@ -23,6 +23,11 @@ export async function transcribeClipWithWhisper(
   startTime: number,
   endTime: number
 ): Promise<WordTiming[]> {
+  // Transcription only works locally
+  if (process.env.NODE_ENV === "production" || process.env.VERCEL) {
+    throw new Error("Transcription is only available in local development");
+  }
+
   const openaiApiKey = process.env.OPENAI_API_KEY;
   if (!openaiApiKey) {
     throw new Error("OPENAI_API_KEY is not configured");

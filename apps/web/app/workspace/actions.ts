@@ -451,6 +451,11 @@ Split into 5-12 word chunks. Return JSON with "chunks" array:
 }
 
 export async function generateClipSubtitles(clipId: string): Promise<{ wordCount: number }> {
+  // Subtitle generation only works locally
+  if (process.env.NODE_ENV === "production" || process.env.VERCEL) {
+    throw new Error("Subtitle generation is only available in local development");
+  }
+
   const { userId } = await requireWorkspaceAccess();
   await checkRateLimit(userId, "generateSubtitles");
   const supabase = createAdminClient();
