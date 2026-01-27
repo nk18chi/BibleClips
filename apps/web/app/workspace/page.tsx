@@ -9,7 +9,7 @@ import { ClipHistory } from "@/components/workspace/clip-history";
 import { VideoQueue } from "@/components/workspace/video-queue";
 import { WorkspacePlayer } from "@/components/workspace/workspace-player";
 import type { ClipWithVerse, WorkQueueVideo, YouTubeChannel } from "@/types/workspace";
-import { getChannels, getQueueVideos, getVideoClips, updateVideoStatus, type VideoStatus } from "./actions";
+import { getVideoClips, updateVideoStatus, type VideoStatus } from "./actions";
 
 function WorkspaceContent() {
   const router = useRouter();
@@ -50,14 +50,21 @@ function WorkspaceContent() {
 
     async function loadData() {
       try {
-        const [videosData, channelsData] = await Promise.all([getQueueVideos(), getChannels()]);
-        setVideos(videosData);
-        setChannels(channelsData);
+        const [videosRes, channelsRes, catsRes] = await Promise.all([
+          fetch("/api/workspace/videos"),
+          fetch("/api/workspace/channels"),
+          fetch("/api/categories"),
+        ]);
 
-        // Load categories from API
-        const res = await fetch("/api/categories");
-        const cats = await res.json();
-        setCategories(cats);
+        if (videosRes.ok) {
+          setVideos(await videosRes.json());
+        }
+        if (channelsRes.ok) {
+          setChannels(await channelsRes.json());
+        }
+        if (catsRes.ok) {
+          setCategories(await catsRes.json());
+        }
       } catch (err) {
         console.error("Failed to load data:", err);
       } finally {
@@ -105,8 +112,12 @@ function WorkspaceContent() {
   const handleFilterChange = async (channelId: string | null, status: VideoStatus) => {
     setFilterChannelId(channelId);
     setFilterStatus(status);
-    const videosData = await getQueueVideos(channelId || undefined, status);
-    setVideos(videosData);
+    const params = new URLSearchParams({ status });
+    if (channelId) params.set("channelId", channelId);
+    const res = await fetch(`/api/workspace/videos?${params}`);
+    if (res.ok) {
+      setVideos(await res.json());
+    }
   };
 
   const handleTimeCapture = useCallback((type: "start" | "end", time: number) => {
@@ -122,8 +133,12 @@ function WorkspaceContent() {
       const clips = await getVideoClips(selectedVideo.youtube_video_id);
       setVideoClips(clips);
       // Refresh video list to update clips_created count
-      const videosData = await getQueueVideos(filterChannelId || undefined, filterStatus);
-      setVideos(videosData);
+      const params = new URLSearchParams({ status: filterStatus });
+      if (filterChannelId) params.set("channelId", filterChannelId);
+      const res = await fetch(`/api/workspace/videos?${params}`);
+      if (res.ok) {
+        setVideos(await res.json());
+      }
     }
   };
 
@@ -136,8 +151,12 @@ function WorkspaceContent() {
     router.replace("/workspace", { scroll: false });
 
     // Refresh video list
-    const videosData = await getQueueVideos(filterChannelId || undefined, filterStatus);
-    setVideos(videosData);
+    const params = new URLSearchParams({ status: filterStatus });
+    if (filterChannelId) params.set("channelId", filterChannelId);
+    const res = await fetch(`/api/workspace/videos?${params}`);
+    if (res.ok) {
+      setVideos(await res.json());
+    }
   };
 
   // Show loading while auth is checking or data is loading
