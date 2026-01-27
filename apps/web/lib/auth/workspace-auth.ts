@@ -22,16 +22,15 @@ export async function requireWorkspaceAccess(): Promise<AuthResult> {
     error: authError,
   } = await supabase.auth.getUser();
 
+  console.log("user", user);
+  console.log("authError", authError);
+
   if (authError || !user) {
     throw new Error("Unauthorized: Please log in");
   }
 
   // Get user role from database
-  const { data: profile, error: profileError } = await supabase
-    .from("users")
-    .select("role")
-    .eq("id", user.id)
-    .single();
+  const { data: profile, error: profileError } = await supabase.from("users").select("role").eq("id", user.id).single();
 
   if (profileError || !profile) {
     throw new Error("Unauthorized: User profile not found");
