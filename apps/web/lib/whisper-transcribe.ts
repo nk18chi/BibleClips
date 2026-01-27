@@ -1,3 +1,12 @@
+import { exec } from "child_process";
+import { promisify } from "util";
+import { unlink, readFile } from "fs/promises";
+import { tmpdir } from "os";
+import { join } from "path";
+import OpenAI from "openai";
+
+const execAsync = promisify(exec);
+
 export type WordTiming = {
   word: string;
   start: number;
@@ -5,7 +14,8 @@ export type WordTiming = {
 };
 
 /**
- * Transcribes YouTube audio using Cloud Run Whisper API.
+ * Transcribes YouTube audio using yt-dlp + OpenAI Whisper.
+ * Runs locally with browser cookies for YouTube authentication.
  * Returns word-level timestamps.
  */
 export async function transcribeClipWithWhisper(
@@ -13,35 +23,60 @@ export async function transcribeClipWithWhisper(
   startTime: number,
   endTime: number
 ): Promise<WordTiming[]> {
-  const apiUrl = process.env.WHISPER_API_URL;
-  const apiKey = process.env.WHISPER_API_KEY;
-
-  if (!apiUrl) {
-    throw new Error("WHISPER_API_URL is not configured");
+  const openaiApiKey = process.env.OPENAI_API_KEY;
+  if (!openaiApiKey) {
+    throw new Error("OPENAI_API_KEY is not configured");
   }
 
-  console.log(`Calling Whisper API for ${videoId} (${startTime}-${endTime})...`);
+  const duration = endTime - startTime;
+  const audioPath = join(tmpdir(), `${videoId}_${Date.now()}.mp3`);
 
-  const response = await fetch(`${apiUrl}/transcribe`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      ...(apiKey && { Authorization: `Bearer ${apiKey}` }),
-    },
-    body: JSON.stringify({
-      video_id: videoId,
-      start: startTime,
-      end: endTime,
-    }),
-  });
+  try {
+    // Download audio with yt-dlp using browser cookies
+    console.log(`Downloading audio for ${videoId} (${startTime}-${endTime})...`);
 
-  if (!response.ok) {
-    const error = await response.text();
-    throw new Error(`Whisper API failed: ${response.status} - ${error}`);
+    const ytdlpCmd = [
+      "yt-dlp",
+      "-x",
+      "--audio-format mp3",
+      `--postprocessor-args "ffmpeg:-ss ${startTime.toFixed(2)} -t ${duration.toFixed(2)}"`,
+      "-o", `"${audioPath}"`,
+      "--cookies-from-browser chrome",
+      `"https://www.youtube.com/watch?v=${videoId}"`,
+    ].join(" ");
+
+    await execAsync(ytdlpCmd, { timeout: 120000 });
+
+    // Transcribe with OpenAI Whisper
+    console.log("Transcribing with Whisper...");
+
+    const openai = new OpenAI({ apiKey: openaiApiKey });
+    const audioFile = await readFile(audioPath);
+
+    const response = await openai.audio.transcriptions.create({
+      file: new File([audioFile], "audio.mp3", { type: "audio/mpeg" }),
+      model: "whisper-1",
+      response_format: "verbose_json",
+      timestamp_granularities: ["word"],
+    });
+
+    // Adjust timestamps relative to clip start time
+    const words: WordTiming[] = (response.words ?? []).map((w) => ({
+      word: w.word,
+      start: startTime + w.start,
+      end: startTime + w.end,
+    }));
+
+    console.log(`Transcribed ${words.length} words`);
+    return words;
+  } finally {
+    // Cleanup temp file
+    try {
+      await unlink(audioPath);
+    } catch {
+      // Ignore cleanup errors
+    }
   }
-
-  const data = await response.json();
-  return data.words as WordTiming[];
 }
 
 /**
