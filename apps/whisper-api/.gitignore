@@ -5,3 +5,6 @@ whisper-api
 # Test files
 *.mp3
 *.wav
+
+# Cookies (sensitive - do not commit)
+cookies.txt

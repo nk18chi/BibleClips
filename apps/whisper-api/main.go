@@ -106,8 +106,14 @@ func transcribe(videoID string, start, end float64) ([]WordTiming, error) {
 		"--audio-format", "mp3",
 		"--postprocessor-args", fmt.Sprintf("ffmpeg:-ss %.2f -t %.2f", start, duration),
 		"-o", audioPath,
-		fmt.Sprintf("https://www.youtube.com/watch?v=%s", videoID),
 	}
+
+	// Use cookies if available (to bypass bot detection)
+	if _, err := os.Stat("cookies.txt"); err == nil {
+		ytdlpArgs = append(ytdlpArgs, "--cookies", "cookies.txt")
+	}
+
+	ytdlpArgs = append(ytdlpArgs, fmt.Sprintf("https://www.youtube.com/watch?v=%s", videoID))
 
 	log.Printf("Downloading audio for %s (%.2f - %.2f)...", videoID, start, end)
 	ctx, cancel := context.WithTimeout(context.Background(), 120*time.Second)
