@@ -51,8 +51,8 @@ function WorkspaceContent() {
     async function loadData() {
       try {
         const [videosRes, channelsRes, catsRes] = await Promise.all([
-          fetch("/api/workspace/videos"),
-          fetch("/api/workspace/channels"),
+          fetch("/api/workspace/videos", { credentials: "include" }),
+          fetch("/api/workspace/channels", { credentials: "include" }),
           fetch("/api/categories"),
         ]);
 
@@ -114,7 +114,7 @@ function WorkspaceContent() {
     setFilterStatus(status);
     const params = new URLSearchParams({ status });
     if (channelId) params.set("channelId", channelId);
-    const res = await fetch(`/api/workspace/videos?${params}`);
+    const res = await fetch(`/api/workspace/videos?${params}`, { credentials: "include" });
     if (res.ok) {
       setVideos(await res.json());
     }
@@ -135,7 +135,7 @@ function WorkspaceContent() {
       // Refresh video list to update clips_created count
       const params = new URLSearchParams({ status: filterStatus });
       if (filterChannelId) params.set("channelId", filterChannelId);
-      const res = await fetch(`/api/workspace/videos?${params}`);
+      const res = await fetch(`/api/workspace/videos?${params}`, { credentials: "include" });
       if (res.ok) {
         setVideos(await res.json());
       }
@@ -153,7 +153,7 @@ function WorkspaceContent() {
     // Refresh video list
     const params = new URLSearchParams({ status: filterStatus });
     if (filterChannelId) params.set("channelId", filterChannelId);
-    const res = await fetch(`/api/workspace/videos?${params}`);
+    const res = await fetch(`/api/workspace/videos?${params}`, { credentials: "include" });
     if (res.ok) {
       setVideos(await res.json());
     }

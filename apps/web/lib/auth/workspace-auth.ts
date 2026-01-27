@@ -22,9 +22,6 @@ export async function requireWorkspaceAccess(): Promise<AuthResult> {
     error: authError,
   } = await supabase.auth.getUser();
 
-  console.log("user", user);
-  console.log("authError", authError);
-
   if (authError || !user) {
     throw new Error("Unauthorized: Please log in");
   }

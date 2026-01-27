@@ -1,5 +1,5 @@
 import { createClient } from "@supabase/supabase-js";
-import { createServerClient } from "@/lib/supabase/server";
+import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
 
 function createAdminClient() {
@@ -9,23 +9,44 @@ function createAdminClient() {
   );
 }
 
+// Workaround: Extract access token from cookie and create authenticated client
+function getAuthFromCookie() {
+  const cookieStore = cookies();
+  const allCookies = cookieStore.getAll();
+
+  // Find the auth token cookie (format: sb-<project-ref>-auth-token)
+  const authCookie = allCookies.find((c) => c.name.includes("auth-token") && !c.name.includes("code-verifier"));
+
+  if (!authCookie) {
+    return null;
+  }
+
+  try {
+    const session = JSON.parse(authCookie.value);
+    return {
+      accessToken: session.access_token,
+      user: session.user,
+    };
+  } catch {
+    return null;
+  }
+}
+
 export async function GET() {
-  const supabase = createServerClient();
+  // Workaround for Supabase SSR bug - manually extract auth from cookie
+  const auth = getAuthFromCookie();
 
-  const {
-    data: { user },
-    error: authError,
-  } = await supabase.auth.getUser();
-
-  if (authError || !user) {
+  if (!auth) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  // Check role
-  const { data: profile } = await supabase
+  const adminSupabase = createAdminClient();
+
+  // Check role using admin client
+  const { data: profile } = await adminSupabase
     .from("users")
     .select("role")
-    .eq("id", user.id)
+    .eq("id", auth.user.id)
     .single();
 
   const role = profile?.role || "USER";
@@ -33,7 +54,6 @@ export async function GET() {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
-  const adminSupabase = createAdminClient();
   const { data, error } = await adminSupabase
     .from("youtube_channels")
     .select("*")
