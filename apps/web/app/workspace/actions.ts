@@ -3,6 +3,8 @@
 import { createClient } from "@supabase/supabase-js";
 import { revalidatePath } from "next/cache";
 import OpenAI from "openai";
+import { checkRateLimit } from "@/lib/auth/rate-limit";
+import { requireWorkspaceAccess } from "@/lib/auth/workspace-auth";
 import { transcribeClipWithWhisper, type WordTiming } from "@/lib/whisper-transcribe";
 import type { ClipWithVerse, SaveClipInput, WorkQueueVideo } from "@/types/workspace";
 
@@ -83,6 +85,7 @@ const BOOK_JA_MAP: Record<string, string> = {
 export type VideoStatus = "pending" | "completed" | "skipped";
 
 export async function getQueueVideos(channelId?: string, status: VideoStatus = "pending"): Promise<WorkQueueVideo[]> {
+  await requireWorkspaceAccess();
   const supabase = createAdminClient();
 
   let query = supabase
@@ -102,6 +105,7 @@ export async function getQueueVideos(channelId?: string, status: VideoStatus = "
 }
 
 export async function getChannels() {
+  await requireWorkspaceAccess();
   const supabase = createAdminClient();
 
   const { data, error } = await supabase
@@ -115,6 +119,7 @@ export async function getChannels() {
 }
 
 export async function getVideoClips(youtubeVideoId: string): Promise<ClipWithVerse[]> {
+  await requireWorkspaceAccess();
   const supabase = createAdminClient();
 
   const { data, error } = await supabase
@@ -146,7 +151,11 @@ export async function getVideoClips(youtubeVideoId: string): Promise<ClipWithVer
 }
 
 export async function saveClip(input: SaveClipInput): Promise<{ clipId: string }> {
+  const { userId } = await requireWorkspaceAccess();
+  await checkRateLimit(userId, "saveClip");
   const supabase = createAdminClient();
+  // Use authenticated user's ID instead of client-provided userId
+  input.userId = userId;
 
   // Insert clip
   const { data: clip, error: clipError } = await supabase
@@ -196,6 +205,7 @@ export async function saveClip(input: SaveClipInput): Promise<{ clipId: string }
 }
 
 export async function deleteClip(clipId: string): Promise<void> {
+  await requireWorkspaceAccess();
   const supabase = createAdminClient();
 
   // Get clip to find youtube_video_id
@@ -227,6 +237,7 @@ export type UpdateClipInput = {
 };
 
 export async function updateClip(input: UpdateClipInput): Promise<{ clipId: string }> {
+  await requireWorkspaceAccess();
   const supabase = createAdminClient();
 
   // Update clip (times and title)
@@ -286,6 +297,7 @@ export async function updateClip(input: UpdateClipInput): Promise<{ clipId: stri
 }
 
 export async function updateVideoStatus(youtubeVideoId: string, status: "completed" | "skipped"): Promise<void> {
+  await requireWorkspaceAccess();
   const supabase = createAdminClient();
 
   const { error } = await supabase.from("work_queue_videos").update({ status }).eq("youtube_video_id", youtubeVideoId);
@@ -439,6 +451,8 @@ Split into 5-12 word chunks. Return JSON with "chunks" array:
 }
 
 export async function generateClipSubtitles(clipId: string): Promise<{ wordCount: number }> {
+  const { userId } = await requireWorkspaceAccess();
+  await checkRateLimit(userId, "generateSubtitles");
   const supabase = createAdminClient();
 
   // Get clip details

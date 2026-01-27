@@ -53,11 +53,25 @@ cd apps/whisper-api
 gcloud run deploy whisper-api \
   --source . \
   --region asia-northeast1 \
-  --set-env-vars OPENAI_API_KEY=sk-xxx \
+  --set-env-vars OPENAI_API_KEY=sk-xxx,API_KEY=your-secret-api-key \
   --allow-unauthenticated \
   --memory 1Gi \
-  --timeout 300
+  --timeout 300 \
+  --max-instances 2 \
+  --concurrency 5
 ```
+
+### Rate Limiting & Cost Control
+
+| Setting | Value | Purpose |
+|---------|-------|---------|
+| `--max-instances 2` | 2 | Limits parallel processing to control costs |
+| `--concurrency 5` | 5 | Max concurrent requests per instance |
+| `API_KEY` | secret | Bearer token authentication |
+
+**Maximum concurrent requests**: 2 × 5 = 10
+
+This limits costs even if the app-layer rate limiting is bypassed.
 
 ## Environment Variables
 
