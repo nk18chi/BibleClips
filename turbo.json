@@ -9,7 +9,9 @@
         "NEXT_PUBLIC_SUPABASE_URL",
         "NEXT_PUBLIC_SUPABASE_ANON_KEY",
         "SUPABASE_SECRET_KEY",
-        "OPENAI_API_KEY"
+        "OPENAI_API_KEY",
+        "WHISPER_API_URL",
+        "WHISPER_API_KEY"
       ]
     },
     "dev": {
