@@ -31,20 +31,21 @@ BibleClips allows users to discover sermon clips by Bible verse or life category
 | Auth | Supabase Auth |
 | Validation | Zod |
 | Monorepo | Turborepo + pnpm |
-| Hosting | Vercel (web) + Supabase (DB) |
+| Hosting | Vercel (web) + Cloud Run (whisper-api) + Supabase (DB) |
 
 ## Project Structure
 
 ```
 bibleclips/
 ├── apps/
-│   └── web/                    # Main public website (Next.js 14)
-│       ├── app/
-│       │   ├── (public)/       # Public routes (home, verse, category)
-│       │   ├── (auth)/         # Auth routes (login, register)
-│       │   ├── (user)/         # Authenticated routes (submit, my-clips)
-│       │   └── (admin)/        # Admin routes (pending, categories)
-│       └── components/
+│   ├── web/                    # Main public website (Next.js 14, Vercel)
+│   │   ├── app/
+│   │   │   ├── (public)/       # Public routes (home, verse, category)
+│   │   │   ├── (auth)/         # Auth routes (login, register)
+│   │   │   ├── (user)/         # Authenticated routes (submit, my-clips)
+│   │   │   └── (admin)/        # Admin routes (pending, categories)
+│   │   └── components/
+│   └── whisper-api/            # Transcription service (Go, Cloud Run)
 ├── packages/
 │   ├── database/               # Supabase client + types
 │   ├── ui/                     # Shared UI components (shadcn/ui)
@@ -103,6 +104,57 @@ Using Supabase PostgreSQL. Key tables:
 | YouTube IFrame API | Embed video player with start/end time |
 | YouTube Data API | Fetch video metadata, captions |
 | wldeh/bible-api (CDN) | Fetch verse text (no API key, MIT license) |
+| Whisper API (Cloud Run) | Transcribe YouTube audio with word-level timestamps |
+| OpenAI Whisper | Speech-to-text (called by whisper-api) |
+
+## Security Guidelines
+
+### API Key Protection
+
+**IMPORTANT**: API keys must NEVER be exposed to the client (browser).
+
+#### Safe Pattern: Server Actions
+```typescript
+// app/workspace/actions.ts
+"use server";  // ← This runs on the server only
+
+export async function generateClipSubtitles(clipId: string) {
+  // Safe: API key is only accessible on server
+  const response = await fetch(WHISPER_API_URL, {
+    headers: { Authorization: `Bearer ${process.env.WHISPER_API_KEY}` },
+  });
+}
+```
+
+#### Unsafe Pattern: Client Components
+```typescript
+// components/SomeComponent.tsx
+"use client";
+
+// NEVER do this - API key will be visible in browser Network tab
+const response = await fetch(API_URL, {
+  headers: { Authorization: `Bearer ${process.env.API_KEY}` },  // ❌ EXPOSED!
+});
+```
+
+#### Flow Diagram
+```
+Browser                    Server (Next.js)              External API
+   |                            |                            |
+   |-- POST /action ----------->|                            |
+   |   (no secrets visible)     |-- fetch (with API key) --->|
+   |                            |<-- response ---------------|
+   |<-- result -----------------|                            |
+```
+
+### Environment Variables
+
+| Variable | Visibility | Usage |
+|----------|------------|-------|
+| `NEXT_PUBLIC_*` | Client + Server | Public info only (URLs, app name) |
+| `SUPABASE_SECRET_KEY` | Server only | Database admin access |
+| `WHISPER_API_KEY` | Server only | Cloud Run authentication |
+| `OPENAI_API_KEY` | Server only | OpenAI API calls |
 
 ## Conventions
 
