@@ -16,6 +16,9 @@ RUN apk add --no-cache ffmpeg python3 py3-pip curl unzip && \
     pip3 install --break-system-packages yt-dlp && \
     curl -fsSL https://deno.land/install.sh | DENO_INSTALL=/usr/local sh
 
+# Ensure deno is in PATH for yt-dlp
+ENV PATH="/usr/local/bin:${PATH}"
+
 WORKDIR /app
 COPY --from=builder /app/server .
 
