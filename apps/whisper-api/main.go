@@ -43,7 +43,7 @@ func main() {
 	http.HandleFunc("/transcribe", handleTranscribe)
 	http.HandleFunc("/health", handleHealth)
 
-	log.Printf("Server starting on port %s", port)
+	log.Printf("Whisper API server starting on http://localhost:%s", port)
 	if err := http.ListenAndServe(":"+port, nil); err != nil {
 		log.Fatal(err)
 	}
@@ -60,7 +60,7 @@ func handleTranscribe(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// API Key authentication
+	// API Key authentication (optional for local use)
 	apiKey := os.Getenv("API_KEY")
 	if apiKey != "" {
 		authHeader := r.Header.Get("Authorization")
@@ -99,21 +99,16 @@ func transcribe(videoID string, start, end float64) ([]WordTiming, error) {
 	audioPath := filepath.Join(tmpDir, fmt.Sprintf("%s_%d.mp3", videoID, time.Now().UnixNano()))
 	defer os.Remove(audioPath)
 
-	// Download audio with yt-dlp
+	// Download audio with yt-dlp (uses browser cookies automatically on local machine)
 	duration := end - start
 	ytdlpArgs := []string{
 		"-x",
 		"--audio-format", "mp3",
 		"--postprocessor-args", fmt.Sprintf("ffmpeg:-ss %.2f -t %.2f", start, duration),
 		"-o", audioPath,
+		"--cookies-from-browser", "chrome",
+		fmt.Sprintf("https://www.youtube.com/watch?v=%s", videoID),
 	}
-
-	// Use cookies if available (to bypass bot detection)
-	if _, err := os.Stat("cookies.txt"); err == nil {
-		ytdlpArgs = append(ytdlpArgs, "--cookies", "cookies.txt")
-	}
-
-	ytdlpArgs = append(ytdlpArgs, fmt.Sprintf("https://www.youtube.com/watch?v=%s", videoID))
 
 	log.Printf("Downloading audio for %s (%.2f - %.2f)...", videoID, start, end)
 	ctx, cancel := context.WithTimeout(context.Background(), 120*time.Second)
@@ -145,8 +140,8 @@ func transcribe(videoID string, start, end float64) ([]WordTiming, error) {
 		context.Background(),
 		openai.AudioRequest{
 			Model:                  openai.Whisper1,
-			FilePath:              audioPath,
-			Format:                openai.AudioResponseFormatVerboseJSON,
+			FilePath:               audioPath,
+			Format:                 openai.AudioResponseFormatVerboseJSON,
 			TimestampGranularities: []openai.TranscriptionTimestampGranularity{openai.TranscriptionTimestampGranularityWord},
 		},
 	)
