@@ -60,6 +60,17 @@ func handleTranscribe(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// API Key authentication
+	apiKey := os.Getenv("API_KEY")
+	if apiKey != "" {
+		authHeader := r.Header.Get("Authorization")
+		expectedHeader := "Bearer " + apiKey
+		if authHeader != expectedHeader {
+			sendError(w, "Unauthorized", http.StatusUnauthorized)
+			return
+		}
+	}
+
 	var req TranscribeRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		sendError(w, "Invalid request body", http.StatusBadRequest)
