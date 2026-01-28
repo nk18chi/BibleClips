@@ -206,26 +206,6 @@ export async function saveClip(input: SaveClipInput): Promise<{ clipId: string }
   return { clipId: clip.id };
 }
 
-export async function deleteClip(clipId: string): Promise<void> {
-  await requireWorkspaceAccess();
-  const supabase = createAdminClient();
-
-  // Get clip to find youtube_video_id
-  const { data: clip } = await supabase.from("clips").select("youtube_video_id").eq("id", clipId).single();
-
-  // Delete clip (cascades to verses, categories)
-  const { error } = await supabase.from("clips").delete().eq("id", clipId);
-
-  if (error) throw error;
-
-  // Decrement clips_created
-  if (clip) {
-    await supabase.rpc("decrement_clips_created", { video_id: clip.youtube_video_id });
-  }
-
-  revalidatePath("/workspace");
-}
-
 export type UpdateClipInput = {
   clipId: string;
   startTime: number;

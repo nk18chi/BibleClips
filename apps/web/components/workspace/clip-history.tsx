@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { deleteClip, generateClipSubtitles, updateClip } from "@/app/workspace/actions";
+import { generateClipSubtitles, updateClip } from "@/app/workspace/actions";
 import type { ClipWithVerse } from "@/types/workspace";
 
 const BIBLE_BOOKS = [
@@ -116,7 +116,13 @@ export function ClipHistory({ clips, categories, onDeleted, isAdmin }: ClipHisto
   const handleDelete = async (clipId: string) => {
     setDeletingId(clipId);
     try {
-      await deleteClip(clipId);
+      const res = await fetch(`/api/workspace/clips/${clipId}`, {
+        method: "DELETE",
+        credentials: "include",
+      });
+      if (!res.ok) {
+        throw new Error("Failed to delete clip");
+      }
       onDeleted();
     } catch (err) {
       console.error("Failed to delete clip:", err);
