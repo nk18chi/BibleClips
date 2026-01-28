@@ -28,3 +28,26 @@ export function createServerClient() {
     }
   );
 }
+
+/**
+ * Get session from cookie manually - workaround for Supabase SSR bug
+ * where getSession() returns null in Server Components/Route Handlers.
+ *
+ * @see https://github.com/supabase/auth-helpers/issues/684
+ */
+export function getSessionFromCookie(): { user: { id: string; email?: string } } | null {
+  const cookieStore = cookies();
+  const allCookies = cookieStore.getAll();
+  const authCookie = allCookies.find(
+    (c) => c.name.includes("auth-token") && !c.name.includes("code-verifier")
+  );
+
+  if (!authCookie) return null;
+
+  try {
+    const session = JSON.parse(authCookie.value);
+    return { user: session.user };
+  } catch {
+    return null;
+  }
+}

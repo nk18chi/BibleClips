@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { Header } from "@/components/ui/header";
-import { createServerClient } from "@/lib/supabase/server";
+import { createServerClient, getSessionFromCookie } from "@/lib/supabase/server";
 
 type Clip = {
   id: string;
@@ -58,10 +58,7 @@ function getStatusBadge(status: Clip["status"]) {
 }
 
 export default async function MyClipsPage({ searchParams }: { searchParams: { submitted?: string } }) {
-  const supabase = createServerClient();
-  const {
-    data: { session },
-  } = await supabase.auth.getSession();
+  const session = getSessionFromCookie();
 
   if (!session) {
     redirect("/login?redirectTo=/my-clips");

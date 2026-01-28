@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import { Header } from "@/components/ui/header";
-import { createServerClient } from "@/lib/supabase/server";
+import { createServerClient, getSessionFromCookie } from "@/lib/supabase/server";
 import { AdminClipActions } from "./admin-clip-actions";
 
 type PendingClip = {
@@ -74,10 +74,7 @@ function formatTime(seconds: number): string {
 }
 
 export default async function AdminPendingPage() {
-  const supabase = createServerClient();
-  const {
-    data: { session },
-  } = await supabase.auth.getSession();
+  const session = getSessionFromCookie();
 
   if (!session) {
     redirect("/login?redirectTo=/admin/pending");
