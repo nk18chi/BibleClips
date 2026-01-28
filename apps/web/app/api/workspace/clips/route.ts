@@ -31,20 +31,8 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
+  // Skip role check for reading clips - auth is enough
   const adminSupabase = createAdminClient();
-
-  // Check role
-  const { data: profile } = await adminSupabase
-    .from("users")
-    .select("role")
-    .eq("id", auth.user.id)
-    .single();
-
-  const role = profile?.role || "USER";
-  if (role !== "ADMIN" && role !== "CONTRIBUTOR") {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-  }
-
   const { searchParams } = new URL(request.url);
   const videoId = searchParams.get("videoId");
 

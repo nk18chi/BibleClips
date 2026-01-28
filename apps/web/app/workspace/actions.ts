@@ -198,13 +198,11 @@ export async function saveClip(input: SaveClipInput): Promise<{ clipId: string }
     if (catError) throw catError;
   }
 
-  // Increment clips_created on work queue video
-  const { error: rpcError } = await supabase.rpc("increment_clips_created", { video_id: input.youtubeVideoId });
-  if (rpcError) {
-    console.error("Failed to increment clips_created:", rpcError);
-  }
+  // Increment clips_created on work queue video (don't await - let it run in background)
+  supabase.rpc("increment_clips_created", { video_id: input.youtubeVideoId }).then(({ error: rpcError }) => {
+    if (rpcError) console.error("Failed to increment clips_created:", rpcError);
+  });
 
-  revalidatePath("/workspace");
   return { clipId: clip.id };
 }
 
