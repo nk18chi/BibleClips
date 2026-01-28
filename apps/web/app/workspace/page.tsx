@@ -138,24 +138,27 @@ function WorkspaceContent() {
 
   const handleClipSaved = async () => {
     if (selectedVideo) {
-      // Refresh all data in parallel
-      const params = new URLSearchParams({ status: filterStatus });
-      if (filterChannelId) params.set("channelId", filterChannelId);
-      const [clipsRes, videosRes, subtitlesRes] = await Promise.all([
-        fetch(`/api/workspace/clips?videoId=${selectedVideo.youtube_video_id}`, { credentials: "include" }),
-        fetch(`/api/workspace/videos?${params}`, { credentials: "include" }),
-        fetch("/api/workspace/clips-without-subtitles", { credentials: "include" }),
-      ]);
+      // Refresh clips list immediately (fastest, most important)
+      const clipsRes = await fetch(`/api/workspace/clips?videoId=${selectedVideo.youtube_video_id}`, { credentials: "include" });
       if (clipsRes.ok) {
         setVideoClips(await clipsRes.json());
       }
-      if (videosRes.ok) {
-        setVideos(await videosRes.json());
-      }
-      if (subtitlesRes.ok) {
-        const { count } = await subtitlesRes.json();
-        setClipsWithoutSubtitles(count);
-      }
+
+      // Refresh other data in background (don't block UI)
+      const params = new URLSearchParams({ status: filterStatus });
+      if (filterChannelId) params.set("channelId", filterChannelId);
+      Promise.all([
+        fetch(`/api/workspace/videos?${params}`, { credentials: "include" }),
+        fetch("/api/workspace/clips-without-subtitles", { credentials: "include" }),
+      ]).then(async ([videosRes, subtitlesRes]) => {
+        if (videosRes.ok) {
+          setVideos(await videosRes.json());
+        }
+        if (subtitlesRes.ok) {
+          const { count } = await subtitlesRes.json();
+          setClipsWithoutSubtitles(count);
+        }
+      });
     }
   };
 
