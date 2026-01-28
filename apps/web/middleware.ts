@@ -1,39 +1,27 @@
-import { createServerClient } from "@supabase/ssr";
 import { type NextRequest, NextResponse } from "next/server";
 
-type CookieToSet = { name: string; value: string; options?: object };
-
-export async function middleware(request: NextRequest) {
-  let supabaseResponse = NextResponse.next({
-    request,
-  });
-
-  const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL ?? "",
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? "",
-    {
-      cookies: {
-        getAll() {
-          return request.cookies.getAll();
-        },
-        setAll(cookiesToSet: CookieToSet[]) {
-          for (const { name, value } of cookiesToSet) {
-            request.cookies.set(name, value);
-          }
-          supabaseResponse = NextResponse.next({
-            request,
-          });
-          for (const { name, value, options } of cookiesToSet) {
-            supabaseResponse.cookies.set(name, value, options);
-          }
-        },
-      },
-    }
+/**
+ * Get user from auth cookie - workaround for Supabase SSR bug
+ * where getUser() returns null in middleware.
+ */
+function getUserFromCookie(request: NextRequest): { id: string } | null {
+  const allCookies = request.cookies.getAll();
+  const authCookie = allCookies.find(
+    (c) => c.name.includes("auth-token") && !c.name.includes("code-verifier")
   );
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  if (!authCookie) return null;
+
+  try {
+    const session = JSON.parse(authCookie.value);
+    return session.user;
+  } catch {
+    return null;
+  }
+}
+
+export async function middleware(request: NextRequest) {
+  const user = getUserFromCookie(request);
 
   // Protected routes that require authentication
   // Note: /workspace uses client-side auth + API route auth
@@ -46,7 +34,7 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(redirectUrl);
   }
 
-  return supabaseResponse;
+  return NextResponse.next();
 }
 
 export const config = {
