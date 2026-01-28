@@ -139,7 +139,11 @@ async function getApprovedClips(userId?: string): Promise<Clip[]> {
       clip_verses: clip.clip_verses,
       clip_categories: clip.clip_categories,
     };
-  });
+  })
+  // Only show clips with subtitles on homepage
+  .filter((clip) => clip.wordTimings && clip.wordTimings.length > 0)
+  // Shuffle randomly
+  .sort(() => Math.random() - 0.5);
 
   if (userId && clipsWithTimings.length > 0) {
     const { data: votes } = await supabase

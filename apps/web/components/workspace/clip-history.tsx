@@ -345,11 +345,16 @@ export function ClipHistory({ clips, categories, onDeleted, isAdmin }: ClipHisto
                 </div>
               ) : (
                 <div className="flex items-center justify-between">
-                  <div className="text-sm">
+                  <div className="text-sm flex items-center gap-2">
                     <span className="font-medium">{verseRef}</span>
-                    <span className="text-gray-500 ml-2">
+                    <span className="text-gray-500">
                       ({formatTime(clip.start_time)} - {formatTime(clip.end_time)})
                     </span>
+                    {clip.clip_subtitles?.[0]?.count ? (
+                      <span className="text-xs text-green-600" title="Subtitles available">✓ subtitles</span>
+                    ) : (
+                      <span className="text-xs text-gray-400" title="No subtitles yet">no subtitles</span>
+                    )}
                   </div>
 
                   {isAdmin && (

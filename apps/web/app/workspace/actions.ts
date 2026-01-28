@@ -141,7 +141,8 @@ export async function getVideoClips(youtubeVideoId: string): Promise<ClipWithVer
       ),
       clip_categories (
         category_id
-      )
+      ),
+      clip_subtitles (count)
     `)
     .eq("youtube_video_id", youtubeVideoId)
     .order("start_time");
@@ -198,7 +199,10 @@ export async function saveClip(input: SaveClipInput): Promise<{ clipId: string }
   }
 
   // Increment clips_created on work queue video
-  await supabase.rpc("increment_clips_created", { video_id: input.youtubeVideoId });
+  const { error: rpcError } = await supabase.rpc("increment_clips_created", { video_id: input.youtubeVideoId });
+  if (rpcError) {
+    console.error("Failed to increment clips_created:", rpcError);
+  }
 
   revalidatePath("/workspace");
   return { clipId: clip.id };

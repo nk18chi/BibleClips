@@ -6,7 +6,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "type-check": "tsc --noEmit"
+    "type-check": "tsc --noEmit",
+    "generate-subtitles": "tsx scripts/generate-missing-subtitles.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.71.2",

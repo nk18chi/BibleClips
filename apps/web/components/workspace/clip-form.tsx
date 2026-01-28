@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { generateClipSubtitles, saveClip } from "@/app/workspace/actions";
+import { saveClip } from "@/app/workspace/actions";
 import { useSupabase } from "@/components/providers/supabase-provider";
 
 const BIBLE_BOOKS = [
@@ -96,7 +96,6 @@ export function ClipForm({ youtubeVideoId, startTime, endTime, onSaved, categori
   const [verseEnd, setVerseEnd] = useState("");
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const [saving, setSaving] = useState(false);
-  const [generatingSubtitles, setGeneratingSubtitles] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [subtitleResult, setSubtitleResult] = useState<string | null>(null);
 
@@ -136,16 +135,7 @@ export function ClipForm({ youtubeVideoId, startTime, endTime, onSaved, categori
       });
 
       setSaving(false);
-      setGeneratingSubtitles(true);
-
-      // Generate subtitles with Whisper and translate
-      try {
-        const result = await generateClipSubtitles(clipId);
-        setSubtitleResult(`${result.wordCount} words transcribed`);
-      } catch (subtitleErr) {
-        console.error("Subtitle generation failed:", subtitleErr);
-        setSubtitleResult("Subtitle generation failed (clip saved)");
-      }
+      setSubtitleResult("Clip saved");
 
       // Reset form
       setTitle("");
@@ -154,12 +144,13 @@ export function ClipForm({ youtubeVideoId, startTime, endTime, onSaved, categori
       setVerseStart("");
       setVerseEnd("");
       setSelectedCategories([]);
+
+      // Refresh clips list immediately (don't await)
       onSaved();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to save clip");
     } finally {
       setSaving(false);
-      setGeneratingSubtitles(false);
     }
   };
 
@@ -270,10 +261,10 @@ export function ClipForm({ youtubeVideoId, startTime, endTime, onSaved, categori
       {/* Submit */}
       <button
         type="submit"
-        disabled={saving || generatingSubtitles || startTime === 0 || endTime === 0}
+        disabled={saving || startTime === 0 || endTime === 0}
         className="w-full py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium"
       >
-        {saving ? "Saving..." : generatingSubtitles ? "Generating subtitles..." : "Save Clip"}
+        {saving ? "Saving..." : "Save Clip"}
       </button>
 
       {/* Subtitle result */}

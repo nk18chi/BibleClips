@@ -71,5 +71,24 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 
+  // Get actual clip counts from clips table (more reliable than stored clips_created)
+  if (data && data.length > 0) {
+    const videoIds = data.map((v) => v.youtube_video_id);
+    const { data: clipCounts } = await adminSupabase
+      .from("clips")
+      .select("youtube_video_id")
+      .in("youtube_video_id", videoIds);
+
+    if (clipCounts) {
+      const countMap: Record<string, number> = {};
+      for (const clip of clipCounts) {
+        countMap[clip.youtube_video_id] = (countMap[clip.youtube_video_id] || 0) + 1;
+      }
+      for (const video of data) {
+        video.clips_created = countMap[video.youtube_video_id] || 0;
+      }
+    }
+  }
+
   return NextResponse.json(data || []);
 }

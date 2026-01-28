@@ -43,6 +43,7 @@ export type ClipWithVerse = {
   clip_categories?: {
     category_id: string;
   }[];
+  clip_subtitles?: { count: number }[];
 };
 
 export type SaveClipInput = {

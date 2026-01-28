@@ -9,7 +9,7 @@ import { ClipHistory } from "@/components/workspace/clip-history";
 import { VideoQueue } from "@/components/workspace/video-queue";
 import { WorkspacePlayer } from "@/components/workspace/workspace-player";
 import type { ClipWithVerse, WorkQueueVideo, YouTubeChannel } from "@/types/workspace";
-import { getVideoClips, updateVideoStatus, type VideoStatus } from "./actions";
+import { updateVideoStatus, type VideoStatus } from "./actions";
 
 function WorkspaceContent() {
   const router = useRouter();
@@ -26,6 +26,7 @@ function WorkspaceContent() {
   const [filterChannelId, setFilterChannelId] = useState<string | null>(null);
   const [filterStatus, setFilterStatus] = useState<VideoStatus>("pending");
   const [showMobileQueue, setShowMobileQueue] = useState(!searchParams.get("id"));
+  const [clipsWithoutSubtitles, setClipsWithoutSubtitles] = useState(0);
 
   // Redirect if not authenticated
   useEffect(() => {
@@ -50,10 +51,11 @@ function WorkspaceContent() {
 
     async function loadData() {
       try {
-        const [videosRes, channelsRes, catsRes] = await Promise.all([
+        const [videosRes, channelsRes, catsRes, subtitlesRes] = await Promise.all([
           fetch("/api/workspace/videos", { credentials: "include" }),
           fetch("/api/workspace/channels", { credentials: "include" }),
           fetch("/api/categories"),
+          fetch("/api/workspace/clips-without-subtitles", { credentials: "include" }),
         ]);
 
         if (videosRes.ok) {
@@ -64,6 +66,10 @@ function WorkspaceContent() {
         }
         if (catsRes.ok) {
           setCategories(await catsRes.json());
+        }
+        if (subtitlesRes.ok) {
+          const { count } = await subtitlesRes.json();
+          setClipsWithoutSubtitles(count);
         }
       } catch (err) {
         console.error("Failed to load data:", err);
@@ -88,7 +94,9 @@ function WorkspaceContent() {
   // Load clips when video selected
   useEffect(() => {
     if (selectedVideo) {
-      getVideoClips(selectedVideo.youtube_video_id).then(setVideoClips);
+      fetch(`/api/workspace/clips?videoId=${selectedVideo.youtube_video_id}`, { credentials: "include" })
+        .then((res) => res.ok ? res.json() : [])
+        .then(setVideoClips);
       setStartTime(0);
       setEndTime(0);
     }
@@ -130,14 +138,23 @@ function WorkspaceContent() {
 
   const handleClipSaved = async () => {
     if (selectedVideo) {
-      const clips = await getVideoClips(selectedVideo.youtube_video_id);
-      setVideoClips(clips);
-      // Refresh video list to update clips_created count
+      // Refresh all data in parallel
       const params = new URLSearchParams({ status: filterStatus });
       if (filterChannelId) params.set("channelId", filterChannelId);
-      const res = await fetch(`/api/workspace/videos?${params}`, { credentials: "include" });
-      if (res.ok) {
-        setVideos(await res.json());
+      const [clipsRes, videosRes, subtitlesRes] = await Promise.all([
+        fetch(`/api/workspace/clips?videoId=${selectedVideo.youtube_video_id}`, { credentials: "include" }),
+        fetch(`/api/workspace/videos?${params}`, { credentials: "include" }),
+        fetch("/api/workspace/clips-without-subtitles", { credentials: "include" }),
+      ]);
+      if (clipsRes.ok) {
+        setVideoClips(await clipsRes.json());
+      }
+      if (videosRes.ok) {
+        setVideos(await videosRes.json());
+      }
+      if (subtitlesRes.ok) {
+        const { count } = await subtitlesRes.json();
+        setClipsWithoutSubtitles(count);
       }
     }
   };
@@ -175,7 +192,14 @@ function WorkspaceContent() {
     <div className="min-h-screen bg-gray-100">
       <Header />
 
-      <div className="flex flex-col md:flex-row h-[calc(100vh-64px)]">
+      {clipsWithoutSubtitles > 0 && (
+        <div className="bg-amber-50 border-b border-amber-200 px-4 py-2 text-sm text-amber-800">
+          <span className="font-medium">{clipsWithoutSubtitles} clip{clipsWithoutSubtitles > 1 ? "s" : ""}</span> without subtitles.
+          Run <code className="bg-amber-100 px-1 rounded">pnpm --filter @bibleclips/web generate-subtitles</code> locally.
+        </div>
+      )}
+
+      <div className={`flex flex-col md:flex-row ${clipsWithoutSubtitles > 0 ? "h-[calc(100vh-64px-36px)]" : "h-[calc(100vh-64px)]"}`}>
         {/* Left Panel - Video Queue */}
         <div className={`
           ${selectedVideo && !showMobileQueue ? 'hidden md:block' : 'block'}
