@@ -142,5 +142,5 @@ export default async function ClipPage({ params }: Props) {
     notFound();
   }
 
-  return <ReelViewer clips={[clip]} />;
+  return <ReelViewer clips={[clip]} showHeader />;
 }
