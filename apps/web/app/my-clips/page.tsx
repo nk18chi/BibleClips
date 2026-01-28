@@ -18,7 +18,7 @@ type Clip = {
   }[];
 };
 
-async function getUserClips(userId: string): Promise<Clip[]> {
+async function getUserSubmittedClips(userId: string): Promise<Clip[]> {
   const supabase = createServerClient();
 
   const { data } = await supabase
@@ -36,6 +36,72 @@ async function getUserClips(userId: string): Promise<Clip[]> {
     .order("created_at", { ascending: false });
 
   return (data as Clip[]) || [];
+}
+
+async function getUserLikedClips(userId: string): Promise<Clip[]> {
+  const supabase = createServerClient();
+
+  const { data } = await supabase
+    .from("votes")
+    .select(`
+      clip_id,
+      clips (
+        id,
+        title,
+        youtube_video_id,
+        status,
+        vote_count,
+        created_at,
+        clip_verses (book, chapter, verse_start, verse_end)
+      )
+    `)
+    .eq("user_id", userId)
+    .order("created_at", { ascending: false });
+
+  // Extract clips from the joined result (clips is a single object, not array)
+  const clips: Clip[] = [];
+  for (const item of data || []) {
+    const clip = item.clips as unknown as Clip | null;
+    if (clip) {
+      clips.push(clip);
+    }
+  }
+  return clips;
+}
+
+async function getUserCommentedClips(userId: string): Promise<Clip[]> {
+  const supabase = createServerClient();
+
+  // Get distinct clip_ids from comments
+  const { data } = await supabase
+    .from("comments")
+    .select(`
+      clip_id,
+      clips (
+        id,
+        title,
+        youtube_video_id,
+        status,
+        vote_count,
+        created_at,
+        clip_verses (book, chapter, verse_start, verse_end)
+      )
+    `)
+    .eq("user_id", userId)
+    .order("created_at", { ascending: false });
+
+  // Deduplicate clips (user may have multiple comments on same clip)
+  const seen = new Set<string>();
+  const clips: Clip[] = [];
+  for (const item of data || []) {
+    const clip = item.clips as unknown as Clip | null;
+    if (clip && !seen.has(clip.id)) {
+      seen.add(clip.id);
+      clips.push(clip);
+    }
+  }
+
+  return clips;
 }
 
 function formatVerseRef(verses: Clip["clip_verses"]): string {
@@ -57,15 +123,74 @@ function getStatusBadge(status: Clip["status"]) {
   }
 }
 
-export default async function MyClipsPage({ searchParams }: { searchParams: { submitted?: string } }) {
+function ClipCard({ clip, showStatus = true }: { clip: Clip; showStatus?: boolean }) {
+  return (
+    <div className="flex gap-4 p-4 bg-white border border-gray-200 rounded-lg">
+      <img
+        src={`https://img.youtube.com/vi/${clip.youtube_video_id}/mqdefault.jpg`}
+        alt={clip.title}
+        className="w-40 h-24 object-cover rounded"
+      />
+      <div className="flex-1">
+        <div className="flex items-start justify-between">
+          <div>
+            <h3 className="font-medium text-gray-900">{clip.title}</h3>
+            <p className="text-sm text-gray-500">{formatVerseRef(clip.clip_verses)}</p>
+          </div>
+          {showStatus && getStatusBadge(clip.status)}
+        </div>
+        <div className="mt-2 flex items-center gap-4 text-sm text-gray-500">
+          <span>{clip.vote_count} votes</span>
+          <span>{new Date(clip.created_at).toLocaleDateString()}</span>
+        </div>
+        {clip.status === "APPROVED" && (
+          <Link
+            href={`/clip/${clip.id}`}
+            className="mt-2 inline-block text-sm text-blue-600 hover:text-blue-800"
+          >
+            View clip
+          </Link>
+        )}
+      </div>
+    </div>
+  );
+}
+
+type Tab = "submitted" | "liked" | "commented";
+
+export default async function MyClipsPage({
+  searchParams,
+}: {
+  searchParams: { submitted?: string; tab?: Tab };
+}) {
   const session = getSessionFromCookie();
 
   if (!session) {
     redirect("/login?redirectTo=/my-clips");
   }
 
-  const clips = await getUserClips(session.user.id);
+  const currentTab = searchParams.tab || "submitted";
   const justSubmitted = searchParams.submitted === "true";
+
+  // Fetch data based on current tab
+  const [submittedClips, likedClips, commentedClips] = await Promise.all([
+    getUserSubmittedClips(session.user.id),
+    currentTab === "liked" ? getUserLikedClips(session.user.id) : Promise.resolve([]),
+    currentTab === "commented" ? getUserCommentedClips(session.user.id) : Promise.resolve([]),
+  ]);
+
+  const clips =
+    currentTab === "submitted"
+      ? submittedClips
+      : currentTab === "liked"
+        ? likedClips
+        : commentedClips;
+
+  const tabs = [
+    { id: "submitted" as Tab, label: "Submitted", count: submittedClips.length },
+    { id: "liked" as Tab, label: "Liked" },
+    { id: "commented" as Tab, label: "Commented" },
+  ];
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -85,44 +210,58 @@ export default async function MyClipsPage({ searchParams }: { searchParams: { su
           </div>
         )}
 
+        {/* Tabs */}
+        <div className="flex gap-1 mb-6 border-b">
+          {tabs.map((tab) => (
+            <Link
+              key={tab.id}
+              href={`/my-clips?tab=${tab.id}`}
+              className={`px-4 py-2 text-sm font-medium border-b-2 -mb-px transition-colors ${
+                currentTab === tab.id
+                  ? "border-blue-600 text-blue-600"
+                  : "border-transparent text-gray-500 hover:text-gray-700"
+              }`}
+            >
+              {tab.label}
+              {tab.count !== undefined && (
+                <span className="ml-1 text-xs text-gray-400">({tab.count})</span>
+              )}
+            </Link>
+          ))}
+        </div>
+
         {clips.length === 0 ? (
           <div className="text-center py-12">
-            <p className="text-gray-500 mb-4">You haven&apos;t submitted any clips yet.</p>
-            <Link href="/submit" className="inline-block bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700">
-              Submit Your First Clip
-            </Link>
+            <p className="text-gray-500 mb-4">
+              {currentTab === "submitted" && "You haven't submitted any clips yet."}
+              {currentTab === "liked" && "You haven't liked any clips yet."}
+              {currentTab === "commented" && "You haven't commented on any clips yet."}
+            </p>
+            {currentTab === "submitted" && (
+              <Link
+                href="/submit"
+                className="inline-block bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700"
+              >
+                Submit Your First Clip
+              </Link>
+            )}
+            {(currentTab === "liked" || currentTab === "commented") && (
+              <Link
+                href="/"
+                className="inline-block bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700"
+              >
+                Discover Clips
+              </Link>
+            )}
           </div>
         ) : (
           <div className="space-y-4">
             {clips.map((clip) => (
-              <div key={clip.id} className="flex gap-4 p-4 bg-white border border-gray-200 rounded-lg">
-                <img
-                  src={`https://img.youtube.com/vi/${clip.youtube_video_id}/mqdefault.jpg`}
-                  alt={clip.title}
-                  className="w-40 h-24 object-cover rounded"
-                />
-                <div className="flex-1">
-                  <div className="flex items-start justify-between">
-                    <div>
-                      <h3 className="font-medium text-gray-900">{clip.title}</h3>
-                      <p className="text-sm text-gray-500">{formatVerseRef(clip.clip_verses)}</p>
-                    </div>
-                    {getStatusBadge(clip.status)}
-                  </div>
-                  <div className="mt-2 flex items-center gap-4 text-sm text-gray-500">
-                    <span>{clip.vote_count} votes</span>
-                    <span>{new Date(clip.created_at).toLocaleDateString()}</span>
-                  </div>
-                  {clip.status === "APPROVED" && (
-                    <Link
-                      href={`/clip/${clip.id}`}
-                      className="mt-2 inline-block text-sm text-blue-600 hover:text-blue-800"
-                    >
-                      View clip
-                    </Link>
-                  )}
-                </div>
-              </div>
+              <ClipCard
+                key={clip.id}
+                clip={clip}
+                showStatus={currentTab === "submitted"}
+              />
             ))}
           </div>
         )}
