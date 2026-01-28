@@ -6,7 +6,7 @@ type Props = {
   params: { id: string };
 };
 
-type Clip = {
+type ClipFromDb = {
   id: string;
   title: string;
   youtube_video_id: string;
@@ -27,6 +27,32 @@ type Clip = {
       name_en: string;
     } | null;
   }[];
+  clip_subtitles: {
+    word: string;
+    start_time: number;
+    end_time: number;
+    sequence: number;
+  }[];
+  clip_translations: {
+    language: string;
+    text: string;
+    start_time: number;
+    end_time: number;
+    sequence: number;
+  }[];
+};
+
+type WordTiming = {
+  word: string;
+  start: number;
+  end: number;
+};
+
+type SentenceTranslation = {
+  language: string;
+  text: string;
+  start: number;
+  end: number;
 };
 
 async function getClip(id: string, userId?: string) {
@@ -44,16 +70,51 @@ async function getClip(id: string, userId?: string) {
       vote_count,
       language,
       clip_verses (book, book_ja, chapter, verse_start, verse_end),
-      clip_categories (categories (slug, name_en))
+      clip_categories (categories (slug, name_en)),
+      clip_subtitles (word, start_time, end_time, sequence),
+      clip_translations (language, text, start_time, end_time, sequence)
     `
     )
     .eq("id", id)
     .eq("status", "APPROVED")
     .single();
 
-  const typedClip = clip as Clip | null;
+  const typedClip = clip as ClipFromDb | null;
 
   if (!typedClip) return null;
+
+  // Convert subtitles to WordTiming format
+  const wordTimings: WordTiming[] = (typedClip.clip_subtitles || [])
+    .sort((a, b) => a.sequence - b.sequence)
+    .map((sub) => ({
+      word: sub.word,
+      start: Number(sub.start_time),
+      end: Number(sub.end_time),
+    }));
+
+  // Convert translations
+  const translations: SentenceTranslation[] = (typedClip.clip_translations || [])
+    .sort((a, b) => a.sequence - b.sequence)
+    .map((trans) => ({
+      language: trans.language,
+      text: trans.text,
+      start: Number(trans.start_time),
+      end: Number(trans.end_time),
+    }));
+
+  const baseClip = {
+    id: typedClip.id,
+    title: typedClip.title,
+    youtube_video_id: typedClip.youtube_video_id,
+    start_time: typedClip.start_time,
+    end_time: typedClip.end_time,
+    vote_count: typedClip.vote_count,
+    language: (typedClip.language === "ja" ? "ja" : "en") as "en" | "ja",
+    clip_verses: typedClip.clip_verses,
+    clip_categories: typedClip.clip_categories,
+    wordTimings,
+    translations,
+  };
 
   if (userId) {
     const { data: vote } = await supabase
@@ -63,10 +124,10 @@ async function getClip(id: string, userId?: string) {
       .eq("clip_id", id)
       .single();
 
-    return { ...typedClip, has_voted: !!vote, language: (typedClip.language === "ja" ? "ja" : "en") as "en" | "ja" };
+    return { ...baseClip, has_voted: !!vote };
   }
 
-  return { ...typedClip, has_voted: false, language: (typedClip.language === "ja" ? "ja" : "en") as "en" | "ja" };
+  return { ...baseClip, has_voted: false };
 }
 
 export default async function ClipPage({ params }: Props) {
