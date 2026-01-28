@@ -140,7 +140,7 @@ function ClipCard({ clip, showStatus = true }: { clip: Clip; showStatus?: boolea
           {showStatus && getStatusBadge(clip.status)}
         </div>
         <div className="mt-2 flex items-center gap-4 text-sm text-gray-500">
-          <span>{clip.vote_count} votes</span>
+          <span>{clip.vote_count} likes</span>
           <span>{new Date(clip.created_at).toLocaleDateString()}</span>
         </div>
         {clip.status === "APPROVED" && (
