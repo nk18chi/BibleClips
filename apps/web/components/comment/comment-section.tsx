@@ -6,17 +6,6 @@ import { CommentCard } from "./comment-card";
 import { CommentForm } from "./comment-form";
 import { ReportModal } from "./report-modal";
 
-type CommentFromDb = {
-  id: string;
-  clip_id: string;
-  user_id: string;
-  content: string;
-  like_count: number;
-  created_at: string;
-  updated_at: string;
-  user: { id: string; display_name: string | null }[] | null;
-};
-
 type CommentWithUser = {
   id: string;
   clip_id: string;
@@ -43,34 +32,36 @@ export function CommentSection({ clipId, onClose }: CommentSectionProps) {
   const fetchComments = useCallback(async () => {
     setLoading(true);
 
-    const { data: commentsData } = await supabase
+    // Fetch comments
+    const { data: commentsData, error } = await supabase
       .from("comments")
-      .select(`
-        id,
-        clip_id,
-        user_id,
-        content,
-        like_count,
-        created_at,
-        updated_at,
-        user:users(id, display_name)
-      `)
+      .select("id, clip_id, user_id, content, like_count, created_at, updated_at")
       .eq("clip_id", clipId)
       .order("created_at", { ascending: false });
 
-    if (commentsData) {
-      // Transform the data - Supabase returns user as array, we need single object
-      const transformed: CommentWithUser[] = (commentsData as CommentFromDb[]).map((c) => ({
-        id: c.id,
-        clip_id: c.clip_id,
-        user_id: c.user_id,
-        content: c.content,
-        like_count: c.like_count,
-        created_at: c.created_at,
-        updated_at: c.updated_at,
-        user: Array.isArray(c.user) && c.user.length > 0 ? (c.user[0] ?? null) : null,
+    if (error) {
+      console.error("Failed to fetch comments:", error);
+      setLoading(false);
+      return;
+    }
+
+    if (commentsData && commentsData.length > 0) {
+      // Fetch user display names separately
+      const userIds = [...new Set(commentsData.map((c) => c.user_id))];
+      const { data: usersData } = await supabase
+        .from("users")
+        .select("id, display_name")
+        .in("id", userIds);
+
+      const userMap = new Map(usersData?.map((u) => [u.id, u.display_name]) ?? []);
+
+      const transformed: CommentWithUser[] = commentsData.map((c) => ({
+        ...c,
+        user: { id: c.user_id, display_name: userMap.get(c.user_id) ?? null },
       }));
       setComments(transformed);
+    } else {
+      setComments([]);
     }
 
     if (user && commentsData && commentsData.length > 0) {
