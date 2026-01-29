@@ -1,6 +1,6 @@
 -- Comments table
 CREATE TABLE comments (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   clip_id UUID NOT NULL REFERENCES clips(id) ON DELETE CASCADE,
   user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
   content TEXT NOT NULL CHECK (char_length(content) <= 2000),
@@ -19,7 +19,7 @@ CREATE TABLE comment_likes (
 
 -- Comment reports table
 CREATE TABLE comment_reports (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   comment_id UUID NOT NULL REFERENCES comments(id) ON DELETE CASCADE,
   user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
   reason TEXT NOT NULL CHECK (reason IN ('spam', 'harassment', 'inappropriate', 'other')),

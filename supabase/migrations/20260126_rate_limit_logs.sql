@@ -9,7 +9,7 @@ CREATE TABLE IF NOT EXISTS rate_limit_logs (
 );
 
 -- Index for efficient rate limit queries
-CREATE INDEX idx_rate_limit_logs_user_action_time
+CREATE INDEX IF NOT EXISTS idx_rate_limit_logs_user_action_time
   ON rate_limit_logs(user_id, action, created_at DESC);
 
 -- Enable RLS
