@@ -48,10 +48,7 @@ export function CommentSection({ clipId, onClose }: CommentSectionProps) {
     if (commentsData && commentsData.length > 0) {
       // Fetch user display names separately
       const userIds = [...new Set(commentsData.map((c) => c.user_id))];
-      const { data: usersData } = await supabase
-        .from("users")
-        .select("id, display_name")
-        .in("id", userIds);
+      const { data: usersData } = await supabase.from("users").select("id, display_name").in("id", userIds);
 
       const userMap = new Map(usersData?.map((u) => [u.id, u.display_name]) ?? []);
 
@@ -66,11 +63,7 @@ export function CommentSection({ clipId, onClose }: CommentSectionProps) {
 
     if (user && commentsData && commentsData.length > 0) {
       const commentIds = commentsData.map((c) => c.id);
-      const { data: likesData } = await supabase
-        .from("comment_likes")
-        .select("comment_id")
-        .eq("user_id", user.id)
-        .in("comment_id", commentIds);
+      const { data: likesData } = await supabase.from("comment_likes").select("comment_id").eq("user_id", user.id).in("comment_id", commentIds);
 
       if (likesData) {
         setUserLikes(new Set(likesData.map((l) => l.comment_id)));
@@ -100,29 +93,26 @@ export function CommentSection({ clipId, onClose }: CommentSectionProps) {
   };
 
   return (
-    <div className="fixed inset-0 z-40 flex flex-col bg-black/50" onClick={onClose}>
-      <div className="flex-1" />
-      <div
-        className="bg-white rounded-t-2xl max-h-[70vh] flex flex-col animate-slide-up"
-        onClick={(e) => e.stopPropagation()}
-      >
+    <div className='fixed inset-0 z-40 flex flex-col bg-black/50' onClick={onClose}>
+      <div className='flex-1' />
+      <div className='bg-white rounded-t-2xl max-h-[95vh] min-h-[60vh] w-full flex flex-col animate-slide-up' onClick={(e) => e.stopPropagation()}>
         {/* Header */}
-        <div className="flex items-center justify-between p-4 border-b border-gray-200">
-          <h2 className="text-lg font-semibold">Comments {comments.length > 0 && `(${comments.length})`}</h2>
-          <button onClick={onClose} className="p-1 text-gray-400 hover:text-gray-600 transition-colors">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <line x1="18" y1="6" x2="6" y2="18" />
-              <line x1="6" y1="6" x2="18" y2="18" />
+        <div className='flex items-center justify-between p-4 border-b border-gray-200'>
+          <h2 className='text-lg font-semibold'>Comments {comments.length > 0 && `(${comments.length})`}</h2>
+          <button onClick={onClose} className='p-1 text-gray-400 hover:text-gray-600 transition-colors'>
+            <svg width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='2'>
+              <line x1='18' y1='6' x2='6' y2='18' />
+              <line x1='6' y1='6' x2='18' y2='18' />
             </svg>
           </button>
         </div>
 
         {/* Comments list */}
-        <div className="flex-1 overflow-y-auto px-4">
+        <div className='flex-1 overflow-y-auto px-4'>
           {loading ? (
-            <div className="py-8 text-center text-gray-400">Loading...</div>
+            <div className='py-8 text-center text-gray-400'>Loading...</div>
           ) : comments.length === 0 ? (
-            <div className="py-8 text-center text-gray-400">No comments yet. Be the first to comment!</div>
+            <div className='py-8 text-center text-gray-400'>No comments yet. Be the first to comment!</div>
           ) : (
             comments.map((comment) => (
               <CommentCard
