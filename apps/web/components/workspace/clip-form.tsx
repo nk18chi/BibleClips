@@ -3,6 +3,8 @@
 import { useState } from "react";
 import { saveClip } from "@/app/workspace/actions";
 import { useSupabase } from "@/components/providers/supabase-provider";
+import { StylePreview } from "@/components/style-picker/style-preview";
+import { SUBTITLE_STYLES } from "@/lib/styles/subtitle-styles";
 
 const BIBLE_BOOKS = [
   "Genesis",
@@ -95,6 +97,7 @@ export function ClipForm({ youtubeVideoId, startTime, endTime, onSaved, categori
   const [verseStart, setVerseStart] = useState("");
   const [verseEnd, setVerseEnd] = useState("");
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
+  const [subtitleStyleId, setSubtitleStyleId] = useState("classic-white");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [subtitleResult, setSubtitleResult] = useState<string | null>(null);
@@ -131,6 +134,7 @@ export function ClipForm({ youtubeVideoId, startTime, endTime, onSaved, categori
         verseStart: parseInt(verseStart, 10),
         verseEnd: verseEnd ? parseInt(verseEnd, 10) : undefined,
         categoryIds: selectedCategories,
+        subtitleStyleId,
         userId: user?.id,
       });
 
@@ -144,6 +148,7 @@ export function ClipForm({ youtubeVideoId, startTime, endTime, onSaved, categori
       setVerseStart("");
       setVerseEnd("");
       setSelectedCategories([]);
+      setSubtitleStyleId("classic-white");
 
       // Refresh clips list immediately (don't await)
       onSaved();
@@ -254,6 +259,22 @@ export function ClipForm({ youtubeVideoId, startTime, endTime, onSaved, categori
             >
               {cat.name_en}
             </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Subtitle Style */}
+      <div>
+        <p className="text-sm text-gray-600 mb-2">Subtitle Style:</p>
+        <div className="flex gap-3 overflow-x-auto pb-2">
+          {SUBTITLE_STYLES.map((s) => (
+            <div key={s.id} className="flex-shrink-0 w-28">
+              <StylePreview
+                style={s}
+                isSelected={subtitleStyleId === s.id}
+                onClick={() => setSubtitleStyleId(s.id)}
+              />
+            </div>
           ))}
         </div>
       </div>

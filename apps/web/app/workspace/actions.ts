@@ -131,6 +131,7 @@ export async function getVideoClips(youtubeVideoId: string): Promise<ClipWithVer
       end_time,
       title,
       status,
+      subtitle_style,
       created_at,
       clip_verses (
         book,
@@ -167,6 +168,7 @@ export async function saveClip(input: SaveClipInput): Promise<{ clipId: string }
       end_time: input.endTime,
       title: input.title,
       submitted_by: input.userId || null,
+      subtitle_style: input.subtitleStyleId || "classic-white",
       status: "APPROVED", // Auto-approve for workspace
     })
     .select()
@@ -216,6 +218,7 @@ export type UpdateClipInput = {
   verseStart?: number;
   verseEnd?: number | null;
   categoryIds?: string[];
+  subtitleStyleId?: string;
 };
 
 export async function updateClip(input: UpdateClipInput): Promise<{ clipId: string }> {
@@ -229,6 +232,9 @@ export async function updateClip(input: UpdateClipInput): Promise<{ clipId: stri
   };
   if (input.title !== undefined) {
     clipUpdate.title = input.title;
+  }
+  if (input.subtitleStyleId !== undefined) {
+    clipUpdate.subtitle_style = input.subtitleStyleId;
   }
 
   const { error: updateError } = await supabase.from("clips").update(clipUpdate).eq("id", input.clipId);

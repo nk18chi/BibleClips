@@ -44,6 +44,7 @@ export type ClipWithVerse = {
     category_id: string;
   }[];
   clip_subtitles?: { count: number }[];
+  subtitle_style?: string | null;
 };
 
 export type SaveClipInput = {
@@ -56,5 +57,6 @@ export type SaveClipInput = {
   verseStart: number;
   verseEnd?: number;
   categoryIds: string[];
+  subtitleStyleId?: string;
   userId?: string; // Optional - for tracking who submitted
 };

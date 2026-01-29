@@ -2,6 +2,8 @@
 
 import { useState } from "react";
 import { generateClipSubtitles, updateClip } from "@/app/workspace/actions";
+import { StylePreview } from "@/components/style-picker/style-preview";
+import { SUBTITLE_STYLES } from "@/lib/styles/subtitle-styles";
 import type { ClipWithVerse } from "@/types/workspace";
 
 const BIBLE_BOOKS = [
@@ -110,6 +112,7 @@ export function ClipHistory({ clips, categories, onDeleted, isAdmin }: ClipHisto
   const [editVerseStart, setEditVerseStart] = useState("");
   const [editVerseEnd, setEditVerseEnd] = useState("");
   const [editCategories, setEditCategories] = useState<string[]>([]);
+  const [editSubtitleStyle, setEditSubtitleStyle] = useState("classic-white");
   const [saving, setSaving] = useState(false);
   const [editError, setEditError] = useState<string | null>(null);
 
@@ -143,6 +146,7 @@ export function ClipHistory({ clips, categories, onDeleted, isAdmin }: ClipHisto
     setEditVerseStart(verse?.verse_start?.toString() || "");
     setEditVerseEnd(verse?.verse_end?.toString() || "");
     setEditCategories(clip.clip_categories?.map((c) => c.category_id) || []);
+    setEditSubtitleStyle(clip.subtitle_style || "classic-white");
     setEditError(null);
   };
 
@@ -156,6 +160,7 @@ export function ClipHistory({ clips, categories, onDeleted, isAdmin }: ClipHisto
     setEditVerseStart("");
     setEditVerseEnd("");
     setEditCategories([]);
+    setEditSubtitleStyle("classic-white");
     setEditError(null);
   };
 
@@ -196,6 +201,7 @@ export function ClipHistory({ clips, categories, onDeleted, isAdmin }: ClipHisto
         verseStart: parseInt(editVerseStart, 10),
         verseEnd: editVerseEnd ? parseInt(editVerseEnd, 10) : null,
         categoryIds: editCategories,
+        subtitleStyleId: editSubtitleStyle,
       });
       await generateClipSubtitles(clipId);
       handleCancelEdit();
@@ -329,6 +335,22 @@ export function ClipHistory({ clips, categories, onDeleted, isAdmin }: ClipHisto
                         {cat.name_en}
                       </button>
                     ))}
+                  </div>
+
+                  {/* Subtitle Style */}
+                  <div>
+                    <p className="text-xs text-gray-500 mb-1">Subtitle Style:</p>
+                    <div className="flex gap-2 overflow-x-auto pb-1">
+                      {SUBTITLE_STYLES.map((s) => (
+                        <div key={s.id} className="flex-shrink-0 w-24">
+                          <StylePreview
+                            style={s}
+                            isSelected={editSubtitleStyle === s.id}
+                            onClick={() => setEditSubtitleStyle(s.id)}
+                          />
+                        </div>
+                      ))}
+                    </div>
                   </div>
 
                   {editError && <div className="text-xs text-red-600">{editError}</div>}

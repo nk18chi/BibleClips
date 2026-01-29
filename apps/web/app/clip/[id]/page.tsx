@@ -14,6 +14,7 @@ type ClipFromDb = {
   end_time: number;
   vote_count: number;
   language: string | null;
+  subtitle_style: string | null;
   clip_verses: {
     book: string;
     book_ja: string;
@@ -69,6 +70,7 @@ async function getClip(id: string, userId?: string) {
       end_time,
       vote_count,
       language,
+      subtitle_style,
       clip_verses (book, book_ja, chapter, verse_start, verse_end),
       clip_categories (categories (slug, name_en)),
       clip_subtitles (word, start_time, end_time, sequence),
@@ -110,6 +112,7 @@ async function getClip(id: string, userId?: string) {
     end_time: typedClip.end_time,
     vote_count: typedClip.vote_count,
     language: (typedClip.language === "ja" ? "ja" : "en") as "en" | "ja",
+    subtitle_style: typedClip.subtitle_style || undefined,
     clip_verses: typedClip.clip_verses,
     clip_categories: typedClip.clip_categories,
     wordTimings,

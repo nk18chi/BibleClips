@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useLanguage } from "@/components/providers/language-provider";
 import { useStyle } from "@/components/providers/style-provider";
+import { getStyleById } from "@/lib/styles/subtitle-styles";
 
 type WordTiming = {
   word: string;
@@ -30,6 +31,7 @@ type SubtitleOverlayProps = {
   offset?: number;
   maxWordsPerSentence?: number;
   videoLanguage?: "en" | "ja";
+  subtitleStyleId?: string;
 };
 
 const DEFAULT_OFFSET = 0; // No offset needed with Whisper timestamps
@@ -97,9 +99,11 @@ export function SubtitleOverlay({
   offset = DEFAULT_OFFSET,
   maxWordsPerSentence = 6,
   videoLanguage = "en",
+  subtitleStyleId,
 }: SubtitleOverlayProps) {
   const { language: userLanguage } = useLanguage();
-  const { style } = useStyle();
+  const { style: contextStyle } = useStyle();
+  const style = (subtitleStyleId && getStyleById(subtitleStyleId)) || contextStyle;
   const [activeSentenceIndex, setActiveSentenceIndex] = useState<number>(-1);
   const [activeWordIndex, setActiveWordIndex] = useState<number>(-1);
   const [activeTranslation, setActiveTranslation] = useState<string | null>(null);

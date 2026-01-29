@@ -5,6 +5,7 @@ import { useEffect, useRef, useState } from "react";
 import { CommentSection } from "@/components/comment/comment-section";
 import { useLanguage } from "@/components/providers/language-provider";
 import { useStyle } from "@/components/providers/style-provider";
+import { getStyleById } from "@/lib/styles/subtitle-styles";
 import { StylePickerModal } from "@/components/style-picker/style-picker-modal";
 import { Header } from "@/components/ui/header";
 import { ActionButtons } from "./action-buttons";
@@ -34,6 +35,7 @@ type Clip = {
   vote_count: number;
   has_voted: boolean;
   language: "en" | "ja";
+  subtitle_style?: string;
   wordTimings?: WordTiming[];
   translations?: SentenceTranslation[];
   clip_verses: {
@@ -76,7 +78,8 @@ function ReelCard({
 }) {
   const [currentTime, setCurrentTime] = useState(0);
   const { language } = useLanguage();
-  const { style } = useStyle();
+  const { style: contextStyle } = useStyle();
+  const style = (clip.subtitle_style && getStyleById(clip.subtitle_style)) || contextStyle;
 
   const verse = clip.clip_verses[0];
 
@@ -147,6 +150,7 @@ function ReelCard({
           translations={clip.translations}
           currentTime={currentTime}
           videoLanguage={clip.language}
+          subtitleStyleId={clip.subtitle_style}
         />
       )}
 

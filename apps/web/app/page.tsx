@@ -55,6 +55,7 @@ type Clip = {
   vote_count: number;
   has_voted: boolean;
   language: "en" | "ja";
+  subtitle_style?: string;
   wordTimings?: WordTiming[];
   translations?: SentenceTranslation[];
   clip_verses: {
@@ -85,6 +86,7 @@ async function getApprovedClips(userId?: string): Promise<Clip[]> {
       end_time,
       vote_count,
       language,
+      subtitle_style,
       clip_verses (book, book_ja, chapter, verse_start, verse_end),
       clip_categories (categories (slug, name_en)),
       clip_subtitles (word, start_time, end_time, sequence),
@@ -100,6 +102,7 @@ async function getApprovedClips(userId?: string): Promise<Clip[]> {
 
   const clips = (data || []) as unknown as (ClipFromDb & {
     language: string | null;
+    subtitle_style: string | null;
     clip_subtitles: { word: string; start_time: number; end_time: number; sequence: number }[];
     clip_translations: { language: string; text: string; start_time: number; end_time: number; sequence: number }[];
   })[];
@@ -134,6 +137,7 @@ async function getApprovedClips(userId?: string): Promise<Clip[]> {
       vote_count: clip.vote_count,
       has_voted: false,
       language: (clip.language === "ja" ? "ja" : "en") as "en" | "ja",
+      subtitle_style: clip.subtitle_style || undefined,
       wordTimings,
       translations,
       clip_verses: clip.clip_verses,

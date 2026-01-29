@@ -49,6 +49,7 @@ export async function GET(request: Request) {
       end_time,
       title,
       status,
+      subtitle_style,
       created_at,
       clip_verses (
         book,
