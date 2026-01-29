@@ -34,11 +34,11 @@ const ShareIcon = () => (
   </svg>
 );
 
-const MoreIcon = () => (
-  <svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor">
-    <circle cx="12" cy="12" r="1.5" />
-    <circle cx="12" cy="6" r="1.5" />
-    <circle cx="12" cy="18" r="1.5" />
+const ExternalLinkIcon = () => (
+  <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+    <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
+    <polyline points="15 3 21 3 21 9" />
+    <line x1="10" y1="14" x2="21" y2="3" />
   </svg>
 );
 
@@ -171,22 +171,22 @@ export function ActionButtons({
         <ShareIcon />
       </button>
 
-      {/* More (verse) */}
+      {/* Verse */}
       <button
         onClick={onVerseClick}
         className="flex flex-col items-center text-gray-700 hover:scale-110 transition-transform"
       >
-        <MoreIcon />
+        <BookIcon />
       </button>
 
-      {/* Book/Verse thumbnail */}
+      {/* YouTube original */}
       <a
         href={`https://www.youtube.com/watch?v=${youtubeVideoId}`}
         target="_blank"
         rel="noopener noreferrer"
-        className="w-10 h-10 rounded-md bg-gray-200 flex items-center justify-center text-gray-700 hover:bg-gray-300 transition-colors overflow-hidden"
+        className="flex flex-col items-center text-gray-700 hover:scale-110 transition-transform"
       >
-        <BookIcon />
+        <ExternalLinkIcon />
       </a>
     </div>
   );

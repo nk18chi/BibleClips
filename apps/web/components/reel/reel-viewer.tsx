@@ -278,7 +278,6 @@ export function ReelViewer({ clips, initialIndex = 0, showHeader = false }: Reel
                 total={clips.length}
                 onVerseClick={() => setShowVerseModal(true)}
                 onCommentClick={() => setShowCommentSection(true)}
-                onStyleClick={() => setShowStylePicker(true)}
               />
             </div>
           ))}
@@ -296,7 +295,6 @@ export function ReelViewer({ clips, initialIndex = 0, showHeader = false }: Reel
             hasVoted={currentClip.has_voted}
             onVerseClick={() => setShowVerseModal(true)}
             onCommentClick={() => setShowCommentSection(true)}
-            onStyleClick={() => setShowStylePicker(true)}
           />
         </div>
       </div>
