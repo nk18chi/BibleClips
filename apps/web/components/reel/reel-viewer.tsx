@@ -74,7 +74,7 @@ function ReelCard({
   total: number;
   onVerseClick: () => void;
   onCommentClick: () => void;
-  onStyleClick: () => void;
+  onStyleClick?: () => void;
 }) {
   const [currentTime, setCurrentTime] = useState(0);
   const { language } = useLanguage();
