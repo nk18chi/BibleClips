@@ -65,7 +65,7 @@ export async function FeaturedClips() {
           <div className="flex-1 min-w-0">
             <h3 className="font-medium text-gray-900 truncate">{clip.title}</h3>
             <p className="text-sm text-gray-500">{formatVerseRef(clip.clip_verses)}</p>
-            <p className="text-sm text-gray-400 mt-1">{clip.vote_count} votes</p>
+            <p className="text-sm text-gray-400 mt-1">{clip.vote_count} likes</p>
           </div>
         </Link>
       ))}

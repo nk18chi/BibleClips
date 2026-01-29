@@ -177,8 +177,8 @@ function ReelCard({
         </div>
       </div>
 
-      {/* Action Buttons - Inside video on right */}
-      <div className="absolute right-3 bottom-24 z-10">
+      {/* Action Buttons - Inside video on right (mobile only) */}
+      <div className="absolute right-3 bottom-24 z-10 sm:hidden">
         <ActionButtons
           clipId={clip.id}
           youtubeVideoId={clip.youtube_video_id}
@@ -289,6 +289,7 @@ export function ReelViewer({ clips, initialIndex = 0, showHeader = false }: Reel
         {/* Action Buttons - Right side outside video (desktop only) */}
         <div className="hidden sm:flex flex-col items-center justify-end pb-24 h-full ml-4">
           <ActionButtons
+            key={currentClip.id}
             clipId={currentClip.id}
             youtubeVideoId={currentClip.youtube_video_id}
             voteCount={currentClip.vote_count}

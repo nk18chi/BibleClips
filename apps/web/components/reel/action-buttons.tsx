@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useSupabase } from "@/components/providers/supabase-provider";
 
 type ActionButtonsProps = {
@@ -77,6 +77,22 @@ export function ActionButtons({
   const [hasVoted, setHasVoted] = useState(initialHasVoted);
   const [voting, setVoting] = useState(false);
 
+  // Check if user has already voted on mount (server may not have this info)
+  useEffect(() => {
+    if (!user || initialHasVoted) return;
+    supabase
+      .from("votes")
+      .select("clip_id")
+      .eq("user_id", user.id)
+      .eq("clip_id", clipId)
+      .maybeSingle()
+      .then(({ data }) => {
+        if (data) {
+          setHasVoted(true);
+        }
+      });
+  }, [user, clipId, initialHasVoted, supabase]);
+
   const handleVote = async () => {
     if (!user || voting) return;
 
@@ -96,6 +112,9 @@ export function ActionButtons({
 
       if (!error) {
         setVoteCount((v) => v + 1);
+        setHasVoted(true);
+      } else if (error.code === "23505") {
+        // Already voted (duplicate key) — just update UI state
         setHasVoted(true);
       }
     }
