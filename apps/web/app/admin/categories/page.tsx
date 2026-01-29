@@ -2,6 +2,8 @@ import { redirect } from "next/navigation";
 import { Header } from "@/components/ui/header";
 import { createServerClient } from "@/lib/supabase/server";
 
+export const dynamic = "force-dynamic";
+
 type Category = {
   id: string;
   slug: string;
