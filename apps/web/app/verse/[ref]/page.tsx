@@ -3,7 +3,7 @@ import { ReelViewer } from "@/components/reel/reel-viewer";
 import { createServerClient } from "@/lib/supabase/server";
 
 type Props = {
-  params: { book: string; chapter: string; verse: string };
+  params: { ref: string };
 };
 
 type ClipFromDb = {
@@ -28,6 +28,27 @@ type ClipFromDb = {
     } | null;
   }[];
 };
+
+/**
+ * Parse a flat verse ref like "genesis-1-1" or "1-john-3-16" into { book, chapter, verse }.
+ * Strategy: try splitting from the end — last segment is verse, second-to-last is chapter,
+ * everything before is the book name.
+ */
+function parseVerseRef(ref: string): { book: string; chapter: number; verse: number } | null {
+  const parts = ref.split("-");
+  if (parts.length < 3) return null;
+
+  const verse = parseInt(parts[parts.length - 1]!, 10);
+  const chapter = parseInt(parts[parts.length - 2]!, 10);
+
+  if (isNaN(verse) || isNaN(chapter)) return null;
+
+  const bookParts = parts.slice(0, -2);
+  if (bookParts.length === 0) return null;
+
+  const book = bookParts.join("-");
+  return { book, chapter, verse };
+}
 
 async function getClipsForVerse(book: string, chapter: number, verse: number, userId?: string) {
   const supabase = createServerClient();
@@ -91,18 +112,33 @@ async function getClipsForVerse(book: string, chapter: number, verse: number, us
 }
 
 export default async function VersePage({ params }: Props) {
+  const parsed = parseVerseRef(params.ref);
+
+  if (!parsed) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
+        <div className="text-center">
+          <h1 className="text-2xl font-bold text-gray-900 mb-2">Invalid verse reference</h1>
+          <p className="text-gray-600 mb-4">Could not parse &quot;{params.ref}&quot;.</p>
+          <Link href="/" className="text-blue-600 hover:text-blue-800">
+            Back to home
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
+  const { book, chapter, verse } = parsed;
+
   const supabase = createServerClient();
   const {
     data: { session },
   } = await supabase.auth.getSession();
 
-  const chapter = parseInt(params.chapter, 10);
-  const verse = parseInt(params.verse, 10);
-
-  const clips = await getClipsForVerse(params.book, chapter, verse, session?.user?.id);
+  const clips = await getClipsForVerse(book, chapter, verse, session?.user?.id);
 
   if (clips.length === 0) {
-    const bookDisplay = params.book
+    const bookDisplay = book
       .split("-")
       .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
       .join(" ");

@@ -28,6 +28,13 @@ export async function middleware(request: NextRequest) {
   const protectedPaths = ["/submit", "/my-clips", "/admin"];
   const isProtectedPath = protectedPaths.some((path) => request.nextUrl.pathname.startsWith(path));
 
+  // Redirect old /verse/book/chapter/verse URLs to flat /verse/book-chapter-verse
+  const oldVerseMatch = request.nextUrl.pathname.match(/^\/verse\/([^/]+)\/(\d+)\/(\d+)$/);
+  if (oldVerseMatch) {
+    const [, book, chapter, verse] = oldVerseMatch;
+    return NextResponse.redirect(new URL(`/verse/${book}-${chapter}-${verse}`, request.url), 301);
+  }
+
   if (isProtectedPath && !user) {
     const redirectUrl = new URL("/login", request.url);
     redirectUrl.searchParams.set("redirectTo", request.nextUrl.pathname);
