@@ -16,7 +16,8 @@ export function VerseSearch() {
       const book = match[1]?.toLowerCase().replace(/\s+/g, "-");
       const chapter = match[2] ?? "";
       const verse = match[3] ?? "";
-      router.push(`/verse/${book}-${chapter}-${verse}`);
+      const endVerse = match[4];
+      router.push(`/verse/${book}-${chapter}-${verse}${endVerse ? `-${endVerse}` : ""}`);
     }
   };
 

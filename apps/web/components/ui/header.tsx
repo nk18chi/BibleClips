@@ -31,7 +31,8 @@ export function Header() {
       const book = verseMatch[1].toLowerCase().replace(/\s+/g, "-");
       const chapter = verseMatch[2];
       const verse = verseMatch[3];
-      router.push(`/verse/${book}-${chapter}-${verse}`);
+      const endVerse = verseMatch[4];
+      router.push(`/verse/${book}-${chapter}-${verse}${endVerse ? `-${endVerse}` : ""}`);
     } else {
       // Search as hashtag/category
       const slug = searchQuery.toLowerCase().replace(/^#/, "").trim();
