@@ -107,7 +107,8 @@ async function getClipsForVerse(book: string, chapter: number, verseStart: numbe
   // It overlaps [verseStart, verseEnd] if clip_end >= verseStart AND clip_start <= verseEnd.
   // The query already ensures clip_start <= verseEnd; now filter clip_end >= verseStart.
   const typedClips = (clips as ClipFromDb[] | null)?.filter((clip) =>
-    clip.clip_verses.some((cv) => (cv.verse_end ?? cv.verse_start) >= verseStart)
+    clip.clip_verses.some((cv) => (cv.verse_end ?? cv.verse_start) >= verseStart) &&
+    (clip.clip_subtitles?.length ?? 0) > 0
   ) ?? null;
 
   const mapClip = (clip: ClipFromDb, hasVoted: boolean) => {
