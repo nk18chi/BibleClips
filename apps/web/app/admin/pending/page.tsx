@@ -152,7 +152,7 @@ export default async function AdminPendingPage() {
                     </div>
                   </div>
 
-                  <div className="flex-shrink-0">
+                  <div className="flex-shrink-0 self-center">
                     <AdminClipActions clipId={clip.id} />
                   </div>
                 </div>
