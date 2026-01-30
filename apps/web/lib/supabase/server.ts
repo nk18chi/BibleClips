@@ -1,5 +1,6 @@
 import { createServerClient as createSupabaseServerClient } from '@supabase/ssr';
 import { cookies } from 'next/headers';
+import { parseUserFromAuthCookies } from './parse-auth-cookie';
 
 type CookieToSet = { name: string; value: string; options?: object };
 
@@ -37,17 +38,6 @@ export function createServerClient() {
  */
 export function getSessionFromCookie(): { user: { id: string; email?: string } } | null {
   const cookieStore = cookies();
-  const allCookies = cookieStore.getAll();
-  const authCookie = allCookies.find(
-    (c) => c.name.includes("auth-token") && !c.name.includes("code-verifier")
-  );
-
-  if (!authCookie) return null;
-
-  try {
-    const session = JSON.parse(authCookie.value);
-    return { user: session.user };
-  } catch {
-    return null;
-  }
+  const user = parseUserFromAuthCookies(cookieStore.getAll());
+  return user ? { user } : null;
 }
