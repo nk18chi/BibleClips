@@ -2,10 +2,11 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useLanguage } from "@/components/providers/language-provider";
 import { useSupabase } from "@/components/providers/supabase-provider";
 import { useUserProfile } from "@/hooks/use-user-profile";
+import { bibleBookNamesEn, bibleBookNamesJa, getBookByEnglishName, getBookByJapaneseName } from "@bibleclips/validation";
 
 export function Header() {
   const { supabase, user, canAccessWorkspace } = useSupabase();
@@ -16,6 +17,87 @@ export function Header() {
   const [showSearch, setShowSearch] = useState(false);
   const [showLanguageMenu, setShowLanguageMenu] = useState(false);
   const [showMobileMenu, setShowMobileMenu] = useState(false);
+  const [categories, setCategories] = useState<{ id: string; slug: string; name_en: string; name_ja: string | null }[]>([]);
+  const [categoriesFetched, setCategoriesFetched] = useState(false);
+  const [highlightIndex, setHighlightIndex] = useState(-1);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const searchInputRef = useRef<HTMLInputElement>(null);
+  const suggestionsRef = useRef<HTMLDivElement>(null);
+
+  const fetchCategories = useCallback(async () => {
+    if (categoriesFetched) return;
+    setCategoriesFetched(true);
+    try {
+      const res = await fetch("/api/categories");
+      if (res.ok) setCategories(await res.json());
+    } catch {}
+  }, [categoriesFetched]);
+
+  const bibleBooks = language === "ja" ? bibleBookNamesJa : bibleBookNamesEn;
+
+  const suggestions = (() => {
+    const q = searchQuery.trim().toLowerCase();
+    if (!q) return [];
+    const results: { label: string; slug: string; type: "book" | "category" }[] = [];
+    for (const name of bibleBooks) {
+      if (name.toLowerCase().startsWith(q) && results.length < 6) {
+        results.push({ label: name, slug: "", type: "book" });
+      }
+    }
+    const catQuery = q.replace(/^#/, "");
+    for (const cat of categories) {
+      const catName = language === "ja" ? (cat.name_ja || cat.name_en) : cat.name_en;
+      if ((cat.slug.startsWith(catQuery) || catName.toLowerCase().startsWith(catQuery)) && results.length < 6) {
+        results.push({ label: `#${catName}`, slug: cat.slug, type: "category" });
+      }
+    }
+    return results.slice(0, 6);
+  })();
+
+  const selectSuggestion = (s: { label: string; slug: string; type: "book" | "category" }) => {
+    if (s.type === "book") {
+      setSearchQuery(`${s.label} `);
+      setShowSuggestions(false);
+      setHighlightIndex(-1);
+      searchInputRef.current?.focus();
+    } else {
+      router.push(`/category/${s.slug}`);
+      setSearchQuery("");
+      setShowSearch(false);
+      setShowSuggestions(false);
+      setHighlightIndex(-1);
+    }
+  };
+
+  const handleSearchKeyDown = (e: React.KeyboardEvent) => {
+    if (!showSuggestions || suggestions.length === 0) return;
+    if (e.key === "ArrowDown") {
+      e.preventDefault();
+      setHighlightIndex((i) => (i + 1) % suggestions.length);
+    } else if (e.key === "ArrowUp") {
+      e.preventDefault();
+      setHighlightIndex((i) => (i <= 0 ? suggestions.length - 1 : i - 1));
+    } else if (e.key === "Enter" && highlightIndex >= 0 && suggestions[highlightIndex]) {
+      e.preventDefault();
+      selectSuggestion(suggestions[highlightIndex]);
+    } else if (e.key === "Escape") {
+      setShowSuggestions(false);
+      setHighlightIndex(-1);
+    }
+  };
+
+  // Dismiss suggestions on outside click
+  useEffect(() => {
+    if (!showSuggestions) return;
+    const handler = (e: MouseEvent) => {
+      if (suggestionsRef.current && !suggestionsRef.current.contains(e.target as Node) && e.target !== searchInputRef.current) {
+        setShowSuggestions(false);
+        setHighlightIndex(-1);
+      }
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, [showSuggestions]);
 
   const handleSignOut = async () => {
     await supabase.auth.signOut();
@@ -25,13 +107,16 @@ export function Header() {
     e.preventDefault();
     if (!searchQuery.trim()) return;
 
-    // Check if it's a verse reference (e.g., "John 3:16")
-    const verseMatch = searchQuery.match(/^(\d?\s*\w+)\s+(\d+):(\d+)(?:-(\d+))?$/i);
+    // Check if it's a verse reference (e.g., "John 3:16" or "創世記 1:1")
+    const verseMatch = searchQuery.match(/^(\d?\s*.+?)\s+(\d+):(\d+)(?:-(\d+))?$/);
     if (verseMatch?.[1] && verseMatch[2] && verseMatch[3]) {
-      const book = verseMatch[1].toLowerCase().replace(/\s+/g, "-");
+      const rawBook = verseMatch[1].trim();
       const chapter = verseMatch[2];
       const verse = verseMatch[3];
       const endVerse = verseMatch[4];
+      // Resolve to English book name for the URL
+      const resolved = getBookByEnglishName(rawBook) || getBookByJapaneseName(rawBook);
+      const book = (resolved ? resolved.en : rawBook).toLowerCase().replace(/\s+/g, "-");
       router.push(`/verse/${book}-${chapter}-${verse}${endVerse ? `-${endVerse}` : ""}`);
     } else {
       // Search as hashtag/category
@@ -77,15 +162,62 @@ export function Header() {
         <div className="flex items-center gap-3">
           {/* Search */}
           {showSearch ? (
-            <form onSubmit={handleSearch} className="flex items-center gap-2">
-              <input
-                type="text"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="John 3:16 or #anxiety"
-                className="w-40 sm:w-56 px-3 py-1.5 text-sm border border-gray-300 rounded-full focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
-              <button type="button" onClick={() => setShowSearch(false)} className="text-gray-500 hover:text-gray-700">
+            <form onSubmit={handleSearch} className="flex items-center gap-2 relative">
+              <div className="relative">
+                <input
+                  ref={searchInputRef}
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => {
+                    setSearchQuery(e.target.value);
+                    setShowSuggestions(true);
+                    setHighlightIndex(-1);
+                  }}
+                  onFocus={() => {
+                    fetchCategories();
+                    if (searchQuery.trim()) setShowSuggestions(true);
+                  }}
+                  onKeyDown={handleSearchKeyDown}
+                  placeholder="John 3:16 or #anxiety"
+                  className="w-40 sm:w-56 px-3 py-1.5 text-sm border border-gray-300 rounded-full focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  autoComplete="off"
+                  role="combobox"
+                  aria-expanded={showSuggestions && suggestions.length > 0}
+                  aria-autocomplete="list"
+                  aria-controls="search-suggestions"
+                  aria-activedescendant={highlightIndex >= 0 ? `suggestion-${highlightIndex}` : undefined}
+                />
+                {showSuggestions && suggestions.length > 0 && (
+                  <div
+                    ref={suggestionsRef}
+                    id="search-suggestions"
+                    role="listbox"
+                    className="absolute top-full left-0 mt-1 w-full bg-white border border-gray-200 rounded-lg shadow-lg z-50 py-1"
+                  >
+                    {suggestions.map((s, i) => (
+                      <button
+                        key={s.label}
+                        id={`suggestion-${i}`}
+                        role="option"
+                        aria-selected={i === highlightIndex}
+                        type="button"
+                        className={`w-full text-left px-3 py-1.5 text-sm ${i === highlightIndex ? "bg-blue-50 text-blue-700" : "text-gray-700 hover:bg-gray-50"}`}
+                        onMouseDown={(e) => {
+                          e.preventDefault();
+                          selectSuggestion(s);
+                        }}
+                      >
+                        {s.type === "category" ? (
+                          <span className="text-purple-600">{s.label}</span>
+                        ) : (
+                          s.label
+                        )}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+              <button type="button" onClick={() => { setShowSearch(false); setShowSuggestions(false); }} className="text-gray-500 hover:text-gray-700">
                 Cancel
               </button>
             </form>

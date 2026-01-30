@@ -6,7 +6,7 @@ export const dynamic = "force-dynamic";
 export async function GET() {
   const supabase = createServerClient();
 
-  const { data, error } = await supabase.from("categories").select("id, slug, name_en").order("sort_order");
+  const { data, error } = await supabase.from("categories").select("id, slug, name_en, name_ja").order("sort_order");
 
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });
