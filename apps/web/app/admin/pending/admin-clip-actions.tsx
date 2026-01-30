@@ -13,15 +13,12 @@ export function AdminClipActions({ clipId }: Props) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
 
-  const updateStatus = async (status: "APPROVED" | "REJECTED", isFeatured = false) => {
+  const updateStatus = async (status: "APPROVED" | "REJECTED") => {
     setLoading(true);
 
     const { error } = await supabase
       .from("clips")
-      .update({
-        status,
-        is_featured: isFeatured,
-      })
+      .update({ status })
       .eq("id", clipId);
 
     if (!error) {
@@ -35,14 +32,6 @@ export function AdminClipActions({ clipId }: Props) {
 
   return (
     <div className="flex flex-col gap-2">
-      <button
-        type="button"
-        onClick={() => updateStatus("APPROVED", true)}
-        disabled={loading}
-        className="px-4 py-2 bg-yellow-500 text-white text-sm rounded hover:bg-yellow-600 disabled:opacity-50"
-      >
-        Approve + Feature
-      </button>
       <button
         type="button"
         onClick={() => updateStatus("APPROVED")}
