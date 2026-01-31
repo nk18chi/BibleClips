@@ -138,7 +138,8 @@ export async function getVideoClips(youtubeVideoId: string): Promise<ClipWithVer
         book_ja,
         chapter,
         verse_start,
-        verse_end
+        verse_end,
+        version
       ),
       clip_categories (
         category_id
@@ -184,6 +185,7 @@ export async function saveClip(input: SaveClipInput): Promise<{ clipId: string }
     chapter: input.chapter,
     verse_start: input.verseStart,
     verse_end: input.verseEnd || null,
+    version: input.version || "NIV",
   });
 
   if (verseError) throw verseError;
@@ -217,6 +219,7 @@ export type UpdateClipInput = {
   chapter?: number;
   verseStart?: number;
   verseEnd?: number | null;
+  version?: string;
   categoryIds?: string[];
   subtitleStyleId?: string;
 };
@@ -254,6 +257,7 @@ export async function updateClip(input: UpdateClipInput): Promise<{ clipId: stri
       chapter: input.chapter,
       verse_start: input.verseStart,
       verse_end: input.verseEnd || null,
+      version: input.version || "NIV",
     });
 
     if (verseError) throw verseError;

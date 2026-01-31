@@ -96,6 +96,7 @@ export function ClipForm({ youtubeVideoId, startTime, endTime, onSaved, categori
   const [chapter, setChapter] = useState("");
   const [verseStart, setVerseStart] = useState("");
   const [verseEnd, setVerseEnd] = useState("");
+  const [version, setVersion] = useState("NIV");
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const [subtitleStyleId, setSubtitleStyleId] = useState("classic-white");
   const [saving, setSaving] = useState(false);
@@ -133,6 +134,7 @@ export function ClipForm({ youtubeVideoId, startTime, endTime, onSaved, categori
         chapter: parseInt(chapter, 10),
         verseStart: parseInt(verseStart, 10),
         verseEnd: verseEnd ? parseInt(verseEnd, 10) : undefined,
+        version,
         categoryIds: selectedCategories,
         subtitleStyleId,
         userId: user?.id,
@@ -147,6 +149,7 @@ export function ClipForm({ youtubeVideoId, startTime, endTime, onSaved, categori
       setChapter("");
       setVerseStart("");
       setVerseEnd("");
+      setVersion("NIV");
       setSelectedCategories([]);
       setSubtitleStyleId("classic-white");
 
@@ -240,6 +243,22 @@ export function ClipForm({ youtubeVideoId, startTime, endTime, onSaved, categori
             className="w-full px-2 py-2 border rounded-lg text-sm"
           />
         </div>
+      </div>
+
+      {/* Bible Version */}
+      <div>
+        <label className="block text-sm text-gray-600 mb-1">Bible Version:</label>
+        <select
+          value={version}
+          onChange={(e) => setVersion(e.target.value)}
+          className="px-3 py-2 border rounded-lg text-sm"
+        >
+          <option value="NIV">NIV</option>
+          <option value="ESV">ESV</option>
+          <option value="KJV">KJV</option>
+          <option value="NASB">NASB</option>
+          <option value="NLT">NLT</option>
+        </select>
       </div>
 
       {/* Categories */}

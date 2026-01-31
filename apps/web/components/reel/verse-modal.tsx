@@ -7,6 +7,7 @@ type VerseModalProps = {
   chapter: number;
   verseStart: number;
   verseEnd?: number | null;
+  version?: string;
   onClose: () => void;
 };
 
@@ -14,7 +15,7 @@ type VerseData = {
   text: string;
 };
 
-export function VerseModal({ book, chapter, verseStart, verseEnd, onClose }: VerseModalProps) {
+export function VerseModal({ book, chapter, verseStart, verseEnd, version = "NIV", onClose }: VerseModalProps) {
   const [verseText, setVerseText] = useState<string>("");
   const [verseTextJa, setVerseTextJa] = useState<string>("");
   const [loading, setLoading] = useState(true);
@@ -82,7 +83,7 @@ export function VerseModal({ book, chapter, verseStart, verseEnd, onClose }: Ver
 
         <div className="p-4 border-t">
           <a
-            href={`https://www.biblegateway.com/passage/?search=${encodeURIComponent(verseRef)}&version=NIV`}
+            href={`https://www.biblegateway.com/passage/?search=${encodeURIComponent(verseRef)}&version=${encodeURIComponent(version)}`}
             target="_blank"
             rel="noopener noreferrer"
             className="block w-full text-center py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"

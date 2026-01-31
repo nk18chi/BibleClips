@@ -20,6 +20,7 @@ type ClipFromDb = {
     chapter: number;
     verse_start: number;
     verse_end: number | null;
+    version?: string;
   }[];
   clip_categories: {
     categories: {
@@ -43,7 +44,7 @@ async function getClipsForCategory(slug: string, userId?: string) {
       end_time,
       vote_count,
       language,
-      clip_verses (book, book_ja, chapter, verse_start, verse_end),
+      clip_verses (book, book_ja, chapter, verse_start, verse_end, version),
       clip_categories!inner (categories!inner (slug, name_en))
     `
     )

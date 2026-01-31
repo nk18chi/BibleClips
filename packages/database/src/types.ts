@@ -40,6 +40,7 @@ export interface ClipVerse {
   chapter: number;
   verse_start: number;
   verse_end: number | null;
+  version: string;
 }
 
 export interface Category {

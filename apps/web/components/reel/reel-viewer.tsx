@@ -44,6 +44,7 @@ type Clip = {
     chapter: number;
     verse_start: number;
     verse_end: number | null;
+    version?: string;
   }[];
   clip_categories: {
     categories: {
@@ -306,6 +307,7 @@ export function ReelViewer({ clips, initialIndex = 0, showHeader = false }: Reel
           chapter={verse.chapter}
           verseStart={verse.verse_start}
           verseEnd={verse.verse_end}
+          version={verse.version}
           onClose={() => setShowVerseModal(false)}
         />
       )}

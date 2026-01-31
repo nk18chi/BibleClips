@@ -132,6 +132,7 @@ export default function SubmitPage() {
   const [chapter, setChapter] = useState("");
   const [verseStart, setVerseStart] = useState("");
   const [verseEnd, setVerseEnd] = useState("");
+  const [version, setVersion] = useState("NIV");
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -215,6 +216,7 @@ export default function SubmitPage() {
           chapter: parseInt(chapter, 10),
           verse_start: parseInt(verseStart, 10),
           verse_end: verseEnd ? parseInt(verseEnd, 10) : null,
+          version,
         });
 
         if (verseError) throw verseError;
@@ -360,6 +362,22 @@ export default function SubmitPage() {
                 />
               </div>
             </div>
+          </div>
+
+          {/* Bible Version */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Bible Version</label>
+            <select
+              value={version}
+              onChange={(e) => setVersion(e.target.value)}
+              className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              <option value="NIV">NIV</option>
+              <option value="ESV">ESV</option>
+              <option value="KJV">KJV</option>
+              <option value="NASB">NASB</option>
+              <option value="NLT">NLT</option>
+            </select>
           </div>
 
           {/* Categories */}

@@ -48,7 +48,8 @@ export async function GET(request: Request) {
         book_ja,
         chapter,
         verse_start,
-        verse_end
+        verse_end,
+        version
       ),
       clip_categories (
         category_id
