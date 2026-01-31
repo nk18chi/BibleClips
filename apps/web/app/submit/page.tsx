@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { useSupabase } from "@/components/providers/supabase-provider";
 import { Header } from "@/components/ui/header";
+import { BIBLE_VERSIONS } from "@/lib/bible-versions";
 
 const CATEGORIES = [
   { slug: "love", name: "Love" },
@@ -372,11 +373,11 @@ export default function SubmitPage() {
               onChange={(e) => setVersion(e.target.value)}
               className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
-              <option value="NIV">NIV</option>
-              <option value="ESV">ESV</option>
-              <option value="KJV">KJV</option>
-              <option value="NASB">NASB</option>
-              <option value="NLT">NLT</option>
+              {BIBLE_VERSIONS.map((v) => (
+                <option key={v.code} value={v.code}>
+                  {v.code} - {v.name}
+                </option>
+              ))}
             </select>
           </div>
 

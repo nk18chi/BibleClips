@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { BIBLE_API_DEFAULT, VERSION_TO_BIBLE_API } from "@/lib/bible-versions";
 
 type VerseModalProps = {
   book: string;
@@ -15,6 +16,7 @@ type VerseData = {
   text: string;
 };
 
+
 export function VerseModal({ book, chapter, verseStart, verseEnd, version = "NIV", onClose }: VerseModalProps) {
   const [verseText, setVerseText] = useState<string>("");
   const [verseTextJa, setVerseTextJa] = useState<string>("");
@@ -25,9 +27,9 @@ export function VerseModal({ book, chapter, verseStart, verseEnd, version = "NIV
   useEffect(() => {
     async function fetchVerse() {
       try {
-        // Fetch English (KJV)
         const bookSlug = book.toLowerCase().replace(/\s+/g, "");
-        const enUrl = `https://cdn.jsdelivr.net/gh/wldeh/bible-api/bibles/en-kjv/books/${bookSlug}/chapters/${chapter}/verses/${verseStart}.json`;
+        const apiId = VERSION_TO_BIBLE_API[version] || BIBLE_API_DEFAULT;
+        const enUrl = `https://cdn.jsdelivr.net/gh/wldeh/bible-api/bibles/${apiId}/books/${bookSlug}/chapters/${chapter}/verses/${verseStart}.json`;
         const enRes = await fetch(enUrl);
         if (enRes.ok) {
           const enData: VerseData = await enRes.json();
@@ -49,7 +51,7 @@ export function VerseModal({ book, chapter, verseStart, verseEnd, version = "NIV
     }
 
     fetchVerse();
-  }, [book, chapter, verseStart]);
+  }, [book, chapter, verseStart, version]);
 
   return (
     <div className="fixed inset-0 bg-black/50 z-50 flex items-end sm:items-center justify-center">

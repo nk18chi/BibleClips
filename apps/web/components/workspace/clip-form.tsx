@@ -4,6 +4,7 @@ import { useState } from "react";
 import { saveClip } from "@/app/workspace/actions";
 import { useSupabase } from "@/components/providers/supabase-provider";
 import { StylePreview } from "@/components/style-picker/style-preview";
+import { BIBLE_VERSIONS } from "@/lib/bible-versions";
 import { SUBTITLE_STYLES } from "@/lib/styles/subtitle-styles";
 
 const BIBLE_BOOKS = [
@@ -253,11 +254,11 @@ export function ClipForm({ youtubeVideoId, startTime, endTime, onSaved, categori
           onChange={(e) => setVersion(e.target.value)}
           className="px-3 py-2 border rounded-lg text-sm"
         >
-          <option value="NIV">NIV</option>
-          <option value="ESV">ESV</option>
-          <option value="KJV">KJV</option>
-          <option value="NASB">NASB</option>
-          <option value="NLT">NLT</option>
+          {BIBLE_VERSIONS.map((v) => (
+            <option key={v.code} value={v.code}>
+              {v.code} - {v.name}
+            </option>
+          ))}
         </select>
       </div>
 
