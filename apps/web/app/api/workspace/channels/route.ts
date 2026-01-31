@@ -1,6 +1,7 @@
 import { createClient } from "@supabase/supabase-js";
 import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
+import { parseUserFromAuthCookies } from "@/lib/supabase/parse-auth-cookie";
 
 function createAdminClient() {
   return createClient(
@@ -9,27 +10,10 @@ function createAdminClient() {
   );
 }
 
-// Workaround: Extract access token from cookie and create authenticated client
 function getAuthFromCookie() {
   const cookieStore = cookies();
-  const allCookies = cookieStore.getAll();
-
-  // Find the auth token cookie (format: sb-<project-ref>-auth-token)
-  const authCookie = allCookies.find((c) => c.name.includes("auth-token") && !c.name.includes("code-verifier"));
-
-  if (!authCookie) {
-    return null;
-  }
-
-  try {
-    const session = JSON.parse(authCookie.value);
-    return {
-      accessToken: session.access_token,
-      user: session.user,
-    };
-  } catch {
-    return null;
-  }
+  const user = parseUserFromAuthCookies(cookieStore.getAll());
+  return user ? { user } : null;
 }
 
 export async function GET() {
