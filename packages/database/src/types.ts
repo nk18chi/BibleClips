@@ -4,6 +4,7 @@
 export type UserRole = "USER" | "ADMIN";
 export type PreferredLanguage = "en" | "ja";
 export type ClipStatus = "PENDING" | "APPROVED" | "REJECTED";
+export type ClipType = "sermon" | "song";
 
 export interface User {
   id: string;
@@ -27,6 +28,7 @@ export interface Clip {
   approved_by: string | null;
   status: ClipStatus;
   is_featured: boolean;
+  clip_type: ClipType;
   vote_count: number;
   created_at: string;
   updated_at: string;
@@ -41,6 +43,13 @@ export interface ClipVerse {
   verse_start: number;
   verse_end: number | null;
   version: string;
+}
+
+export interface ClipSong {
+  id: string;
+  clip_id: string;
+  artist_name: string;
+  song_name: string;
 }
 
 export interface Category {
@@ -110,5 +119,6 @@ export interface ClipSubtitle {
 export interface ClipWithRelations extends Clip {
   verses: ClipVerse[];
   categories: Category[];
+  songs?: ClipSong[];
   submitted_by_user: User | null;
 }
