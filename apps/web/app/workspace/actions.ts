@@ -222,6 +222,8 @@ export type UpdateClipInput = {
   version?: string;
   categoryIds?: string[];
   subtitleStyleId?: string;
+  originalStartTime?: number;
+  originalEndTime?: number;
 };
 
 export async function updateClip(input: UpdateClipInput): Promise<{ clipId: string }> {
@@ -281,8 +283,16 @@ export async function updateClip(input: UpdateClipInput): Promise<{ clipId: stri
     }
   }
 
-  // Delete existing subtitles (will be regenerated)
-  await supabase.from("clip_subtitles").delete().eq("clip_id", input.clipId);
+  // Only delete subtitles when start/end times changed (transcript is time-dependent)
+  const timesChanged =
+    input.originalStartTime !== undefined &&
+    input.originalEndTime !== undefined &&
+    (input.startTime !== input.originalStartTime || input.endTime !== input.originalEndTime);
+
+  if (timesChanged) {
+    await supabase.from("clip_subtitles").delete().eq("clip_id", input.clipId);
+    await supabase.from("clip_translations").delete().eq("clip_id", input.clipId);
+  }
 
   revalidatePath("/workspace");
   return { clipId: input.clipId };

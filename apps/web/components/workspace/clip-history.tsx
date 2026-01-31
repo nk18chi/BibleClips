@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { generateClipSubtitles, updateClip } from "@/app/workspace/actions";
 import { StylePreview } from "@/components/style-picker/style-preview";
+import { BIBLE_VERSIONS } from "@/lib/bible-versions";
 import { SUBTITLE_STYLES } from "@/lib/styles/subtitle-styles";
 import type { ClipWithVerse } from "@/types/workspace";
 
@@ -104,6 +105,8 @@ export function ClipHistory({ clips, categories, onDeleted, isAdmin }: ClipHisto
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [confirmId, setConfirmId] = useState<string | null>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [originalStartTime, setOriginalStartTime] = useState(0);
+  const [originalEndTime, setOriginalEndTime] = useState(0);
   const [editStart, setEditStart] = useState("");
   const [editEnd, setEditEnd] = useState("");
   const [editTitle, setEditTitle] = useState("");
@@ -111,6 +114,7 @@ export function ClipHistory({ clips, categories, onDeleted, isAdmin }: ClipHisto
   const [editChapter, setEditChapter] = useState("");
   const [editVerseStart, setEditVerseStart] = useState("");
   const [editVerseEnd, setEditVerseEnd] = useState("");
+  const [editVersion, setEditVersion] = useState("NIV");
   const [editCategories, setEditCategories] = useState<string[]>([]);
   const [editSubtitleStyle, setEditSubtitleStyle] = useState("classic-white");
   const [saving, setSaving] = useState(false);
@@ -138,6 +142,8 @@ export function ClipHistory({ clips, categories, onDeleted, isAdmin }: ClipHisto
   const handleStartEdit = (clip: ClipWithVerse) => {
     const verse = clip.clip_verses[0];
     setEditingId(clip.id);
+    setOriginalStartTime(clip.start_time);
+    setOriginalEndTime(clip.end_time);
     setEditStart(formatTime(clip.start_time));
     setEditEnd(formatTime(clip.end_time));
     setEditTitle(clip.title || "");
@@ -145,6 +151,7 @@ export function ClipHistory({ clips, categories, onDeleted, isAdmin }: ClipHisto
     setEditChapter(verse?.chapter?.toString() || "");
     setEditVerseStart(verse?.verse_start?.toString() || "");
     setEditVerseEnd(verse?.verse_end?.toString() || "");
+    setEditVersion(verse?.version || "NIV");
     setEditCategories(clip.clip_categories?.map((c) => c.category_id) || []);
     setEditSubtitleStyle(clip.subtitle_style || "classic-white");
     setEditError(null);
@@ -159,6 +166,7 @@ export function ClipHistory({ clips, categories, onDeleted, isAdmin }: ClipHisto
     setEditChapter("");
     setEditVerseStart("");
     setEditVerseEnd("");
+    setEditVersion("NIV");
     setEditCategories([]);
     setEditSubtitleStyle("classic-white");
     setEditError(null);
@@ -191,6 +199,7 @@ export function ClipHistory({ clips, categories, onDeleted, isAdmin }: ClipHisto
     setEditError(null);
 
     try {
+      const timesChanged = startTime !== originalStartTime || endTime !== originalEndTime;
       await updateClip({
         clipId,
         startTime,
@@ -200,10 +209,15 @@ export function ClipHistory({ clips, categories, onDeleted, isAdmin }: ClipHisto
         chapter: parseInt(editChapter, 10),
         verseStart: parseInt(editVerseStart, 10),
         verseEnd: editVerseEnd ? parseInt(editVerseEnd, 10) : null,
+        version: editVersion,
         categoryIds: editCategories,
         subtitleStyleId: editSubtitleStyle,
+        originalStartTime,
+        originalEndTime,
       });
-      await generateClipSubtitles(clipId);
+      if (timesChanged) {
+        await generateClipSubtitles(clipId);
+      }
       handleCancelEdit();
       onDeleted(); // Refresh the list
     } catch (err) {
@@ -295,6 +309,20 @@ export function ClipHistory({ clips, categories, onDeleted, isAdmin }: ClipHisto
                       />
                     </div>
                   </div>
+
+                  {/* Bible Version */}
+                  <select
+                    value={editVersion}
+                    onChange={(e) => setEditVersion(e.target.value)}
+                    className="px-2 py-1 border rounded text-sm"
+                    disabled={saving}
+                  >
+                    {BIBLE_VERSIONS.map((v) => (
+                      <option key={v.code} value={v.code}>
+                        {v.code} - {v.name}
+                      </option>
+                    ))}
+                  </select>
 
                   {/* Time */}
                   <div className="flex items-center gap-2">
