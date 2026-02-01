@@ -3,7 +3,7 @@ ALTER TABLE clips ADD COLUMN clip_type TEXT NOT NULL DEFAULT 'sermon'
 CREATE INDEX idx_clips_clip_type ON clips(clip_type);
 
 CREATE TABLE clip_songs (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   clip_id UUID NOT NULL REFERENCES clips(id) ON DELETE CASCADE,
   artist_name TEXT NOT NULL,
   song_name TEXT NOT NULL,
