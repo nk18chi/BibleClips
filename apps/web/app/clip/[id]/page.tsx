@@ -15,6 +15,11 @@ type ClipFromDb = {
   vote_count: number;
   language: string | null;
   subtitle_style: string | null;
+  clip_type: "sermon" | "song";
+  clip_songs: {
+    artist_name: string;
+    song_name: string;
+  }[];
   clip_verses: {
     book: string;
     book_ja: string;
@@ -72,6 +77,8 @@ async function getClip(id: string, userId?: string) {
       vote_count,
       language,
       subtitle_style,
+      clip_type,
+      clip_songs (artist_name, song_name),
       clip_verses (book, book_ja, chapter, verse_start, verse_end, version),
       clip_categories (categories (slug, name_en)),
       clip_subtitles (word, start_time, end_time, sequence),
@@ -114,6 +121,8 @@ async function getClip(id: string, userId?: string) {
     vote_count: typedClip.vote_count,
     language: (typedClip.language === "ja" ? "ja" : "en") as "en" | "ja",
     subtitle_style: typedClip.subtitle_style || undefined,
+    clip_type: typedClip.clip_type,
+    clip_songs: typedClip.clip_songs,
     clip_verses: typedClip.clip_verses,
     clip_categories: typedClip.clip_categories,
     wordTimings,

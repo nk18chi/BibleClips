@@ -12,6 +12,11 @@ type PendingClip = {
   status: string;
   created_at: string;
   submitted_by: string;
+  clip_type: "sermon" | "song";
+  clip_songs: {
+    artist_name: string;
+    song_name: string;
+  }[];
   users: {
     display_name: string | null;
   }[];
@@ -42,6 +47,8 @@ async function getPendingClips(): Promise<PendingClip[]> {
       status,
       created_at,
       submitted_by,
+      clip_type,
+      clip_songs (artist_name, song_name),
       users!submitted_by (display_name),
       clip_verses (book, chapter, verse_start, verse_end),
       clip_categories (categories (name_en))
@@ -59,7 +66,12 @@ async function isAdmin(userId: string): Promise<boolean> {
   return data?.role === "ADMIN";
 }
 
-function formatVerseRef(verses: PendingClip["clip_verses"]): string {
+function formatClipRef(clip: PendingClip): string {
+  if (clip.clip_type === "song" && clip.clip_songs?.length > 0) {
+    const song = clip.clip_songs[0]!;
+    return `${song.artist_name} - ${song.song_name}`;
+  }
+  const verses = clip.clip_verses;
   if (!verses || verses.length === 0) return "No verse";
   const v = verses[0];
   if (!v) return "No verse";
@@ -119,7 +131,7 @@ export default async function AdminPendingPage() {
 
                   <div className="flex-1">
                     <h3 className="font-semibold text-gray-900">{clip.title}</h3>
-                    <p className="text-sm text-gray-600 mt-1">{formatVerseRef(clip.clip_verses)}</p>
+                    <p className="text-sm text-gray-600 mt-1">{formatClipRef(clip)}</p>
 
                     <div className="flex flex-wrap gap-1 mt-2">
                       {clip.clip_categories?.map(

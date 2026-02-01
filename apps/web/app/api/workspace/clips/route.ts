@@ -43,6 +43,11 @@ export async function GET(request: Request) {
       status,
       subtitle_style,
       created_at,
+      clip_type,
+      clip_songs (
+        artist_name,
+        song_name
+      ),
       clip_verses (
         book,
         book_ja,

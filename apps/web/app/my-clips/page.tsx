@@ -10,6 +10,11 @@ type Clip = {
   status: "PENDING" | "APPROVED" | "REJECTED";
   vote_count: number;
   created_at: string;
+  clip_type: "sermon" | "song";
+  clip_songs: {
+    artist_name: string;
+    song_name: string;
+  }[];
   clip_verses: {
     book: string;
     chapter: number;
@@ -30,6 +35,8 @@ async function getUserSubmittedClips(userId: string): Promise<Clip[]> {
       status,
       vote_count,
       created_at,
+      clip_type,
+      clip_songs (artist_name, song_name),
       clip_verses (book, chapter, verse_start, verse_end)
     `)
     .eq("submitted_by", userId)
@@ -52,6 +59,8 @@ async function getUserLikedClips(userId: string): Promise<Clip[]> {
         status,
         vote_count,
         created_at,
+        clip_type,
+        clip_songs (artist_name, song_name),
         clip_verses (book, chapter, verse_start, verse_end)
       )
     `)
@@ -84,6 +93,8 @@ async function getUserCommentedClips(userId: string): Promise<Clip[]> {
         status,
         vote_count,
         created_at,
+        clip_type,
+        clip_songs (artist_name, song_name),
         clip_verses (book, chapter, verse_start, verse_end)
       )
     `)
@@ -104,7 +115,12 @@ async function getUserCommentedClips(userId: string): Promise<Clip[]> {
   return clips;
 }
 
-function formatVerseRef(verses: Clip["clip_verses"]): string {
+function formatClipRef(clip: Clip): string {
+  if (clip.clip_type === "song" && clip.clip_songs?.length > 0) {
+    const song = clip.clip_songs[0]!;
+    return `${song.artist_name} - ${song.song_name}`;
+  }
+  const verses = clip.clip_verses;
   if (!verses || verses.length === 0) return "";
   const v = verses[0];
   if (!v || !v.book || v.chapter === undefined || v.verse_start === undefined) return "";
@@ -135,7 +151,7 @@ function ClipCard({ clip, showStatus = true }: { clip: Clip; showStatus?: boolea
         <div className="flex items-start justify-between">
           <div>
             <h3 className="font-medium text-gray-900">{clip.title}</h3>
-            <p className="text-sm text-gray-500">{formatVerseRef(clip.clip_verses)}</p>
+            <p className="text-sm text-gray-500">{formatClipRef(clip)}</p>
           </div>
           {showStatus && getStatusBadge(clip.status)}
         </div>
