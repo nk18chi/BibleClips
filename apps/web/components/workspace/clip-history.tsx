@@ -117,6 +117,9 @@ export function ClipHistory({ clips, categories, onDeleted, isAdmin }: ClipHisto
   const [editVersion, setEditVersion] = useState("NIV");
   const [editCategories, setEditCategories] = useState<string[]>([]);
   const [editSubtitleStyle, setEditSubtitleStyle] = useState("classic-white");
+  const [editClipType, setEditClipType] = useState<"sermon" | "song">("sermon");
+  const [editArtistName, setEditArtistName] = useState("");
+  const [editSongName, setEditSongName] = useState("");
   const [saving, setSaving] = useState(false);
   const [editError, setEditError] = useState<string | null>(null);
 
@@ -154,6 +157,9 @@ export function ClipHistory({ clips, categories, onDeleted, isAdmin }: ClipHisto
     setEditVersion(verse?.version || "NIV");
     setEditCategories(clip.clip_categories?.map((c) => c.category_id) || []);
     setEditSubtitleStyle(clip.subtitle_style || "classic-white");
+    setEditClipType(clip.clip_type || "sermon");
+    setEditArtistName(clip.clip_songs?.[0]?.artist_name || "");
+    setEditSongName(clip.clip_songs?.[0]?.song_name || "");
     setEditError(null);
   };
 
@@ -169,6 +175,9 @@ export function ClipHistory({ clips, categories, onDeleted, isAdmin }: ClipHisto
     setEditVersion("NIV");
     setEditCategories([]);
     setEditSubtitleStyle("classic-white");
+    setEditClipType("sermon");
+    setEditArtistName("");
+    setEditSongName("");
     setEditError(null);
   };
 
@@ -190,9 +199,16 @@ export function ClipHistory({ clips, categories, onDeleted, isAdmin }: ClipHisto
       return;
     }
 
-    if (!editBook || !editChapter || !editVerseStart) {
-      setEditError("Please fill in the verse reference");
-      return;
+    if (editClipType === "song") {
+      if (!editArtistName || !editSongName) {
+        setEditError("Please fill in artist and song name");
+        return;
+      }
+    } else {
+      if (!editBook || !editChapter || !editVerseStart) {
+        setEditError("Please fill in the verse reference");
+        return;
+      }
     }
 
     setSaving(true);
@@ -204,16 +220,19 @@ export function ClipHistory({ clips, categories, onDeleted, isAdmin }: ClipHisto
         clipId,
         startTime,
         endTime,
-        title: editTitle || `${editBook} ${editChapter}:${editVerseStart}`,
-        book: editBook,
-        chapter: parseInt(editChapter, 10),
-        verseStart: parseInt(editVerseStart, 10),
-        verseEnd: editVerseEnd ? parseInt(editVerseEnd, 10) : null,
-        version: editVersion,
-        categoryIds: editCategories,
+        title: editTitle || (editClipType === "sermon" ? `${editBook} ${editChapter}:${editVerseStart}` : `${editArtistName} - ${editSongName}`),
+        book: editClipType === "sermon" ? editBook : "",
+        chapter: editClipType === "sermon" ? parseInt(editChapter, 10) : 0,
+        verseStart: editClipType === "sermon" ? parseInt(editVerseStart, 10) : 0,
+        verseEnd: editClipType === "sermon" && editVerseEnd ? parseInt(editVerseEnd, 10) : null,
+        version: editClipType === "sermon" ? editVersion : "NIV",
+        categoryIds: editClipType === "sermon" ? editCategories : [],
         subtitleStyleId: editSubtitleStyle,
         originalStartTime,
         originalEndTime,
+        clipType: editClipType,
+        artistName: editClipType === "song" ? editArtistName : undefined,
+        songName: editClipType === "song" ? editSongName : undefined,
       });
       if (timesChanged) {
         await generateClipSubtitles(clipId);
@@ -243,9 +262,12 @@ export function ClipHistory({ clips, categories, onDeleted, isAdmin }: ClipHisto
       <div className="space-y-2">
         {clips.map((clip) => {
           const verse = clip.clip_verses[0];
-          const verseRef = verse
-            ? `${verse.book} ${verse.chapter}:${verse.verse_start}${verse.verse_end ? `-${verse.verse_end}` : ""}`
-            : clip.title;
+          const song = clip.clip_songs?.[0];
+          const verseRef = clip.clip_type === "song" && song
+            ? `${song.artist_name} — ${song.song_name}`
+            : verse
+              ? `${verse.book} ${verse.chapter}:${verse.verse_start}${verse.verse_end ? `-${verse.verse_end}` : ""}`
+              : clip.title;
 
           const isEditing = editingId === clip.id;
 
@@ -263,6 +285,52 @@ export function ClipHistory({ clips, categories, onDeleted, isAdmin }: ClipHisto
                     disabled={saving}
                   />
 
+                  {/* Clip Type Toggle */}
+                  <div className="flex gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setEditClipType("sermon")}
+                      disabled={saving}
+                      className={`px-3 py-1 rounded-full text-xs font-medium transition-colors ${
+                        editClipType === "sermon" ? "bg-blue-600 text-white" : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                      }`}
+                    >
+                      Sermon
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setEditClipType("song")}
+                      disabled={saving}
+                      className={`px-3 py-1 rounded-full text-xs font-medium transition-colors ${
+                        editClipType === "song" ? "bg-blue-600 text-white" : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                      }`}
+                    >
+                      Song
+                    </button>
+                  </div>
+
+                  {editClipType === "song" && (
+                    <div className="space-y-2">
+                      <input
+                        type="text"
+                        value={editArtistName}
+                        onChange={(e) => setEditArtistName(e.target.value)}
+                        placeholder="Artist name"
+                        className="w-full px-2 py-1 border rounded text-sm"
+                        disabled={saving}
+                      />
+                      <input
+                        type="text"
+                        value={editSongName}
+                        onChange={(e) => setEditSongName(e.target.value)}
+                        placeholder="Song name"
+                        className="w-full px-2 py-1 border rounded text-sm"
+                        disabled={saving}
+                      />
+                    </div>
+                  )}
+
+                  {editClipType === "sermon" && (<>
                   {/* Verse reference */}
                   <div className="grid grid-cols-4 gap-2">
                     <select
@@ -324,6 +392,26 @@ export function ClipHistory({ clips, categories, onDeleted, isAdmin }: ClipHisto
                     ))}
                   </select>
 
+                  {/* Categories */}
+                  <div className="flex flex-wrap gap-1">
+                    {categories.map((cat) => (
+                      <button
+                        key={cat.id}
+                        type="button"
+                        onClick={() => handleCategoryToggle(cat.id)}
+                        disabled={saving}
+                        className={`px-2 py-0.5 rounded-full text-xs border transition-colors ${
+                          editCategories.includes(cat.id)
+                            ? "bg-blue-600 text-white border-blue-600"
+                            : "bg-white text-gray-700 border-gray-300 hover:border-blue-400"
+                        }`}
+                      >
+                        {cat.name_en}
+                      </button>
+                    ))}
+                  </div>
+                  </>)}
+
                   {/* Time */}
                   <div className="flex items-center gap-2">
                     <label className="text-xs text-gray-500">Start:</label>
@@ -344,25 +432,6 @@ export function ClipHistory({ clips, categories, onDeleted, isAdmin }: ClipHisto
                       className="w-16 px-2 py-1 border rounded text-sm font-mono"
                       disabled={saving}
                     />
-                  </div>
-
-                  {/* Categories */}
-                  <div className="flex flex-wrap gap-1">
-                    {categories.map((cat) => (
-                      <button
-                        key={cat.id}
-                        type="button"
-                        onClick={() => handleCategoryToggle(cat.id)}
-                        disabled={saving}
-                        className={`px-2 py-0.5 rounded-full text-xs border transition-colors ${
-                          editCategories.includes(cat.id)
-                            ? "bg-blue-600 text-white border-blue-600"
-                            : "bg-white text-gray-700 border-gray-300 hover:border-blue-400"
-                        }`}
-                      >
-                        {cat.name_en}
-                      </button>
-                    ))}
                   </div>
 
                   {/* Subtitle Style */}
