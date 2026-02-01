@@ -18,6 +18,11 @@ type ClipFromDb = {
   start_time: number;
   end_time: number;
   vote_count: number;
+  clip_type: string;
+  clip_songs: {
+    artist_name: string;
+    song_name: string;
+  }[];
   clip_verses: {
     book: string;
     book_ja: string;
@@ -57,6 +62,11 @@ type Clip = {
   has_voted: boolean;
   language: "en" | "ja";
   subtitle_style?: string;
+  clip_type: string;
+  clip_songs: {
+    artist_name: string;
+    song_name: string;
+  }[];
   wordTimings?: WordTiming[];
   translations?: SentenceTranslation[];
   clip_verses: {
@@ -75,10 +85,10 @@ type Clip = {
   }[];
 };
 
-async function getApprovedClips(userId?: string): Promise<Clip[]> {
+async function getApprovedClips(userId?: string, clipType?: string): Promise<Clip[]> {
   const supabase = createAdminClient();
 
-  const { data, error } = await supabase
+  let query = supabase
     .from("clips")
     .select(`
       id,
@@ -89,12 +99,20 @@ async function getApprovedClips(userId?: string): Promise<Clip[]> {
       vote_count,
       language,
       subtitle_style,
+      clip_type,
+      clip_songs (artist_name, song_name),
       clip_verses (book, book_ja, chapter, verse_start, verse_end, version),
       clip_categories (categories (slug, name_en)),
       clip_subtitles (word, start_time, end_time, sequence),
       clip_translations (language, text, start_time, end_time, sequence)
     `)
-    .eq("status", "APPROVED")
+    .eq("status", "APPROVED");
+
+  if (clipType) {
+    query = query.eq("clip_type", clipType);
+  }
+
+  const { data, error } = await query
     .order("created_at", { ascending: false })
     .limit(50);
 
@@ -140,6 +158,8 @@ async function getApprovedClips(userId?: string): Promise<Clip[]> {
       has_voted: false,
       language: (clip.language === "ja" ? "ja" : "en") as "en" | "ja",
       subtitle_style: clip.subtitle_style || undefined,
+      clip_type: clip.clip_type || "sermon",
+      clip_songs: clip.clip_songs || [],
       wordTimings,
       translations,
       clip_verses: clip.clip_verses,
@@ -172,13 +192,19 @@ async function getApprovedClips(userId?: string): Promise<Clip[]> {
   return clipsWithTimings;
 }
 
-export default async function HomePage() {
+export default async function HomePage({
+  searchParams,
+}: {
+  searchParams: Promise<{ type?: string }>;
+}) {
+  const { type } = await searchParams;
+  const clipType = type === "sermon" || type === "song" ? type : undefined;
   // Session not working due to cookie issues, skip for now
-  const clips = await getApprovedClips();
+  const clips = await getApprovedClips(undefined, clipType);
 
   // If there are clips, show the reel viewer (full screen like Instagram)
   if (clips.length > 0) {
-    return <ReelViewer clips={clips} showHeader />;
+    return <ReelViewer clips={clips} showHeader clipType={clipType} />;
   }
 
   // Empty state - no clips yet

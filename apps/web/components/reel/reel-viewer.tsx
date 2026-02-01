@@ -58,6 +58,7 @@ type ReelViewerProps = {
   clips: Clip[];
   initialIndex?: number;
   showHeader?: boolean;
+  clipType?: string;
 };
 
 function ReelCard({
@@ -194,7 +195,7 @@ function ReelCard({
   );
 }
 
-export function ReelViewer({ clips, initialIndex = 0, showHeader = false }: ReelViewerProps) {
+export function ReelViewer({ clips, initialIndex = 0, showHeader = false, clipType }: ReelViewerProps) {
   const [currentIndex, setCurrentIndex] = useState(initialIndex);
   const [showVerseModal, setShowVerseModal] = useState(false);
   const [showCommentSection, setShowCommentSection] = useState(false);
@@ -256,6 +257,42 @@ export function ReelViewer({ clips, initialIndex = 0, showHeader = false }: Reel
         >
           X
         </Link>
+      )}
+
+      {/* Filter Bar */}
+      {showHeader && (
+        <div className="flex justify-center gap-2 py-2 px-4">
+          <Link
+            href="/"
+            className={`px-4 py-1.5 rounded-full text-sm font-medium transition-colors ${
+              !clipType
+                ? "bg-white text-black shadow-sm"
+                : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+            }`}
+          >
+            All
+          </Link>
+          <Link
+            href="/?type=sermon"
+            className={`px-4 py-1.5 rounded-full text-sm font-medium transition-colors ${
+              clipType === "sermon"
+                ? "bg-white text-black shadow-sm"
+                : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+            }`}
+          >
+            Sermons
+          </Link>
+          <Link
+            href="/?type=song"
+            className={`px-4 py-1.5 rounded-full text-sm font-medium transition-colors ${
+              clipType === "song"
+                ? "bg-white text-black shadow-sm"
+                : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+            }`}
+          >
+            Songs
+          </Link>
+        </div>
       )}
 
       {/* Main content area */}
