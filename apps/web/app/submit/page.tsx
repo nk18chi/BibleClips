@@ -125,6 +125,7 @@ export default function SubmitPage() {
   const { supabase, user } = useSupabase();
   const router = useRouter();
 
+  const [clipType, setClipType] = useState<"sermon" | "song">("sermon");
   const [youtubeUrl, setYoutubeUrl] = useState("");
   const [startTime, setStartTime] = useState("");
   const [endTime, setEndTime] = useState("");
@@ -135,6 +136,8 @@ export default function SubmitPage() {
   const [verseEnd, setVerseEnd] = useState("");
   const [version, setVersion] = useState("NIV");
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
+  const [artistName, setArtistName] = useState("");
+  const [songName, setSongName] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -166,8 +169,13 @@ export default function SubmitPage() {
       return;
     }
 
-    if (selectedCategories.length === 0) {
+    if (clipType === "sermon" && selectedCategories.length === 0) {
       setError("Please select at least one category");
+      return;
+    }
+
+    if (clipType === "song" && (!artistName.trim() || !songName.trim())) {
+      setError("Please enter both artist name and song name");
       return;
     }
 
@@ -202,39 +210,51 @@ export default function SubmitPage() {
           title,
           submitted_by: user.id,
           status: "PENDING",
+          clip_type: clipType,
         })
         .select()
         .single();
 
       if (clipError) throw clipError;
 
-      // Insert verse
-      if (book && chapter && verseStart) {
-        const { error: verseError } = await supabase.from("clip_verses").insert({
+      if (clipType === "sermon") {
+        // Insert verse
+        if (book && chapter && verseStart) {
+          const { error: verseError } = await supabase.from("clip_verses").insert({
+            clip_id: clip.id,
+            book,
+            book_ja: bookJaMap[book] || book,
+            chapter: parseInt(chapter, 10),
+            verse_start: parseInt(verseStart, 10),
+            verse_end: verseEnd ? parseInt(verseEnd, 10) : null,
+            version,
+          });
+
+          if (verseError) throw verseError;
+        }
+
+        // Get category IDs and insert clip_categories
+        const { data: categories } = await supabase.from("categories").select("id, slug").in("slug", selectedCategories);
+
+        if (categories && categories.length > 0) {
+          const { error: catError } = await supabase.from("clip_categories").insert(
+            categories.map((cat) => ({
+              clip_id: clip.id,
+              category_id: cat.id,
+            }))
+          );
+
+          if (catError) throw catError;
+        }
+      } else {
+        // Insert song info
+        const { error: songError } = await supabase.from("clip_songs").insert({
           clip_id: clip.id,
-          book,
-          book_ja: bookJaMap[book] || book,
-          chapter: parseInt(chapter, 10),
-          verse_start: parseInt(verseStart, 10),
-          verse_end: verseEnd ? parseInt(verseEnd, 10) : null,
-          version,
+          artist_name: artistName.trim(),
+          song_name: songName.trim(),
         });
 
-        if (verseError) throw verseError;
-      }
-
-      // Get category IDs and insert clip_categories
-      const { data: categories } = await supabase.from("categories").select("id, slug").in("slug", selectedCategories);
-
-      if (categories && categories.length > 0) {
-        const { error: catError } = await supabase.from("clip_categories").insert(
-          categories.map((cat) => ({
-            clip_id: clip.id,
-            category_id: cat.id,
-          }))
-        );
-
-        if (catError) throw catError;
+        if (songError) throw songError;
       }
 
       router.push("/my-clips?submitted=true");
@@ -254,6 +274,35 @@ export default function SubmitPage() {
 
         <form onSubmit={handleSubmit} className="space-y-6">
           {error && <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">{error}</div>}
+
+          {/* Clip Type Toggle */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Clip Type</label>
+            <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={() => setClipType("sermon")}
+                className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                  clipType === "sermon"
+                    ? "bg-blue-600 text-white"
+                    : "bg-white text-gray-700 border border-gray-300 hover:border-blue-400"
+                }`}
+              >
+                Sermon
+              </button>
+              <button
+                type="button"
+                onClick={() => setClipType("song")}
+                className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                  clipType === "song"
+                    ? "bg-blue-600 text-white"
+                    : "bg-white text-gray-700 border border-gray-300 hover:border-blue-400"
+                }`}
+              >
+                Song
+              </button>
+            </div>
+          </div>
 
           {/* YouTube URL */}
           <div>
@@ -316,91 +365,123 @@ export default function SubmitPage() {
             />
           </div>
 
-          {/* Bible Verse */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Bible Verse *</label>
-            <div className="grid grid-cols-4 gap-2">
-              <select
-                value={book}
-                onChange={(e) => setBook(e.target.value)}
-                className="col-span-2 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                required
-              >
-                <option value="">Select book</option>
-                {BIBLE_BOOKS.map((b) => (
-                  <option key={b} value={b}>
-                    {b}
-                  </option>
-                ))}
-              </select>
-              <input
-                type="number"
-                value={chapter}
-                onChange={(e) => setChapter(e.target.value)}
-                placeholder="Ch"
-                min="1"
-                className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                required
-              />
-              <div className="flex gap-1 items-center">
+          {clipType === "sermon" ? (
+            <>
+              {/* Bible Verse */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Bible Verse *</label>
+                <div className="grid grid-cols-4 gap-2">
+                  <select
+                    value={book}
+                    onChange={(e) => setBook(e.target.value)}
+                    className="col-span-2 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    required
+                  >
+                    <option value="">Select book</option>
+                    {BIBLE_BOOKS.map((b) => (
+                      <option key={b} value={b}>
+                        {b}
+                      </option>
+                    ))}
+                  </select>
+                  <input
+                    type="number"
+                    value={chapter}
+                    onChange={(e) => setChapter(e.target.value)}
+                    placeholder="Ch"
+                    min="1"
+                    className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    required
+                  />
+                  <div className="flex gap-1 items-center">
+                    <input
+                      type="number"
+                      value={verseStart}
+                      onChange={(e) => setVerseStart(e.target.value)}
+                      placeholder="V"
+                      min="1"
+                      className="w-full px-2 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      required
+                    />
+                    <span>-</span>
+                    <input
+                      type="number"
+                      value={verseEnd}
+                      onChange={(e) => setVerseEnd(e.target.value)}
+                      placeholder="V"
+                      min="1"
+                      className="w-full px-2 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Bible Version */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Bible Version</label>
+                <select
+                  value={version}
+                  onChange={(e) => setVersion(e.target.value)}
+                  className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                  {BIBLE_VERSIONS.map((v) => (
+                    <option key={v.code} value={v.code}>
+                      {v.code} - {v.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Categories */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Categories * (select at least one)</label>
+                <div className="flex flex-wrap gap-2">
+                  {CATEGORIES.map((cat) => (
+                    <button
+                      key={cat.slug}
+                      type="button"
+                      onClick={() => handleCategoryToggle(cat.slug)}
+                      className={`px-3 py-1 rounded-full text-sm border transition-colors ${
+                        selectedCategories.includes(cat.slug)
+                          ? "bg-blue-600 text-white border-blue-600"
+                          : "bg-white text-gray-700 border-gray-300 hover:border-blue-400"
+                      }`}
+                    >
+                      {cat.name}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </>
+          ) : (
+            <>
+              {/* Artist Name */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Artist Name *</label>
                 <input
-                  type="number"
-                  value={verseStart}
-                  onChange={(e) => setVerseStart(e.target.value)}
-                  placeholder="V"
-                  min="1"
-                  className="w-full px-2 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  type="text"
+                  value={artistName}
+                  onChange={(e) => setArtistName(e.target.value)}
+                  placeholder="e.g., Hillsong Worship"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                   required
                 />
-                <span>-</span>
+              </div>
+
+              {/* Song Name */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Song Name *</label>
                 <input
-                  type="number"
-                  value={verseEnd}
-                  onChange={(e) => setVerseEnd(e.target.value)}
-                  placeholder="V"
-                  min="1"
-                  className="w-full px-2 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  type="text"
+                  value={songName}
+                  onChange={(e) => setSongName(e.target.value)}
+                  placeholder="e.g., What A Beautiful Name"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  required
                 />
               </div>
-            </div>
-          </div>
-
-          {/* Bible Version */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Bible Version</label>
-            <select
-              value={version}
-              onChange={(e) => setVersion(e.target.value)}
-              className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            >
-              {BIBLE_VERSIONS.map((v) => (
-                <option key={v.code} value={v.code}>
-                  {v.code} - {v.name}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          {/* Categories */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Categories * (select at least one)</label>
-            <div className="flex flex-wrap gap-2">
-              {CATEGORIES.map((cat) => (
-                <button
-                  key={cat.slug}
-                  type="button"
-                  onClick={() => handleCategoryToggle(cat.slug)}
-                  className={`px-3 py-1 rounded-full text-sm border transition-colors ${
-                    selectedCategories.includes(cat.slug)
-                      ? "bg-blue-600 text-white border-blue-600"
-                      : "bg-white text-gray-700 border-gray-300 hover:border-blue-400"
-                  }`}
-                >
-                  {cat.name}
-                </button>
-              ))}
-            </div>
-          </div>
+            </>
+          )}
 
           {/* Submit */}
           <button
