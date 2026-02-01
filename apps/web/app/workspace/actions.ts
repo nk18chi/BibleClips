@@ -132,6 +132,7 @@ export async function getVideoClips(youtubeVideoId: string): Promise<ClipWithVer
       title,
       status,
       subtitle_style,
+      clip_type,
       created_at,
       clip_verses (
         book,
@@ -143,6 +144,10 @@ export async function getVideoClips(youtubeVideoId: string): Promise<ClipWithVer
       ),
       clip_categories (
         category_id
+      ),
+      clip_songs (
+        artist_name,
+        song_name
       ),
       clip_subtitles (count)
     `)
@@ -171,27 +176,40 @@ export async function saveClip(input: SaveClipInput): Promise<{ clipId: string }
       submitted_by: input.userId || null,
       subtitle_style: input.subtitleStyleId || "classic-white",
       status: "APPROVED", // Auto-approve for workspace
+      clip_type: input.clipType || "sermon",
     })
     .select()
     .single();
 
   if (clipError) throw clipError;
 
-  // Insert verse
-  const { error: verseError } = await supabase.from("clip_verses").insert({
-    clip_id: clip.id,
-    book: input.book,
-    book_ja: BOOK_JA_MAP[input.book] || input.book,
-    chapter: input.chapter,
-    verse_start: input.verseStart,
-    verse_end: input.verseEnd || null,
-    version: input.version || "NIV",
-  });
+  // Insert verse (sermon clips only)
+  if (input.clipType !== "song") {
+    const { error: verseError } = await supabase.from("clip_verses").insert({
+      clip_id: clip.id,
+      book: input.book,
+      book_ja: BOOK_JA_MAP[input.book] || input.book,
+      chapter: input.chapter,
+      verse_start: input.verseStart,
+      verse_end: input.verseEnd || null,
+      version: input.version || "NIV",
+    });
 
-  if (verseError) throw verseError;
+    if (verseError) throw verseError;
+  }
 
-  // Insert categories
-  if (input.categoryIds.length > 0) {
+  // Insert song metadata (song clips only)
+  if (input.clipType === "song" && input.artistName && input.songName) {
+    const { error: songError } = await supabase.from("clip_songs").insert({
+      clip_id: clip.id,
+      artist_name: input.artistName,
+      song_name: input.songName,
+    });
+    if (songError) throw songError;
+  }
+
+  // Insert categories (sermon clips only)
+  if (input.clipType !== "song" && input.categoryIds.length > 0) {
     const { error: catError } = await supabase.from("clip_categories").insert(
       input.categoryIds.map((catId) => ({
         clip_id: clip.id,
@@ -224,6 +242,9 @@ export type UpdateClipInput = {
   subtitleStyleId?: string;
   originalStartTime?: number;
   originalEndTime?: number;
+  clipType?: "sermon" | "song";
+  artistName?: string;
+  songName?: string;
 };
 
 export async function updateClip(input: UpdateClipInput): Promise<{ clipId: string }> {
@@ -281,6 +302,18 @@ export async function updateClip(input: UpdateClipInput): Promise<{ clipId: stri
 
       if (catError) throw catError;
     }
+  }
+
+  // Update song metadata if provided (delete + re-insert)
+  if (input.clipType === "song" && input.artistName && input.songName) {
+    await supabase.from("clip_songs").delete().eq("clip_id", input.clipId);
+
+    const { error: songError } = await supabase.from("clip_songs").insert({
+      clip_id: input.clipId,
+      artist_name: input.artistName,
+      song_name: input.songName,
+    });
+    if (songError) throw songError;
   }
 
   // Only delete subtitles when start/end times changed (transcript is time-dependent)
