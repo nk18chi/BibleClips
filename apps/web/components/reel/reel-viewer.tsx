@@ -52,6 +52,8 @@ type Clip = {
       name_en: string;
     } | null;
   }[];
+  clip_type?: string;
+  clip_songs?: { artist_name: string; song_name: string }[];
 };
 
 type ReelViewerProps = {
@@ -84,6 +86,8 @@ function ReelCard({
   const style = (clip.subtitle_style && getStyleById(clip.subtitle_style)) || contextStyle;
 
   const verse = clip.clip_verses[0];
+  const isSong = clip.clip_type === "song";
+  const song = clip.clip_songs?.[0];
 
   // Use Japanese book name when Japanese is selected
   const bookName = language === "ja" && verse?.book_ja ? verse.book_ja : verse?.book;
@@ -105,26 +109,42 @@ function ReelCard({
 
   return (
     <div className="relative w-full h-full rounded-lg overflow-hidden bg-black">
-      {/* Verse reference overlay */}
-      {verse && (
+      {/* Verse/Song reference overlay */}
+      {(verse || (isSong && song)) && (
         <div className="absolute top-24 left-0 right-0 z-10 flex justify-center">
-          <a
-            href={bibleGatewayUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            style={{
-              background: style.verse.background,
-              color: style.verse.textColor,
-              fontSize: style.verse.fontSize,
-              fontWeight: style.verse.fontWeight,
-              padding: style.verse.padding,
-              borderRadius: style.verse.borderRadius,
-              boxShadow: style.verse.boxShadow,
-            }}
-            className="hover:opacity-90 transition-opacity"
-          >
-            {verseRef}
-          </a>
+          {isSong && song ? (
+            <span
+              style={{
+                background: style.verse.background,
+                color: style.verse.textColor,
+                fontSize: style.verse.fontSize,
+                fontWeight: style.verse.fontWeight,
+                padding: style.verse.padding,
+                borderRadius: style.verse.borderRadius,
+                boxShadow: style.verse.boxShadow,
+              }}
+            >
+              {song.artist_name} — {song.song_name}
+            </span>
+          ) : (
+            <a
+              href={bibleGatewayUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{
+                background: style.verse.background,
+                color: style.verse.textColor,
+                fontSize: style.verse.fontSize,
+                fontWeight: style.verse.fontWeight,
+                padding: style.verse.padding,
+                borderRadius: style.verse.borderRadius,
+                boxShadow: style.verse.boxShadow,
+              }}
+              className="hover:opacity-90 transition-opacity"
+            >
+              {verseRef}
+            </a>
+          )}
         </div>
       )}
 
@@ -338,7 +358,7 @@ export function ReelViewer({ clips, initialIndex = 0, showHeader = false, clipTy
       </div>
 
       {/* Verse Modal */}
-      {showVerseModal && verse && (
+      {showVerseModal && verse && currentClip.clip_type !== "song" && (
         <VerseModal
           book={verse.book}
           chapter={verse.chapter}
