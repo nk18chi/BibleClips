@@ -17,3 +17,10 @@ CREATE POLICY "clip_songs_read" ON clip_songs FOR SELECT USING (true);
 CREATE POLICY "clip_songs_admin" ON clip_songs FOR ALL USING (
   EXISTS (SELECT 1 FROM users WHERE id = auth.uid() AND role = 'ADMIN')
 );
+CREATE POLICY "clip_songs_user_insert" ON clip_songs FOR INSERT WITH CHECK (
+  EXISTS (
+    SELECT 1 FROM clips
+    WHERE clips.id = clip_songs.clip_id
+    AND clips.submitted_by = auth.uid()
+  )
+);
