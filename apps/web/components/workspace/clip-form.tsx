@@ -99,6 +99,9 @@ export function ClipForm({ youtubeVideoId, startTime, endTime, onSaved, categori
   const [verseEnd, setVerseEnd] = useState("");
   const [version, setVersion] = useState("NIV");
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
+  const [clipType, setClipType] = useState<"sermon" | "song">("sermon");
+  const [artistName, setArtistName] = useState("");
+  const [songName, setSongName] = useState("");
   const [subtitleStyleId, setSubtitleStyleId] = useState("classic-white");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -117,8 +120,13 @@ export function ClipForm({ youtubeVideoId, startTime, endTime, onSaved, categori
       return;
     }
 
-    if (!book || !chapter || !verseStart) {
+    if (clipType === "sermon" && (!book || !chapter || !verseStart)) {
       setError("Please fill in the verse reference");
+      return;
+    }
+
+    if (clipType === "song" && (!artistName || !songName)) {
+      setError("Please fill in the artist name and song name");
       return;
     }
 
@@ -130,13 +138,16 @@ export function ClipForm({ youtubeVideoId, startTime, endTime, onSaved, categori
         youtubeVideoId,
         startTime,
         endTime,
-        title: title || `${book} ${chapter}:${verseStart}`,
-        book,
-        chapter: parseInt(chapter, 10),
-        verseStart: parseInt(verseStart, 10),
-        verseEnd: verseEnd ? parseInt(verseEnd, 10) : undefined,
-        version,
-        categoryIds: selectedCategories,
+        title: title || (clipType === "sermon" ? `${book} ${chapter}:${verseStart}` : `${artistName} - ${songName}`),
+        book: clipType === "sermon" ? book : "",
+        chapter: clipType === "sermon" ? parseInt(chapter, 10) : 0,
+        verseStart: clipType === "sermon" ? parseInt(verseStart, 10) : 0,
+        verseEnd: clipType === "sermon" && verseEnd ? parseInt(verseEnd, 10) : undefined,
+        version: clipType === "sermon" ? version : undefined,
+        clipType,
+        artistName: clipType === "song" ? artistName : undefined,
+        songName: clipType === "song" ? songName : undefined,
+        categoryIds: clipType === "sermon" ? selectedCategories : [],
         subtitleStyleId,
         userId: user?.id,
       });
@@ -151,6 +162,9 @@ export function ClipForm({ youtubeVideoId, startTime, endTime, onSaved, categori
       setVerseStart("");
       setVerseEnd("");
       setVersion("NIV");
+      setClipType("sermon");
+      setArtistName("");
+      setSongName("");
       setSelectedCategories([]);
       setSubtitleStyleId("classic-white");
 
@@ -200,88 +214,136 @@ export function ClipForm({ youtubeVideoId, startTime, endTime, onSaved, categori
         className="w-full px-3 py-2 border rounded-lg text-sm"
       />
 
-      {/* Verse reference */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-        <select
-          value={book}
-          onChange={(e) => setBook(e.target.value)}
-          className="col-span-2 px-3 py-2 border rounded-lg text-sm"
-          required
+      {/* Clip Type */}
+      <div className="flex gap-2">
+        <button
+          type="button"
+          onClick={() => setClipType("sermon")}
+          className={`px-4 py-1.5 rounded-full text-sm font-medium transition-colors ${
+            clipType === "sermon" ? "bg-blue-600 text-white" : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+          }`}
         >
-          <option value="">Select book</option>
-          {BIBLE_BOOKS.map((b) => (
-            <option key={b} value={b}>
-              {b}
-            </option>
-          ))}
-        </select>
-        <input
-          type="number"
-          value={chapter}
-          onChange={(e) => setChapter(e.target.value)}
-          placeholder="Ch"
-          min="1"
-          className="px-3 py-2 border rounded-lg text-sm"
-          required
-        />
-        <div className="flex gap-1 items-center">
+          Sermon
+        </button>
+        <button
+          type="button"
+          onClick={() => setClipType("song")}
+          className={`px-4 py-1.5 rounded-full text-sm font-medium transition-colors ${
+            clipType === "song" ? "bg-blue-600 text-white" : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+          }`}
+        >
+          Song
+        </button>
+      </div>
+
+      {/* Song fields */}
+      {clipType === "song" && (
+        <div className="space-y-2">
           <input
-            type="number"
-            value={verseStart}
-            onChange={(e) => setVerseStart(e.target.value)}
-            placeholder="V"
-            min="1"
-            className="w-full px-2 py-2 border rounded-lg text-sm"
+            type="text"
+            value={artistName}
+            onChange={(e) => setArtistName(e.target.value)}
+            placeholder="Artist name"
+            className="w-full px-3 py-2 border rounded-lg text-sm"
             required
           />
-          <span className="text-gray-400">-</span>
           <input
-            type="number"
-            value={verseEnd}
-            onChange={(e) => setVerseEnd(e.target.value)}
-            placeholder="V"
-            min="1"
-            className="w-full px-2 py-2 border rounded-lg text-sm"
+            type="text"
+            value={songName}
+            onChange={(e) => setSongName(e.target.value)}
+            placeholder="Song name"
+            className="w-full px-3 py-2 border rounded-lg text-sm"
+            required
           />
         </div>
-      </div>
+      )}
 
-      {/* Bible Version */}
-      <div>
-        <label className="block text-sm text-gray-600 mb-1">Bible Version:</label>
-        <select
-          value={version}
-          onChange={(e) => setVersion(e.target.value)}
-          className="px-3 py-2 border rounded-lg text-sm"
-        >
-          {BIBLE_VERSIONS.map((v) => (
-            <option key={v.code} value={v.code}>
-              {v.code} - {v.name}
-            </option>
-          ))}
-        </select>
-      </div>
-
-      {/* Categories */}
-      <div>
-        <p className="text-sm text-gray-600 mb-2">Categories:</p>
-        <div className="flex flex-wrap gap-2">
-          {categories.map((cat) => (
-            <button
-              key={cat.id}
-              type="button"
-              onClick={() => handleCategoryToggle(cat.id)}
-              className={`px-3 py-1 rounded-full text-xs border transition-colors ${
-                selectedCategories.includes(cat.id)
-                  ? "bg-blue-600 text-white border-blue-600"
-                  : "bg-white text-gray-700 border-gray-300 hover:border-blue-400"
-              }`}
+      {/* Verse reference (sermon only) */}
+      {clipType === "sermon" && (
+        <>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+            <select
+              value={book}
+              onChange={(e) => setBook(e.target.value)}
+              className="col-span-2 px-3 py-2 border rounded-lg text-sm"
+              required
             >
-              {cat.name_en}
-            </button>
-          ))}
-        </div>
-      </div>
+              <option value="">Select book</option>
+              {BIBLE_BOOKS.map((b) => (
+                <option key={b} value={b}>
+                  {b}
+                </option>
+              ))}
+            </select>
+            <input
+              type="number"
+              value={chapter}
+              onChange={(e) => setChapter(e.target.value)}
+              placeholder="Ch"
+              min="1"
+              className="px-3 py-2 border rounded-lg text-sm"
+              required
+            />
+            <div className="flex gap-1 items-center">
+              <input
+                type="number"
+                value={verseStart}
+                onChange={(e) => setVerseStart(e.target.value)}
+                placeholder="V"
+                min="1"
+                className="w-full px-2 py-2 border rounded-lg text-sm"
+                required
+              />
+              <span className="text-gray-400">-</span>
+              <input
+                type="number"
+                value={verseEnd}
+                onChange={(e) => setVerseEnd(e.target.value)}
+                placeholder="V"
+                min="1"
+                className="w-full px-2 py-2 border rounded-lg text-sm"
+              />
+            </div>
+          </div>
+
+          {/* Bible Version */}
+          <div>
+            <label className="block text-sm text-gray-600 mb-1">Bible Version:</label>
+            <select
+              value={version}
+              onChange={(e) => setVersion(e.target.value)}
+              className="px-3 py-2 border rounded-lg text-sm"
+            >
+              {BIBLE_VERSIONS.map((v) => (
+                <option key={v.code} value={v.code}>
+                  {v.code} - {v.name}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {/* Categories */}
+          <div>
+            <p className="text-sm text-gray-600 mb-2">Categories:</p>
+            <div className="flex flex-wrap gap-2">
+              {categories.map((cat) => (
+                <button
+                  key={cat.id}
+                  type="button"
+                  onClick={() => handleCategoryToggle(cat.id)}
+                  className={`px-3 py-1 rounded-full text-xs border transition-colors ${
+                    selectedCategories.includes(cat.id)
+                      ? "bg-blue-600 text-white border-blue-600"
+                      : "bg-white text-gray-700 border-gray-300 hover:border-blue-400"
+                  }`}
+                >
+                  {cat.name_en}
+                </button>
+              ))}
+            </div>
+          </div>
+        </>
+      )}
 
       {/* Subtitle Style */}
       <div>
