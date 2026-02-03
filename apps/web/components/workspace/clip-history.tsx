@@ -87,13 +87,8 @@ type ClipHistoryProps = {
 
 function formatTime(seconds: number): string {
   const m = Math.floor(seconds / 60);
-  const s = seconds % 60;
-  const whole = Math.floor(s);
-  const ms = Math.round((s - whole) * 1000);
-  if (ms > 0) {
-    return `${m}:${whole.toString().padStart(2, "0")}.${ms.toString().padStart(3, "0")}`;
-  }
-  return `${m}:${whole.toString().padStart(2, "0")}`;
+  const s = Math.floor(seconds % 60);
+  return `${m}:${s.toString().padStart(2, "0")}`;
 }
 
 function parseTime(timeStr: string): number | null {
