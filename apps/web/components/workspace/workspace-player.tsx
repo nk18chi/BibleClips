@@ -86,13 +86,13 @@ export function WorkspacePlayer({ videoId, onTimeCapture }: WorkspacePlayerProps
 
   const handleSetStart = useCallback(() => {
     if (playerRef.current) {
-      onTimeCapture("start", Math.floor(playerRef.current.getCurrentTime()));
+      onTimeCapture("start", Math.round(playerRef.current.getCurrentTime() * 1000) / 1000);
     }
   }, [onTimeCapture]);
 
   const handleSetEnd = useCallback(() => {
     if (playerRef.current) {
-      onTimeCapture("end", Math.floor(playerRef.current.getCurrentTime()));
+      onTimeCapture("end", Math.round(playerRef.current.getCurrentTime() * 1000) / 1000);
     }
   }, [onTimeCapture]);
 

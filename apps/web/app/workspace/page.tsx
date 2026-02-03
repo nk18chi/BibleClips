@@ -249,6 +249,8 @@ function WorkspaceContent() {
                 youtubeVideoId={selectedVideo.youtube_video_id}
                 startTime={startTime}
                 endTime={endTime}
+                onStartTimeChange={setStartTime}
+                onEndTimeChange={setEndTime}
                 onSaved={handleClipSaved}
                 categories={categories}
               />

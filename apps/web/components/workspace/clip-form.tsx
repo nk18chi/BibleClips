@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { saveClip } from "@/app/workspace/actions";
 import { useSupabase } from "@/components/providers/supabase-provider";
 import { StylePreview } from "@/components/style-picker/style-preview";
@@ -80,6 +80,8 @@ type ClipFormProps = {
   youtubeVideoId: string;
   startTime: number;
   endTime: number;
+  onStartTimeChange: (time: number) => void;
+  onEndTimeChange: (time: number) => void;
   onSaved: () => void;
   categories: { id: string; slug: string; name_en: string }[];
 };
@@ -87,11 +89,44 @@ type ClipFormProps = {
 function formatTime(seconds: number): string {
   const m = Math.floor(seconds / 60);
   const s = seconds % 60;
-  return `${m}:${s.toString().padStart(2, "0")}`;
+  const whole = Math.floor(s);
+  const ms = Math.round((s - whole) * 1000);
+  if (ms > 0) {
+    return `${m}:${whole.toString().padStart(2, "0")}.${ms.toString().padStart(3, "0")}`;
+  }
+  return `${m}:${whole.toString().padStart(2, "0")}`;
 }
 
-export function ClipForm({ youtubeVideoId, startTime, endTime, onSaved, categories }: ClipFormProps) {
+function parseTime(value: string): number | null {
+  const trimmed = value.trim();
+  if (!trimmed) return null;
+  if (trimmed.includes(":")) {
+    const colonParts = trimmed.split(":");
+    if (colonParts.some((p) => p === "")) return null;
+    const parts = colonParts.map(Number);
+    if (parts.some(isNaN)) return null;
+    if (parts.length === 2) return parts[0]! * 60 + parts[1]!;
+    if (parts.length === 3) return parts[0]! * 3600 + parts[1]! * 60 + parts[2]!;
+    return null;
+  }
+  const n = Number(trimmed);
+  return isNaN(n) ? null : n;
+}
+
+export function ClipForm({ youtubeVideoId, startTime, endTime, onStartTimeChange, onEndTimeChange, onSaved, categories }: ClipFormProps) {
   const { user } = useSupabase();
+  const [startTimeText, setStartTimeText] = useState(formatTime(startTime));
+  const [endTimeText, setEndTimeText] = useState(formatTime(endTime));
+  const [startFocused, setStartFocused] = useState(false);
+  const [endFocused, setEndFocused] = useState(false);
+
+  useEffect(() => {
+    if (!startFocused) setStartTimeText(formatTime(startTime));
+  }, [startTime, startFocused]);
+
+  useEffect(() => {
+    if (!endFocused) setEndTimeText(formatTime(endTime));
+  }, [endTime, endFocused]);
   const [title, setTitle] = useState("");
   const [book, setBook] = useState("");
   const [chapter, setChapter] = useState("");
@@ -189,17 +224,47 @@ export function ClipForm({ youtubeVideoId, startTime, endTime, onSaved, categori
 
       {error && <div className="text-sm text-red-600 bg-red-50 p-2 rounded">{error}</div>}
 
-      {/* Time display */}
-      <div className="flex flex-wrap gap-2 md:gap-4 text-sm">
+      {/* Time inputs */}
+      <div className="flex flex-wrap items-end gap-2 md:gap-4 text-sm">
         <div>
-          <span className="text-gray-500">Start:</span>{" "}
-          <span className="font-mono font-medium">{formatTime(startTime)}</span>
+          <label className="text-gray-500 block mb-1">Start</label>
+          <input
+            type="text"
+            value={startTimeText}
+            onChange={(e) => setStartTimeText(e.target.value)}
+            onFocus={() => setStartFocused(true)}
+            onBlur={() => {
+              setStartFocused(false);
+              const parsed = parseTime(startTimeText);
+              if (parsed !== null) {
+                onStartTimeChange(parsed);
+              }
+              setStartTimeText(formatTime(parsed ?? startTime));
+            }}
+            className="w-28 px-2 py-1 border rounded font-mono text-sm"
+            placeholder="0:00"
+          />
         </div>
         <div>
-          <span className="text-gray-500">End:</span>{" "}
-          <span className="font-mono font-medium">{formatTime(endTime)}</span>
+          <label className="text-gray-500 block mb-1">End</label>
+          <input
+            type="text"
+            value={endTimeText}
+            onChange={(e) => setEndTimeText(e.target.value)}
+            onFocus={() => setEndFocused(true)}
+            onBlur={() => {
+              setEndFocused(false);
+              const parsed = parseTime(endTimeText);
+              if (parsed !== null) {
+                onEndTimeChange(parsed);
+              }
+              setEndTimeText(formatTime(parsed ?? endTime));
+            }}
+            className="w-28 px-2 py-1 border rounded font-mono text-sm"
+            placeholder="0:00"
+          />
         </div>
-        <div>
+        <div className="py-1">
           <span className="text-gray-500">Duration:</span>{" "}
           <span className="font-mono font-medium">{formatTime(endTime - startTime)}</span>
         </div>
