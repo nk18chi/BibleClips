@@ -420,7 +420,7 @@ export function ClipHistory({ clips, categories, onDeleted, isAdmin }: ClipHisto
                       value={editStart}
                       onChange={(e) => setEditStart(e.target.value)}
                       placeholder="0:00"
-                      className="w-16 px-2 py-1 border rounded text-sm font-mono"
+                      className="w-28 px-2 py-1 border rounded text-sm font-mono"
                       disabled={saving}
                     />
                     <label className="text-xs text-gray-500">End:</label>
@@ -429,7 +429,7 @@ export function ClipHistory({ clips, categories, onDeleted, isAdmin }: ClipHisto
                       value={editEnd}
                       onChange={(e) => setEditEnd(e.target.value)}
                       placeholder="0:00"
-                      className="w-16 px-2 py-1 border rounded text-sm font-mono"
+                      className="w-28 px-2 py-1 border rounded text-sm font-mono"
                       disabled={saving}
                     />
                   </div>
