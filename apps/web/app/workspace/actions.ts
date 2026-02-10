@@ -184,7 +184,7 @@ export async function saveClip(input: SaveClipInput): Promise<{ clipId: string }
   if (clipError) throw clipError;
 
   // Insert verse (sermon clips only)
-  if (input.clipType !== "song") {
+  if (input.clipType === "sermon") {
     const { error: verseError } = await supabase.from("clip_verses").insert({
       clip_id: clip.id,
       book: input.book,
@@ -209,7 +209,7 @@ export async function saveClip(input: SaveClipInput): Promise<{ clipId: string }
   }
 
   // Insert categories (sermon clips only)
-  if (input.clipType !== "song" && input.categoryIds.length > 0) {
+  if (input.clipType === "sermon" && input.categoryIds.length > 0) {
     const { error: catError } = await supabase.from("clip_categories").insert(
       input.categoryIds.map((catId) => ({
         clip_id: clip.id,
@@ -242,7 +242,7 @@ export type UpdateClipInput = {
   subtitleStyleId?: string;
   originalStartTime?: number;
   originalEndTime?: number;
-  clipType?: "sermon" | "song";
+  clipType?: "sermon" | "song" | "testimony";
   artistName?: string;
   songName?: string;
 };
