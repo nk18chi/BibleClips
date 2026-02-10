@@ -15,7 +15,7 @@ type ClipFromDb = {
   vote_count: number;
   language: string | null;
   subtitle_style: string | null;
-  clip_type: "sermon" | "song";
+  clip_type: "sermon" | "song" | "testimony";
   clip_songs: {
     artist_name: string;
     song_name: string;

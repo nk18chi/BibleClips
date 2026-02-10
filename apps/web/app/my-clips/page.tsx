@@ -10,7 +10,7 @@ type Clip = {
   status: "PENDING" | "APPROVED" | "REJECTED";
   vote_count: number;
   created_at: string;
-  clip_type: "sermon" | "song";
+  clip_type: "sermon" | "song" | "testimony";
   clip_songs: {
     artist_name: string;
     song_name: string;
@@ -116,6 +116,9 @@ async function getUserCommentedClips(userId: string): Promise<Clip[]> {
 }
 
 function formatClipRef(clip: Clip): string {
+  if (clip.clip_type === "testimony") {
+    return "Testimony";
+  }
   if (clip.clip_type === "song" && clip.clip_songs?.length > 0) {
     const song = clip.clip_songs[0]!;
     return `${song.artist_name} - ${song.song_name}`;
