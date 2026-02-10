@@ -87,6 +87,7 @@ function ReelCard({
 
   const verse = clip.clip_verses[0];
   const isSong = clip.clip_type === "song";
+  const isTestimony = clip.clip_type === "testimony";
   const song = clip.clip_songs?.[0];
 
   // Use Japanese book name when Japanese is selected
@@ -109,10 +110,24 @@ function ReelCard({
 
   return (
     <div className="relative w-full h-full rounded-lg overflow-hidden bg-black">
-      {/* Verse/Song reference overlay */}
-      {(verse || (isSong && song)) && (
+      {/* Verse/Song/Testimony reference overlay */}
+      {(verse || (isSong && song) || isTestimony) && (
         <div className="absolute top-24 left-0 right-0 z-10 flex justify-center">
-          {isSong && song ? (
+          {isTestimony ? (
+            <span
+              style={{
+                background: style.verse.background,
+                color: style.verse.textColor,
+                fontSize: style.verse.fontSize,
+                fontWeight: style.verse.fontWeight,
+                padding: style.verse.padding,
+                borderRadius: style.verse.borderRadius,
+                boxShadow: style.verse.boxShadow,
+              }}
+            >
+              Testimony
+            </span>
+          ) : isSong && song ? (
             <span
               style={{
                 background: style.verse.background,
@@ -360,7 +375,7 @@ export function ReelViewer({ clips, initialIndex = 0, showHeader = false, clipTy
       </div>
 
       {/* Verse Modal */}
-      {showVerseModal && verse && currentClip.clip_type !== "song" && (
+      {showVerseModal && verse && currentClip.clip_type === "sermon" && (
         <VerseModal
           book={verse.book}
           chapter={verse.chapter}
