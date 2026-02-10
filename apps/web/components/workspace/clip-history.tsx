@@ -117,7 +117,7 @@ export function ClipHistory({ clips, categories, onDeleted, isAdmin }: ClipHisto
   const [editVersion, setEditVersion] = useState("NIV");
   const [editCategories, setEditCategories] = useState<string[]>([]);
   const [editSubtitleStyle, setEditSubtitleStyle] = useState("classic-white");
-  const [editClipType, setEditClipType] = useState<"sermon" | "song">("sermon");
+  const [editClipType, setEditClipType] = useState<"sermon" | "song" | "testimony">("sermon");
   const [editArtistName, setEditArtistName] = useState("");
   const [editSongName, setEditSongName] = useState("");
   const [saving, setSaving] = useState(false);
@@ -204,12 +204,13 @@ export function ClipHistory({ clips, categories, onDeleted, isAdmin }: ClipHisto
         setEditError("Please fill in artist and song name");
         return;
       }
-    } else {
+    } else if (editClipType === "sermon") {
       if (!editBook || !editChapter || !editVerseStart) {
         setEditError("Please fill in the verse reference");
         return;
       }
     }
+    // Testimony has no additional required fields
 
     setSaving(true);
     setEditError(null);
@@ -220,7 +221,7 @@ export function ClipHistory({ clips, categories, onDeleted, isAdmin }: ClipHisto
         clipId,
         startTime,
         endTime,
-        title: editTitle || (editClipType === "sermon" ? `${editBook} ${editChapter}:${editVerseStart}` : `${editArtistName} - ${editSongName}`),
+        title: editTitle || (editClipType === "sermon" ? `${editBook} ${editChapter}:${editVerseStart}` : editClipType === "song" ? `${editArtistName} - ${editSongName}` : "Testimony"),
         book: editClipType === "sermon" ? editBook : "",
         chapter: editClipType === "sermon" ? parseInt(editChapter, 10) : 0,
         verseStart: editClipType === "sermon" ? parseInt(editVerseStart, 10) : 0,
@@ -263,11 +264,13 @@ export function ClipHistory({ clips, categories, onDeleted, isAdmin }: ClipHisto
         {clips.map((clip) => {
           const verse = clip.clip_verses[0];
           const song = clip.clip_songs?.[0];
-          const verseRef = clip.clip_type === "song" && song
-            ? `${song.artist_name} — ${song.song_name}`
-            : verse
-              ? `${verse.book} ${verse.chapter}:${verse.verse_start}${verse.verse_end ? `-${verse.verse_end}` : ""}`
-              : clip.title;
+          const verseRef = clip.clip_type === "testimony"
+            ? "Testimony"
+            : clip.clip_type === "song" && song
+              ? `${song.artist_name} — ${song.song_name}`
+              : verse
+                ? `${verse.book} ${verse.chapter}:${verse.verse_start}${verse.verse_end ? `-${verse.verse_end}` : ""}`
+                : clip.title;
 
           const isEditing = editingId === clip.id;
 
@@ -306,6 +309,16 @@ export function ClipHistory({ clips, categories, onDeleted, isAdmin }: ClipHisto
                       }`}
                     >
                       Song
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setEditClipType("testimony")}
+                      disabled={saving}
+                      className={`px-3 py-1 rounded-full text-xs font-medium transition-colors ${
+                        editClipType === "testimony" ? "bg-blue-600 text-white" : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                      }`}
+                    >
+                      Testimony
                     </button>
                   </div>
 
