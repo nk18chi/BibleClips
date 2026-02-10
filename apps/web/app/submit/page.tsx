@@ -125,7 +125,7 @@ export default function SubmitPage() {
   const { supabase, user } = useSupabase();
   const router = useRouter();
 
-  const [clipType, setClipType] = useState<"sermon" | "song">("sermon");
+  const [clipType, setClipType] = useState<"sermon" | "song" | "testimony">("sermon");
   const [youtubeUrl, setYoutubeUrl] = useState("");
   const [startTime, setStartTime] = useState("");
   const [endTime, setEndTime] = useState("");
@@ -234,7 +234,10 @@ export default function SubmitPage() {
         }
 
         // Get category IDs and insert clip_categories
-        const { data: categories } = await supabase.from("categories").select("id, slug").in("slug", selectedCategories);
+        const { data: categories } = await supabase
+          .from("categories")
+          .select("id, slug")
+          .in("slug", selectedCategories);
 
         if (categories && categories.length > 0) {
           const { error: catError } = await supabase.from("clip_categories").insert(
@@ -301,6 +304,17 @@ export default function SubmitPage() {
               >
                 Song
               </button>
+              <button
+                type="button"
+                onClick={() => setClipType("testimony")}
+                className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                  clipType === "testimony"
+                    ? "bg-blue-600 text-white"
+                    : "bg-white text-gray-700 border border-gray-300 hover:border-blue-400"
+                }`}
+              >
+                Testimony
+              </button>
             </div>
           </div>
 
@@ -365,7 +379,7 @@ export default function SubmitPage() {
             />
           </div>
 
-          {clipType === "sermon" ? (
+          {clipType === "sermon" && (
             <>
               {/* Bible Verse */}
               <div>
@@ -434,7 +448,9 @@ export default function SubmitPage() {
 
               {/* Categories */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Categories * (select at least one)</label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Categories * (select at least one)
+                </label>
                 <div className="flex flex-wrap gap-2">
                   {CATEGORIES.map((cat) => (
                     <button
@@ -453,7 +469,9 @@ export default function SubmitPage() {
                 </div>
               </div>
             </>
-          ) : (
+          )}
+
+          {clipType === "song" && (
             <>
               {/* Artist Name */}
               <div>
@@ -481,6 +499,10 @@ export default function SubmitPage() {
                 />
               </div>
             </>
+          )}
+
+          {clipType === "testimony" && (
+            <p className="text-sm text-gray-500">No additional fields required for testimony clips.</p>
           )}
 
           {/* Submit */}
