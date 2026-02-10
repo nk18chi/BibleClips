@@ -4,7 +4,7 @@
 export type UserRole = "USER" | "ADMIN";
 export type PreferredLanguage = "en" | "ja";
 export type ClipStatus = "PENDING" | "APPROVED" | "REJECTED";
-export type ClipType = "sermon" | "song";
+export type ClipType = "sermon" | "song" | "testimony";
 
 export interface User {
   id: string;

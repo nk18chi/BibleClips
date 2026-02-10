@@ -31,7 +31,7 @@ export type ClipWithVerse = {
   start_time: number;
   end_time: number;
   title: string;
-  clip_type: "sermon" | "song";
+  clip_type: "sermon" | "song" | "testimony";
   status: string;
   created_at: string;
   clip_verses: {
@@ -60,7 +60,7 @@ export type SaveClipInput = {
   verseStart: number;
   verseEnd?: number;
   version?: string;
-  clipType: "sermon" | "song";
+  clipType: "sermon" | "song" | "testimony";
   artistName?: string;
   songName?: string;
   categoryIds: string[];
