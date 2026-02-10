@@ -134,7 +134,7 @@ export function ClipForm({ youtubeVideoId, startTime, endTime, onStartTimeChange
   const [verseEnd, setVerseEnd] = useState("");
   const [version, setVersion] = useState("NIV");
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
-  const [clipType, setClipType] = useState<"sermon" | "song">("sermon");
+  const [clipType, setClipType] = useState<"sermon" | "song" | "testimony">("sermon");
   const [artistName, setArtistName] = useState("");
   const [songName, setSongName] = useState("");
   const [subtitleStyleId, setSubtitleStyleId] = useState("classic-white");
@@ -165,6 +165,8 @@ export function ClipForm({ youtubeVideoId, startTime, endTime, onStartTimeChange
       return;
     }
 
+    // Testimony has no additional required fields beyond title
+
     setSaving(true);
     setSubtitleResult(null);
 
@@ -173,7 +175,7 @@ export function ClipForm({ youtubeVideoId, startTime, endTime, onStartTimeChange
         youtubeVideoId,
         startTime,
         endTime,
-        title: title || (clipType === "sermon" ? `${book} ${chapter}:${verseStart}` : `${artistName} - ${songName}`),
+        title: title || (clipType === "sermon" ? `${book} ${chapter}:${verseStart}` : clipType === "song" ? `${artistName} - ${songName}` : "Testimony"),
         book: clipType === "sermon" ? book : "",
         chapter: clipType === "sermon" ? parseInt(chapter, 10) : 0,
         verseStart: clipType === "sermon" ? parseInt(verseStart, 10) : 0,
@@ -298,6 +300,15 @@ export function ClipForm({ youtubeVideoId, startTime, endTime, onStartTimeChange
           }`}
         >
           Song
+        </button>
+        <button
+          type="button"
+          onClick={() => setClipType("testimony")}
+          className={`px-4 py-1.5 rounded-full text-sm font-medium transition-colors ${
+            clipType === "testimony" ? "bg-blue-600 text-white" : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+          }`}
+        >
+          Testimony
         </button>
       </div>
 
