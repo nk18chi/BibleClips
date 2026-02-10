@@ -112,9 +112,7 @@ async function getApprovedClips(userId?: string, clipType?: string): Promise<Cli
     query = query.eq("clip_type", clipType);
   }
 
-  const { data, error } = await query
-    .order("created_at", { ascending: false })
-    .limit(50);
+  const { data, error } = await query.order("created_at", { ascending: false }).limit(50);
 
   if (error) {
     console.error("Failed to fetch clips:", error.message);
@@ -128,48 +126,49 @@ async function getApprovedClips(userId?: string, clipType?: string): Promise<Cli
   })[];
 
   // Convert DB subtitles to WordTiming format
-  const clipsWithTimings = clips.map((clip) => {
-    // Sort by sequence and convert to WordTiming
-    const wordTimings: WordTiming[] = (clip.clip_subtitles || [])
-      .sort((a, b) => a.sequence - b.sequence)
-      .map((sub) => ({
-        word: sub.word,
-        start: Number(sub.start_time),
-        end: Number(sub.end_time),
-      }));
+  const clipsWithTimings = clips
+    .map((clip) => {
+      // Sort by sequence and convert to WordTiming
+      const wordTimings: WordTiming[] = (clip.clip_subtitles || [])
+        .sort((a, b) => a.sequence - b.sequence)
+        .map((sub) => ({
+          word: sub.word,
+          start: Number(sub.start_time),
+          end: Number(sub.end_time),
+        }));
 
-    // Convert translations
-    const translations: SentenceTranslation[] = (clip.clip_translations || [])
-      .sort((a, b) => a.sequence - b.sequence)
-      .map((trans) => ({
-        language: trans.language,
-        text: trans.text,
-        start: Number(trans.start_time),
-        end: Number(trans.end_time),
-      }));
+      // Convert translations
+      const translations: SentenceTranslation[] = (clip.clip_translations || [])
+        .sort((a, b) => a.sequence - b.sequence)
+        .map((trans) => ({
+          language: trans.language,
+          text: trans.text,
+          start: Number(trans.start_time),
+          end: Number(trans.end_time),
+        }));
 
-    return {
-      id: clip.id,
-      title: clip.title,
-      youtube_video_id: clip.youtube_video_id,
-      start_time: clip.start_time,
-      end_time: clip.end_time,
-      vote_count: clip.vote_count,
-      has_voted: false,
-      language: (clip.language === "ja" ? "ja" : "en") as "en" | "ja",
-      subtitle_style: clip.subtitle_style || undefined,
-      clip_type: clip.clip_type || "sermon",
-      clip_songs: clip.clip_songs || [],
-      wordTimings,
-      translations,
-      clip_verses: clip.clip_verses,
-      clip_categories: clip.clip_categories,
-    };
-  })
-  // Only show clips with subtitles on homepage
-  .filter((clip) => clip.wordTimings && clip.wordTimings.length > 0)
-  // Shuffle randomly
-  .sort(() => Math.random() - 0.5);
+      return {
+        id: clip.id,
+        title: clip.title,
+        youtube_video_id: clip.youtube_video_id,
+        start_time: clip.start_time,
+        end_time: clip.end_time,
+        vote_count: clip.vote_count,
+        has_voted: false,
+        language: (clip.language === "ja" ? "ja" : "en") as "en" | "ja",
+        subtitle_style: clip.subtitle_style || undefined,
+        clip_type: clip.clip_type || "sermon",
+        clip_songs: clip.clip_songs || [],
+        wordTimings,
+        translations,
+        clip_verses: clip.clip_verses,
+        clip_categories: clip.clip_categories,
+      };
+    })
+    // Only show clips with subtitles on homepage
+    .filter((clip) => clip.wordTimings && clip.wordTimings.length > 0)
+    // Shuffle randomly
+    .sort(() => Math.random() - 0.5);
 
   if (userId && clipsWithTimings.length > 0) {
     const { data: votes } = await supabase
@@ -192,13 +191,9 @@ async function getApprovedClips(userId?: string, clipType?: string): Promise<Cli
   return clipsWithTimings;
 }
 
-export default async function HomePage({
-  searchParams,
-}: {
-  searchParams: Promise<{ type?: string }>;
-}) {
+export default async function HomePage({ searchParams }: { searchParams: Promise<{ type?: string }> }) {
   const { type } = await searchParams;
-  const clipType = type === "sermon" || type === "song" ? type : undefined;
+  const clipType = type === "sermon" || type === "song" || type === "testimony" ? type : undefined;
   // Session not working due to cookie issues, skip for now
   const clips = await getApprovedClips(undefined, clipType);
 

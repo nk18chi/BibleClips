@@ -5,9 +5,9 @@ import { useEffect, useRef, useState } from "react";
 import { CommentSection } from "@/components/comment/comment-section";
 import { useLanguage } from "@/components/providers/language-provider";
 import { useStyle } from "@/components/providers/style-provider";
-import { getStyleById } from "@/lib/styles/subtitle-styles";
 import { StylePickerModal } from "@/components/style-picker/style-picker-modal";
 import { Header } from "@/components/ui/header";
+import { getStyleById } from "@/lib/styles/subtitle-styles";
 import { ActionButtons } from "./action-buttons";
 import { SubtitleOverlay } from "./subtitle-overlay";
 import { VerseModal } from "./verse-modal";
@@ -285,9 +285,7 @@ export function ReelViewer({ clips, initialIndex = 0, showHeader = false, clipTy
           <Link
             href="/"
             className={`px-4 py-1.5 rounded-full text-sm font-medium transition-colors ${
-              !clipType
-                ? "bg-white text-black shadow-sm"
-                : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+              !clipType ? "bg-white text-black shadow-sm" : "bg-gray-100 text-gray-600 hover:bg-gray-200"
             }`}
           >
             All
@@ -295,9 +293,7 @@ export function ReelViewer({ clips, initialIndex = 0, showHeader = false, clipTy
           <Link
             href="/?type=sermon"
             className={`px-4 py-1.5 rounded-full text-sm font-medium transition-colors ${
-              clipType === "sermon"
-                ? "bg-white text-black shadow-sm"
-                : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+              clipType === "sermon" ? "bg-white text-black shadow-sm" : "bg-gray-100 text-gray-600 hover:bg-gray-200"
             }`}
           >
             Sermons
@@ -305,12 +301,18 @@ export function ReelViewer({ clips, initialIndex = 0, showHeader = false, clipTy
           <Link
             href="/?type=song"
             className={`px-4 py-1.5 rounded-full text-sm font-medium transition-colors ${
-              clipType === "song"
-                ? "bg-white text-black shadow-sm"
-                : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+              clipType === "song" ? "bg-white text-black shadow-sm" : "bg-gray-100 text-gray-600 hover:bg-gray-200"
             }`}
           >
             Songs
+          </Link>
+          <Link
+            href="/?type=testimony"
+            className={`px-4 py-1.5 rounded-full text-sm font-medium transition-colors ${
+              clipType === "testimony" ? "bg-white text-black shadow-sm" : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+            }`}
+          >
+            Testimonies
           </Link>
         </div>
       )}
@@ -375,9 +377,7 @@ export function ReelViewer({ clips, initialIndex = 0, showHeader = false, clipTy
       )}
 
       {/* Style Picker Modal */}
-      {showStylePicker && (
-        <StylePickerModal onClose={() => setShowStylePicker(false)} />
-      )}
+      {showStylePicker && <StylePickerModal onClose={() => setShowStylePicker(false)} />}
 
       {/* Hide scrollbar */}
       <style jsx global>{`
