@@ -171,7 +171,7 @@ export function ClipForm({ youtubeVideoId, startTime, endTime, onStartTimeChange
     setSubtitleResult(null);
 
     try {
-      const { clipId } = await saveClip({
+      await saveClip({
         youtubeVideoId,
         startTime,
         endTime,
