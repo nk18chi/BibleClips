@@ -12,7 +12,7 @@ type PendingClip = {
   status: string;
   created_at: string;
   submitted_by: string;
-  clip_type: "sermon" | "song";
+  clip_type: "sermon" | "song" | "testimony";
   clip_songs: {
     artist_name: string;
     song_name: string;
@@ -67,6 +67,9 @@ async function isAdmin(userId: string): Promise<boolean> {
 }
 
 function formatClipRef(clip: PendingClip): string {
+  if (clip.clip_type === "testimony") {
+    return "Testimony";
+  }
   if (clip.clip_type === "song" && clip.clip_songs?.length > 0) {
     const song = clip.clip_songs[0]!;
     return `${song.artist_name} - ${song.song_name}`;
