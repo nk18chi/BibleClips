@@ -120,7 +120,8 @@ function formatClipRef(clip: Clip): string {
     return "Testimony";
   }
   if (clip.clip_type === "song" && clip.clip_songs?.length > 0) {
-    const song = clip.clip_songs[0]!;
+    const song = clip.clip_songs[0];
+    if (!song) return "";
     return `${song.artist_name} - ${song.song_name}`;
   }
   const verses = clip.clip_verses;

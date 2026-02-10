@@ -52,7 +52,7 @@ function parseVerseRef(ref: string): { book: string; chapter: number; verseStart
   const last2 = parts.slice(-2).map((p) => parseInt(p, 10));
 
   // Try range: last 3 segments are all numeric
-  if (parts.length >= 4 && last3.every((n) => !isNaN(n))) {
+  if (parts.length >= 4 && last3.every((n) => !Number.isNaN(n))) {
     const [chapter, verseStart, verseEnd] = last3 as [number, number, number];
     const bookParts = parts.slice(0, -3);
     if (bookParts.length === 0) return null;
@@ -60,7 +60,7 @@ function parseVerseRef(ref: string): { book: string; chapter: number; verseStart
   }
 
   // Single verse: last 2 segments are numeric
-  if (last2.every((n) => !isNaN(n))) {
+  if (last2.every((n) => !Number.isNaN(n))) {
     const [chapter, verse] = last2 as [number, number];
     const bookParts = parts.slice(0, -2);
     if (bookParts.length === 0) return null;
