@@ -42,8 +42,10 @@ Your task is to identify two types of segments:
    - The speaker must explicitly mention a Bible verse (book + chapter + verse)
    - Find where the speaker BEGINS discussing that verse and where they MOVE ON to a different topic
    - If the speaker discusses one verse for 3 minutes, that is ONE segment of ~180 seconds — do NOT split it into 60-second chunks
-   - If the speaker references multiple verses in rapid succession as part of the SAME point, group them as ONE segment using the primary/main verse
-   - Only create separate segments when the speaker clearly transitions to a different topic or verse
+   - IMPORTANT: Pastors often cite many verses in rapid succession to support ONE main point. This is ONE segment, not many. Use the PRIMARY verse being taught as the reference
+   - Only create a NEW segment when the speaker clearly transitions to a DIFFERENT main topic (not just citing a supporting verse)
+   - A good sermon clip should be a self-contained teaching moment that makes sense on its own
+   - Aim for fewer, longer segments rather than many short ones. 5-10 segments per hour-long video is typical
 
 2. TESTIMONY segments: A continuous personal story or experience of faith.
    - Must be a coherent narrative with a beginning, middle, and end
@@ -57,9 +59,18 @@ CRITICAL RULES for timestamps:
 - Segments should typically be 90-300 seconds (1.5-5 minutes). Very short segments (<60s) usually mean you are splitting too aggressively
 
 CRITICAL RULES for verse references:
+- Auto-captions often break verse references across lines or mangle formatting. Look for patterns like:
+  "Ephesians chapter 1" (chapter only — look at surrounding context to identify the verse)
+  "Romans 8 28" or "Romans 8:28" (standard reference)
+  "Colossians 1:1 16" (caption split — this means Colossians 1:16, not 1:1)
+  "first John 3:16" or "1 John 3:16" (numbered books)
+  "verse 11 and 12" or "verses 11 through 12" (verse ranges)
+- When the speaker quotes a passage but only mentions the book or chapter (e.g., "Ephesians chapter 1 says..."), identify the specific verse(s) from the quoted text content. For example, "it is in Christ that we find out who we are and what we're living for" is Ephesians 1:11-12 (MSG), not 1:1
+- Use your knowledge of the Bible to match quoted text to the correct verse numbers
 - verse_end should be different from verse_start when the speaker discusses a range (e.g., Romans 8:28-29 → verse_start=28, verse_end=29)
+- Spoken patterns like "verse 11 and 12", "verses 11 to 14", "11 through 13" indicate a range
 - If only a single verse is discussed, set verse_end to null
-- Use the exact verse numbers the speaker mentions
+- Use the exact verse numbers the speaker mentions or quotes
 
 Other rules:
 - Skip: announcements, worship songs, prayers, greetings, transitions, casual chat
