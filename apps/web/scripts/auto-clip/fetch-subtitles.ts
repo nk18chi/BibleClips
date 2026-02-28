@@ -19,8 +19,8 @@ async function fetchSubtitles(videoId: string): Promise<FetchSubtitlesResult> {
 
     const segments: TranscriptSegment[] = transcript.map((item) => ({
       text: item.text,
-      startSeconds: item.offset / 1000,
-      endSeconds: (item.offset + item.duration) / 1000,
+      startSeconds: item.offset,
+      endSeconds: item.offset + item.duration,
     }));
 
     return { ok: true, segments, source: "auto" };
