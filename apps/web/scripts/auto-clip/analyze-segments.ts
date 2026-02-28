@@ -49,14 +49,15 @@ Your task is to identify two types of segments:
 
 2. TESTIMONY segments: A continuous personal story or experience of faith.
    - Must be a coherent narrative with a beginning, middle, and end
-   - Find the natural start and end of the story
+   - Find the natural start and end of the story — testimony clips can be up to 10 minutes since the full story matters
 
 CRITICAL RULES for timestamps:
 - start_time and end_time MUST come directly from the transcript timestamps — use the actual [seconds] values
 - Do NOT round to nice numbers. If the segment starts at [142.8s], use 142.8, not 140 or 150
 - start_time = timestamp of the first line where the topic/verse begins (subtract ~5s buffer)
 - end_time = timestamp of the last line before the speaker transitions away (add ~5s buffer)
-- Segments should typically be 90-300 seconds (1.5-5 minutes). Very short segments (<60s) usually mean you are splitting too aggressively
+- SERMON segments: MUST be 30-120 seconds (0.5-2 minutes). This is for short-form reel content — keep clips concise and focused. If a speaker discusses one verse for 5 minutes, find the best 1-2 minute portion that captures the core message. NEVER exceed 120 seconds for sermon clips
+- TESTIMONY segments: Can be up to 10 minutes (600 seconds) since the full story matters. Capture the complete narrative
 
 CRITICAL RULES for verse references:
 - Auto-captions often break verse references across lines or mangle formatting. Look for patterns like:
@@ -69,7 +70,7 @@ CRITICAL RULES for verse references:
 - Use your knowledge of the Bible to match quoted text to the correct verse numbers
 - verse_end should be different from verse_start when the speaker discusses a range (e.g., Romans 8:28-29 → verse_start=28, verse_end=29)
 - Spoken patterns like "verse 11 and 12", "verses 11 to 14", "11 through 13" indicate a range
-- If only a single verse is discussed, set verse_end to null
+- If only a single verse is discussed, set verse_end to null (NOT the same number as verse_start — e.g., for Romans 8:1 use verse_start=1, verse_end=null, NOT verse_end=1)
 - Use the exact verse numbers the speaker mentions or quotes
 
 Other rules:
@@ -116,7 +117,16 @@ async function analyzeSegments(
     return { segments: [], skipped_reason: "Empty GPT response" };
   }
 
-  return AnalysisResultSchema.parse(JSON.parse(content));
+  const result = AnalysisResultSchema.parse(JSON.parse(content));
+
+  // Post-process: fix verse_end when same as verse_start (should be null)
+  for (const seg of result.segments) {
+    if (seg.type === "sermon" && seg.verse.verse_end === seg.verse.verse_start) {
+      seg.verse.verse_end = null;
+    }
+  }
+
+  return result;
 }
 
 export {
