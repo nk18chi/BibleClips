@@ -12,7 +12,7 @@ const SermonSegmentSchema = z.object({
     book: z.string().describe("Bible book name in English, e.g. Matthew, Genesis, Psalms"),
     chapter: z.number(),
     verse_start: z.number(),
-    verse_end: z.number().optional(),
+    verse_end: z.number().nullable(),
   }),
 });
 
@@ -25,7 +25,7 @@ const TestimonySegmentSchema = z.object({
 
 const AnalysisResultSchema = z.object({
   segments: z.array(z.discriminatedUnion("type", [SermonSegmentSchema, TestimonySegmentSchema])),
-  skipped_reason: z.string().optional().describe("If no segments found, explain why"),
+  skipped_reason: z.string().nullable().describe("If no segments found, explain why"),
 });
 
 type AnalysisResult = z.infer<typeof AnalysisResultSchema>;
