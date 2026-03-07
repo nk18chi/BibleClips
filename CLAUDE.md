@@ -156,6 +156,25 @@ Browser                    Server (Next.js)              External API
 | `WHISPER_API_KEY` | Server only | Cloud Run authentication |
 | `OPENAI_API_KEY` | Server only | OpenAI API calls |
 
+## Database Safety Rules
+
+**IMPORTANT**: Before deleting any rows from the database, always SELECT and log the rows first as a backup. This applies to scripts, one-off cleanups, and any DELETE operations.
+
+```typescript
+// 1. First, fetch and log what will be deleted
+const { data: toDelete } = await supabase.from("clips").select("*").eq("some_column", value);
+console.log("Backing up before delete:", JSON.stringify(toDelete, null, 2));
+
+// 2. Then delete
+for (const row of toDelete) {
+  await supabase.from("clips").delete().eq("id", row.id);
+}
+```
+
+- Always log full row data (not just IDs) before deletion so it can be re-inserted if needed
+- For bulk deletes, write backup data to a JSON file: `fs.writeFileSync("backup-<table>-<date>.json", JSON.stringify(data))`
+- Never assume which rows will be returned — always verify the SELECT results before proceeding with DELETE
+
 ## Conventions
 
 ### Code Style
