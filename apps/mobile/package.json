@@ -25,7 +25,9 @@
     "react-dom": "18.3.1",
     "@expo/vector-icons": "^14.0.0",
     "@bibleclips/database": "workspace:*",
-    "@bibleclips/validation": "workspace:*"
+    "@bibleclips/validation": "workspace:*",
+    "@supabase/supabase-js": "^2.43.0",
+    "@react-native-async-storage/async-storage": "~2.1.0"
   },
   "devDependencies": {
     "@bibleclips/config": "workspace:*",
