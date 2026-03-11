@@ -1,0 +1,36 @@
+{
+  "expo": {
+    "name": "BibleClips",
+    "slug": "bibleclips",
+    "version": "1.0.0",
+    "scheme": "bibleclips",
+    "platforms": ["ios", "android", "web"],
+    "icon": "./assets/icon.png",
+    "splash": {
+      "image": "./assets/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#ffffff"
+    },
+    "ios": {
+      "bundleIdentifier": "com.bibleclips.app",
+      "supportsTablet": true
+    },
+    "android": {
+      "package": "com.bibleclips.app",
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#ffffff"
+      }
+    },
+    "web": {
+      "bundler": "metro",
+      "favicon": "./assets/favicon.png"
+    },
+    "plugins": ["expo-router"],
+    "extra": {
+      "router": {
+        "origin": "https://bibleclips.com"
+      }
+    }
+  }
+}
