@@ -19,6 +19,24 @@ import { router } from "expo-router";
 
 const youtubeUrlRegex = /(?:youtube\.com\/watch\?v=|youtu\.be\/)([a-zA-Z0-9_-]{11})/;
 
+const verseRegex = /^(\d?\s?[A-Za-z]+)\s+(\d+):(\d+)(?:-(\d+))?$/;
+
+const bookJaMap: Record<string, string> = {
+  Genesis: "創世記",
+  Exodus: "出エジプト記",
+  Matthew: "マタイ",
+  Mark: "マルコ",
+  Luke: "ルカ",
+  John: "ヨハネ",
+  Acts: "使徒",
+  Romans: "ローマ",
+  Philippians: "ピリピ",
+  Psalms: "詩篇",
+  Proverbs: "箴言",
+  Isaiah: "イザヤ",
+  Revelation: "黙示録",
+};
+
 const clipFormSchema = z
   .object({
     youtubeUrl: z.string().min(1, "YouTube URL is required"),
@@ -86,26 +104,59 @@ export function ClipSubmitForm() {
     }
 
     setSubmitting(true);
-    const { error } = await supabase.from("clips").insert({
-      youtube_video_id: videoIdMatch[1],
-      start_time: Number.parseFloat(data.startTime),
-      end_time: Number.parseFloat(data.endTime),
-      title: data.title,
-      clip_type: data.clipType,
-      submitted_by: user.id,
-      status: "PENDING",
-    });
+    try {
+      const { data: clip, error } = await supabase
+        .from("clips")
+        .insert({
+          youtube_video_id: videoIdMatch[1],
+          start_time: Number.parseFloat(data.startTime),
+          end_time: Number.parseFloat(data.endTime),
+          title: data.title,
+          clip_type: data.clipType,
+          submitted_by: user.id,
+          status: "PENDING",
+        })
+        .select()
+        .single();
 
-    if (error) {
-      Alert.alert("Error", error.message);
+      if (error) throw error;
+
+      // Insert verse reference if provided
+      if (data.verseInput) {
+        const match = data.verseInput.trim().match(verseRegex);
+        if (match) {
+          const [, book, chapter, verseStart, verseEnd] = match;
+          const { error: verseError } = await supabase.from("clip_verses").insert({
+            clip_id: clip.id,
+            book,
+            book_ja: bookJaMap[book] || book,
+            chapter: Number.parseInt(chapter, 10),
+            verse_start: Number.parseInt(verseStart, 10),
+            verse_end: verseEnd ? Number.parseInt(verseEnd, 10) : null,
+          });
+          if (verseError) throw verseError;
+        }
+      }
+
+      // Insert category associations
+      if (data.categoryIds.length > 0) {
+        const { error: catError } = await supabase.from("clip_categories").insert(
+          data.categoryIds.map((categoryId) => ({
+            clip_id: clip.id,
+            category_id: categoryId,
+          }))
+        );
+        if (catError) throw catError;
+      }
+
+      Alert.alert("Success", "Clip submitted for review!", [
+        { text: "OK", onPress: () => router.replace("/(tabs)/profile") },
+      ]);
+    } catch (err) {
+      Alert.alert("Error", err instanceof Error ? err.message : "Submission failed");
+    } finally {
       setSubmitting(false);
-      return;
     }
-
-    Alert.alert("Success", "Clip submitted for review!", [
-      { text: "OK", onPress: () => router.replace("/(tabs)/profile") },
-    ]);
-    setSubmitting(false);
   };
 
   const nextStep = () => setStep((s) => Math.min(s + 1, STEPS.length - 1));
