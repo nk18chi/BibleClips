@@ -26,6 +26,9 @@ importers:
       '@expo/vector-icons':
         specifier: ^14.0.0
         version: 14.1.0(expo-font@55.0.4)(react-native@0.76.9)(react@18.3.1)
+      '@hookform/resolvers':
+        specifier: ^3.3.0
+        version: 3.10.0(react-hook-form@7.72.1)
       '@react-native-async-storage/async-storage':
         specifier: ~2.1.0
         version: 2.1.2(react-native@0.76.9)
@@ -53,6 +56,9 @@ importers:
       react-dom:
         specifier: 18.3.1
         version: 18.3.1(react@18.3.1)
+      react-hook-form:
+        specifier: ^7.51.0
+        version: 7.72.1(react@18.3.1)
       react-native:
         specifier: 0.76.9
         version: 0.76.9(@babel/core@7.29.0)(@babel/preset-env@7.29.0)(@types/react@18.3.27)(react@18.3.1)
@@ -74,6 +80,9 @@ importers:
       react-native-webview:
         specifier: ~13.12.0
         version: 13.12.5(react-native@0.76.9)(react@18.3.1)
+      zod:
+        specifier: ^3.22.0
+        version: 3.25.76
     devDependencies:
       '@bibleclips/config':
         specifier: workspace:*
@@ -2434,6 +2443,14 @@ packages:
       '@babel/code-frame': 7.29.0
       chalk: 4.1.2
       js-yaml: 4.1.1
+    dev: false
+
+  /@hookform/resolvers@3.10.0(react-hook-form@7.72.1):
+    resolution: {integrity: sha512-79Dv+3mDF7i+2ajj7SkypSKHhl1cbln1OGavqrsF7p6mbUv11xpqpacPsGDCTRvCSjEEIez2ef1NveSVL3b0Ag==}
+    peerDependencies:
+      react-hook-form: ^7.0.0
+    dependencies:
+      react-hook-form: 7.72.1(react@18.3.1)
     dev: false
 
   /@isaacs/cliui@8.0.2:
@@ -7236,6 +7253,15 @@ packages:
       react-dom: 18.3.1(react@18.3.1)
       react-fast-compare: 3.2.2
       shallowequal: 1.1.0
+    dev: false
+
+  /react-hook-form@7.72.1(react@18.3.1):
+    resolution: {integrity: sha512-RhwBoy2ygeVZje+C+bwJ8g0NjTdBmDlJvAUHTxRjTmSUKPYsKfMphkS2sgEMotsY03bP358yEYlnUeZy//D9Ig==}
+    engines: {node: '>=18.0.0'}
+    peerDependencies:
+      react: ^16.8.0 || ^17 || ^18 || ^19
+    dependencies:
+      react: 18.3.1
     dev: false
 
   /react-is@16.13.1:

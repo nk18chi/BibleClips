@@ -1,14 +1,13 @@
-import { View, Text, StyleSheet } from "react-native";
+import { ActivityIndicator } from "react-native";
+import { Redirect } from "expo-router";
+import { useSupabase } from "@/hooks/useSupabase";
+import { ClipSubmitForm } from "@/components/ClipSubmitForm";
 
 export default function SubmitScreen() {
-  return (
-    <View style={styles.container}>
-      <Text style={styles.text}>Submit</Text>
-    </View>
-  );
-}
+  const { user, isLoading } = useSupabase();
 
-const styles = StyleSheet.create({
-  container: { flex: 1, justifyContent: "center", alignItems: "center", backgroundColor: "#000" },
-  text: { color: "#fff", fontSize: 24 },
-});
+  if (isLoading) return <ActivityIndicator size="large" color="#8B5CF6" style={{ flex: 1, backgroundColor: "#000" }} />;
+  if (!user) return <Redirect href="/(auth)/login" />;
+
+  return <ClipSubmitForm />;
+}
