@@ -1,21 +1,22 @@
-import { useState, useCallback, useEffect } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import { useSupabase } from "./useSupabase";
 
 export function useVotes() {
   const { user } = useSupabase();
+  const userId = user?.id;
   const [votedClipIds, setVotedClipIds] = useState<Set<string>>(new Set());
 
   useEffect(() => {
-    if (!user) return;
+    if (!userId) return;
     supabase
       .from("votes")
       .select("clip_id")
-      .eq("user_id", user.id)
+      .eq("user_id", userId)
       .then(({ data }) => {
         if (data) setVotedClipIds(new Set(data.map((v) => v.clip_id)));
       });
-  }, [user?.id]);
+  }, [userId]);
 
   const toggleVote = useCallback(
     async (clipId: string) => {

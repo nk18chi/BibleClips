@@ -1,8 +1,8 @@
-import { useState, useEffect } from "react";
-import { View, Text, FlatList, StyleSheet } from "react-native";
 import type { Clip } from "@bibleclips/database";
-import { supabase } from "@/lib/supabase";
+import { useEffect, useState } from "react";
+import { FlatList, StyleSheet, Text, View } from "react-native";
 import { useSupabase } from "@/hooks/useSupabase";
+import { supabase } from "@/lib/supabase";
 
 const statusColors: Record<string, string> = {
   PENDING: "#f59e0b",
@@ -12,21 +12,22 @@ const statusColors: Record<string, string> = {
 
 export function MyClipsList() {
   const { user } = useSupabase();
+  const userId = user?.id;
   const [clips, setClips] = useState<Clip[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (!user) return;
+    if (!userId) return;
     supabase
       .from("clips")
       .select("*")
-      .eq("submitted_by", user.id)
+      .eq("submitted_by", userId)
       .order("created_at", { ascending: false })
       .then(({ data }) => {
         setClips((data ?? []) as Clip[]);
         setLoading(false);
       });
-  }, [user?.id]);
+  }, [userId]);
 
   if (loading) {
     return <Text style={styles.loading}>Loading clips...</Text>;
@@ -44,10 +45,10 @@ export function MyClipsList() {
       renderItem={({ item }) => (
         <View style={styles.clipRow}>
           <View style={styles.clipInfo}>
-            <Text style={styles.clipTitle} numberOfLines={1}>{item.title}</Text>
-            <Text style={[styles.status, { color: statusColors[item.status] ?? "#888" }]}>
-              {item.status}
+            <Text style={styles.clipTitle} numberOfLines={1}>
+              {item.title}
             </Text>
+            <Text style={[styles.status, { color: statusColors[item.status] ?? "#888" }]}>{item.status}</Text>
           </View>
         </View>
       )}

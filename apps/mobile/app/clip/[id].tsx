@@ -1,11 +1,11 @@
-import { useState, useEffect } from "react";
-import { useLocalSearchParams } from "expo-router";
-import { View, ScrollView, StyleSheet, ActivityIndicator } from "react-native";
 import type { Clip, ClipVerse } from "@bibleclips/database";
-import { supabase } from "@/lib/supabase";
-import { YouTubePlayer } from "@/components/YouTubePlayer";
+import { useLocalSearchParams } from "expo-router";
+import { useEffect, useState } from "react";
+import { ActivityIndicator, ScrollView, StyleSheet, View } from "react-native";
 import { ClipInfo } from "@/components/ClipInfo";
 import { CommentSection } from "@/components/CommentSection";
+import { YouTubePlayer } from "@/components/YouTubePlayer";
+import { supabase } from "@/lib/supabase";
 
 type ClipWithVerses = Clip & { clip_verses: ClipVerse[] };
 

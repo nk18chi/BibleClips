@@ -1,11 +1,11 @@
-import { View, StyleSheet, useWindowDimensions } from "react-native";
-import { useRef, useEffect, useState, useCallback } from "react";
-import { YouTubePlayer, type YouTubePlayerRef } from "./YouTubePlayer";
-import { ClipInfo } from "./ClipInfo";
-import { ActionButtons } from "./ActionButtons";
-import { SubtitleOverlay } from "./SubtitleOverlay";
-import { useSubtitles } from "@/hooks/useSubtitles";
 import type { Clip, ClipVerse } from "@bibleclips/database";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { StyleSheet, useWindowDimensions, View } from "react-native";
+import { useSubtitles } from "@/hooks/useSubtitles";
+import { ActionButtons } from "./ActionButtons";
+import { ClipInfo } from "./ClipInfo";
+import { SubtitleOverlay } from "./SubtitleOverlay";
+import { YouTubePlayer, type YouTubePlayerRef } from "./YouTubePlayer";
 
 interface ReelItemProps {
   clip: Clip & { clip_verses: ClipVerse[] };
@@ -45,12 +45,7 @@ export function ReelItem({ clip, isActive, hasVoted, onVote }: ReelItemProps) {
         <SubtitleOverlay subtitles={subtitles} currentTime={currentTime} translations={translations} />
       )}
       <ClipInfo clip={clip} verses={clip.clip_verses} />
-      <ActionButtons
-        clipId={clip.id}
-        voteCount={clip.vote_count}
-        hasVoted={hasVoted}
-        onVote={onVote}
-      />
+      <ActionButtons clipId={clip.id} voteCount={clip.vote_count} hasVoted={hasVoted} onVote={onVote} />
     </View>
   );
 }

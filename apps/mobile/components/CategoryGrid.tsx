@@ -1,5 +1,5 @@
-import { View, Text, Pressable, StyleSheet } from "react-native";
 import { router } from "expo-router";
+import { Pressable, StyleSheet, Text, View } from "react-native";
 import { useCategories } from "@/hooks/useCategories";
 
 export function CategoryGrid() {

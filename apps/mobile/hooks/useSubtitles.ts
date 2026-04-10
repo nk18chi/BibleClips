@@ -1,5 +1,5 @@
-import { useState, useEffect } from "react";
 import type { ClipSubtitle } from "@bibleclips/database";
+import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 
 interface ClipTranslation {

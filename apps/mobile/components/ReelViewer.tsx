@@ -1,8 +1,8 @@
-import { useRef, useCallback, useState } from "react";
-import { FlatList, useWindowDimensions, type ViewToken } from "react-native";
-import { ReelItem } from "./ReelItem";
-import { useVotes } from "@/hooks/useVotes";
 import type { Clip, ClipVerse } from "@bibleclips/database";
+import { useCallback, useRef, useState } from "react";
+import { FlatList, useWindowDimensions, type ViewToken } from "react-native";
+import { useVotes } from "@/hooks/useVotes";
+import { ReelItem } from "./ReelItem";
 
 type ClipWithVerse = Clip & { clip_verses: ClipVerse[] };
 
@@ -15,13 +15,11 @@ export function ReelViewer({ clips }: ReelViewerProps) {
   const [activeIndex, setActiveIndex] = useState(0);
   const { votedClipIds, toggleVote } = useVotes();
 
-  const onViewableItemsChanged = useRef(
-    ({ viewableItems }: { viewableItems: ViewToken[] }) => {
-      if (viewableItems.length > 0 && viewableItems[0].index != null) {
-        setActiveIndex(viewableItems[0].index);
-      }
+  const onViewableItemsChanged = useRef(({ viewableItems }: { viewableItems: ViewToken[] }) => {
+    if (viewableItems.length > 0 && viewableItems[0].index != null) {
+      setActiveIndex(viewableItems[0].index);
     }
-  ).current;
+  }).current;
 
   const viewabilityConfig = useRef({
     itemVisiblePercentThreshold: 50,

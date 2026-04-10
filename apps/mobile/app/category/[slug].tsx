@@ -1,5 +1,5 @@
 import { useLocalSearchParams } from "expo-router";
-import { View, Text, StyleSheet, ActivityIndicator } from "react-native";
+import { ActivityIndicator, StyleSheet, Text, View } from "react-native";
 import { ReelViewer } from "@/components/ReelViewer";
 import { useClips } from "@/hooks/useClips";
 
@@ -8,11 +8,19 @@ export default function CategoryReelScreen() {
   const { clips, loading } = useClips({ categorySlug: slug });
 
   if (loading) {
-    return <View style={styles.centered}><ActivityIndicator size="large" color="#8B5CF6" /></View>;
+    return (
+      <View style={styles.centered}>
+        <ActivityIndicator size="large" color="#8B5CF6" />
+      </View>
+    );
   }
 
   if (clips.length === 0) {
-    return <View style={styles.centered}><Text style={styles.empty}>No clips in this category</Text></View>;
+    return (
+      <View style={styles.centered}>
+        <Text style={styles.empty}>No clips in this category</Text>
+      </View>
+    );
   }
 
   return <ReelViewer clips={clips} />;

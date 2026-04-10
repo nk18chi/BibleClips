@@ -1,5 +1,5 @@
-import { View, Text, StyleSheet } from "react-native";
 import type { CommentWithUser } from "@bibleclips/database";
+import { StyleSheet, Text, View } from "react-native";
 
 interface CommentCardProps {
   comment: CommentWithUser;
@@ -7,8 +7,7 @@ interface CommentCardProps {
 
 export function CommentCard({ comment }: CommentCardProps) {
   const displayName =
-    (comment as unknown as { user: { display_name: string } | null }).user
-      ?.display_name ?? "Anonymous";
+    (comment as unknown as { user: { display_name: string } | null }).user?.display_name ?? "Anonymous";
   const timeAgo = formatTimeAgo(new Date(comment.created_at));
 
   return (

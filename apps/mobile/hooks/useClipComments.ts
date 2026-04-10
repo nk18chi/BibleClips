@@ -1,5 +1,5 @@
-import { useState, useEffect, useCallback } from "react";
 import type { CommentWithUser } from "@bibleclips/database";
+import { useCallback, useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import { useSupabase } from "./useSupabase";
 
@@ -18,7 +18,9 @@ export function useClipComments(clipId: string) {
     setLoading(false);
   }, [clipId]);
 
-  useEffect(() => { fetchComments(); }, [fetchComments]);
+  useEffect(() => {
+    fetchComments();
+  }, [fetchComments]);
 
   const addComment = useCallback(
     async (content: string) => {

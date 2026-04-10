@@ -1,8 +1,8 @@
-import { View, Text, ScrollView, Pressable, StyleSheet } from "react-native";
 import { Link } from "expo-router";
+import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { MyClipsList } from "@/components/MyClipsList";
 import { useSupabase } from "@/hooks/useSupabase";
 import { supabase } from "@/lib/supabase";
-import { MyClipsList } from "@/components/MyClipsList";
 
 export default function ProfileScreen() {
   const { user, isLoading } = useSupabase();
@@ -52,9 +52,24 @@ const styles = StyleSheet.create({
   centered: { flex: 1, justifyContent: "center", alignItems: "center", padding: 24, backgroundColor: "#000" },
   header: { padding: 24, alignItems: "center" },
   title: { color: "#fff", fontSize: 24, fontWeight: "bold", marginBottom: 16 },
-  sectionTitle: { color: "#fff", fontSize: 18, fontWeight: "600", paddingHorizontal: 16, paddingTop: 16, paddingBottom: 8 },
+  sectionTitle: {
+    color: "#fff",
+    fontSize: 18,
+    fontWeight: "600",
+    paddingHorizontal: 16,
+    paddingTop: 16,
+    paddingBottom: 8,
+  },
   text: { color: "#888", fontSize: 16 },
-  button: { backgroundColor: "#8B5CF6", paddingVertical: 14, paddingHorizontal: 32, borderRadius: 8, marginBottom: 12, width: "100%", alignItems: "center" },
+  button: {
+    backgroundColor: "#8B5CF6",
+    paddingVertical: 14,
+    paddingHorizontal: 32,
+    borderRadius: 8,
+    marginBottom: 12,
+    width: "100%",
+    alignItems: "center",
+  },
   secondaryButton: { backgroundColor: "#333" },
   buttonText: { color: "#fff", fontSize: 16, fontWeight: "600" },
 });

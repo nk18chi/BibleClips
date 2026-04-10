@@ -1,21 +1,12 @@
-import { useState } from "react";
-import {
-  View,
-  Text,
-  TextInput,
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Alert,
-  ActivityIndicator,
-} from "react-native";
-import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
-import { supabase } from "@/lib/supabase";
-import { useSupabase } from "@/hooks/useSupabase";
-import { useCategories } from "@/hooks/useCategories";
 import { router } from "expo-router";
+import { useState } from "react";
+import { Controller, useForm } from "react-hook-form";
+import { ActivityIndicator, Alert, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
+import { z } from "zod";
+import { useCategories } from "@/hooks/useCategories";
+import { useSupabase } from "@/hooks/useSupabase";
+import { supabase } from "@/lib/supabase";
 
 const youtubeUrlRegex = /(?:youtube\.com\/watch\?v=|youtu\.be\/)([a-zA-Z0-9_-]{11})/;
 
@@ -308,9 +299,7 @@ export function ClipSubmitForm() {
                         onChange(next);
                       }}
                     >
-                      <Text style={[styles.categoryText, selected && styles.categoryTextActive]}>
-                        {cat.name_en}
-                      </Text>
+                      <Text style={[styles.categoryText, selected && styles.categoryTextActive]}>{cat.name_en}</Text>
                     </Pressable>
                   );
                 })}

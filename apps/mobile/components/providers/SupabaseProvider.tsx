@@ -1,5 +1,5 @@
 import type { Session, User } from "@supabase/supabase-js";
-import { createContext, useEffect, useState, type ReactNode } from "react";
+import { createContext, type ReactNode, useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 
 interface SupabaseContextType {
@@ -24,11 +24,11 @@ export function SupabaseProvider({ children }: { children: ReactNode }) {
       setIsLoading(false);
     });
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (_event, session) => {
-        setSession(session);
-      }
-    );
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      setSession(session);
+    });
 
     return () => subscription.unsubscribe();
   }, []);

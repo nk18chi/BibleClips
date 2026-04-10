@@ -1,4 +1,4 @@
-import { View, Text, StyleSheet, ActivityIndicator } from "react-native";
+import { ActivityIndicator, StyleSheet, Text, View } from "react-native";
 import { ReelViewer } from "@/components/ReelViewer";
 import { useClips } from "@/hooks/useClips";
 

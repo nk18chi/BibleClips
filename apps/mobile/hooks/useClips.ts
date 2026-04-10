@@ -1,5 +1,5 @@
-import { useState, useEffect } from "react";
-import type { Clip, ClipVerse, Category, ClipSong } from "@bibleclips/database";
+import type { Category, Clip, ClipSong, ClipVerse } from "@bibleclips/database";
+import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 
 interface ClipQueryResult extends Clip {

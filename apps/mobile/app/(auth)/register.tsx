@@ -1,6 +1,6 @@
-import { useState } from "react";
-import { View, Text, TextInput, Pressable, StyleSheet, Alert } from "react-native";
 import { Link, router } from "expo-router";
+import { useState } from "react";
+import { Alert, Pressable, StyleSheet, Text, TextInput, View } from "react-native";
 import { supabase } from "@/lib/supabase";
 
 export default function RegisterScreen() {

@@ -1,7 +1,7 @@
-import { useState } from "react";
-import { View, TextInput, Pressable, Text, StyleSheet } from "react-native";
-import { router } from "expo-router";
 import { bibleBookNamesEn } from "@bibleclips/validation";
+import { router } from "expo-router";
+import { useState } from "react";
+import { Pressable, StyleSheet, Text, TextInput, View } from "react-native";
 
 export function VerseSearch() {
   const [query, setQuery] = useState("");
@@ -24,7 +24,13 @@ export function VerseSearch() {
 
   return (
     <View style={styles.container}>
-      <TextInput style={styles.input} placeholder="Search by verse (e.g. John 3:16)" placeholderTextColor="#888" value={query} onChangeText={handleChange} />
+      <TextInput
+        style={styles.input}
+        placeholder="Search by verse (e.g. John 3:16)"
+        placeholderTextColor="#888"
+        value={query}
+        onChangeText={handleChange}
+      />
       {suggestions.map((s) => (
         <Pressable key={s} onPress={() => handleSelect(s)} style={styles.suggestion}>
           <Text style={styles.suggestionText}>{s}</Text>

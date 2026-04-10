@@ -1,4 +1,4 @@
-import { useRef, useCallback, forwardRef, useImperativeHandle } from "react";
+import { forwardRef, useCallback, useImperativeHandle, useRef } from "react";
 import { StyleSheet } from "react-native";
 import { WebView, type WebViewMessageEvent } from "react-native-webview";
 
@@ -87,51 +87,52 @@ function generateHTML(videoId: string, startTime: number, endTime: number): stri
 </body></html>`;
 }
 
-export const YouTubePlayer = forwardRef<YouTubePlayerRef, YouTubePlayerProps>(
-  function YouTubePlayer({ videoId, startTime, endTime, onStateChange, onTimeUpdate }, ref) {
-    const webViewRef = useRef<WebView>(null);
+export const YouTubePlayer = forwardRef<YouTubePlayerRef, YouTubePlayerProps>(function YouTubePlayer(
+  { videoId, startTime, endTime, onStateChange, onTimeUpdate },
+  ref
+) {
+  const webViewRef = useRef<WebView>(null);
 
-    const sendMessage = useCallback((msg: object) => {
-      const js = `window.dispatchEvent(new MessageEvent('message', { data: '${JSON.stringify(msg).replace(/'/g, "\\'")}' })); true;`;
-      webViewRef.current?.injectJavaScript(js);
-    }, []);
+  const sendMessage = useCallback((msg: object) => {
+    const js = `window.dispatchEvent(new MessageEvent('message', { data: '${JSON.stringify(msg).replace(/'/g, "\\'")}' })); true;`;
+    webViewRef.current?.injectJavaScript(js);
+  }, []);
 
-    useImperativeHandle(ref, () => ({
-      play: () => sendMessage({ action: "play" }),
-      pause: () => sendMessage({ action: "pause" }),
-      seekTo: (seconds: number) => sendMessage({ action: "seekTo", time: seconds }),
-    }));
+  useImperativeHandle(ref, () => ({
+    play: () => sendMessage({ action: "play" }),
+    pause: () => sendMessage({ action: "pause" }),
+    seekTo: (seconds: number) => sendMessage({ action: "seekTo", time: seconds }),
+  }));
 
-    const handleMessage = useCallback(
-      (event: WebViewMessageEvent) => {
-        const data = JSON.parse(event.nativeEvent.data);
-        if (data.type === "state" && onStateChange) {
-          onStateChange(data.state);
-        }
-        if (data.type === "time" && onTimeUpdate) {
-          onTimeUpdate(data.currentTime);
-        }
-      },
-      [onStateChange, onTimeUpdate]
-    );
+  const handleMessage = useCallback(
+    (event: WebViewMessageEvent) => {
+      const data = JSON.parse(event.nativeEvent.data);
+      if (data.type === "state" && onStateChange) {
+        onStateChange(data.state);
+      }
+      if (data.type === "time" && onTimeUpdate) {
+        onTimeUpdate(data.currentTime);
+      }
+    },
+    [onStateChange, onTimeUpdate]
+  );
 
-    const html = generateHTML(videoId, startTime, endTime);
+  const html = generateHTML(videoId, startTime, endTime);
 
-    return (
-      <WebView
-        ref={webViewRef}
-        source={{ html }}
-        style={styles.webview}
-        allowsInlineMediaPlayback
-        mediaPlaybackRequiresUserAction={false}
-        javaScriptEnabled
-        onMessage={handleMessage}
-        scrollEnabled={false}
-        bounces={false}
-      />
-    );
-  }
-);
+  return (
+    <WebView
+      ref={webViewRef}
+      source={{ html }}
+      style={styles.webview}
+      allowsInlineMediaPlayback
+      mediaPlaybackRequiresUserAction={false}
+      javaScriptEnabled
+      onMessage={handleMessage}
+      scrollEnabled={false}
+      bounces={false}
+    />
+  );
+});
 
 const styles = StyleSheet.create({
   webview: { flex: 1, backgroundColor: "#000" },

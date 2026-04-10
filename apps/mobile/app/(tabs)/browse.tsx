@@ -1,6 +1,6 @@
 import { ScrollView, StyleSheet } from "react-native";
-import { VerseSearch } from "@/components/VerseSearch";
 import { CategoryGrid } from "@/components/CategoryGrid";
+import { VerseSearch } from "@/components/VerseSearch";
 
 export default function BrowseScreen() {
   return (

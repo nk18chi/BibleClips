@@ -1,7 +1,7 @@
-import { useMemo } from "react";
-import { View, Text, StyleSheet } from "react-native";
 import type { ClipSubtitle } from "@bibleclips/database";
 import { groupIntoSentences } from "@bibleclips/database/src/subtitle-utils";
+import { useMemo } from "react";
+import { StyleSheet, Text, View } from "react-native";
 
 interface SubtitleOverlayProps {
   subtitles: ClipSubtitle[];
@@ -25,9 +25,7 @@ export function SubtitleOverlay({ subtitles, currentTime, translations }: Subtit
 
   const text = activeSentence.words.map((w) => w.word).join(" ");
 
-  const translation = translations?.find(
-    (t) => currentTime >= t.start_time && currentTime <= t.end_time + 0.3
-  );
+  const translation = translations?.find((t) => currentTime >= t.start_time && currentTime <= t.end_time + 0.3);
 
   return (
     <View style={styles.container}>
