@@ -112,32 +112,39 @@ export function ClipSubmitForm() {
 
       if (error) throw error;
 
-      // Insert verse reference if provided
+      const relatedInserts: PromiseLike<{ error: { message: string } | null }>[] = [];
+
       if (data.verseInput) {
         const match = data.verseInput.trim().match(verseRegex);
         if (match) {
           const [, book, chapter, verseStart, verseEnd] = match;
-          const { error: verseError } = await supabase.from("clip_verses").insert({
-            clip_id: clip.id,
-            book,
-            book_ja: bookJaMap[book] || book,
-            chapter: Number.parseInt(chapter, 10),
-            verse_start: Number.parseInt(verseStart, 10),
-            verse_end: verseEnd ? Number.parseInt(verseEnd, 10) : null,
-          });
-          if (verseError) throw verseError;
+          relatedInserts.push(
+            supabase.from("clip_verses").insert({
+              clip_id: clip.id,
+              book,
+              book_ja: bookJaMap[book] || book,
+              chapter: Number.parseInt(chapter, 10),
+              verse_start: Number.parseInt(verseStart, 10),
+              verse_end: verseEnd ? Number.parseInt(verseEnd, 10) : null,
+            })
+          );
         }
       }
 
-      // Insert category associations
       if (data.categoryIds.length > 0) {
-        const { error: catError } = await supabase.from("clip_categories").insert(
-          data.categoryIds.map((categoryId) => ({
-            clip_id: clip.id,
-            category_id: categoryId,
-          }))
+        relatedInserts.push(
+          supabase.from("clip_categories").insert(
+            data.categoryIds.map((categoryId) => ({
+              clip_id: clip.id,
+              category_id: categoryId,
+            }))
+          )
         );
-        if (catError) throw catError;
+      }
+
+      const results = await Promise.all(relatedInserts);
+      for (const result of results) {
+        if (result.error) throw result.error;
       }
 
       Alert.alert("Success", "Clip submitted for review!", [

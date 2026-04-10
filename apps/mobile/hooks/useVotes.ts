@@ -20,22 +20,22 @@ export function useVotes() {
 
   const toggleVote = useCallback(
     async (clipId: string) => {
-      if (!user) return;
+      if (!userId) return;
       const hasVoted = votedClipIds.has(clipId);
 
       if (hasVoted) {
-        await supabase.from("votes").delete().eq("clip_id", clipId).eq("user_id", user.id);
+        await supabase.from("votes").delete().eq("clip_id", clipId).eq("user_id", userId);
         setVotedClipIds((prev) => {
           const next = new Set(prev);
           next.delete(clipId);
           return next;
         });
       } else {
-        await supabase.from("votes").insert({ clip_id: clipId, user_id: user.id });
+        await supabase.from("votes").insert({ clip_id: clipId, user_id: userId });
         setVotedClipIds((prev) => new Set(prev).add(clipId));
       }
     },
-    [user, votedClipIds]
+    [userId, votedClipIds]
   );
 
   return { votedClipIds, toggleVote };

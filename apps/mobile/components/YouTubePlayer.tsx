@@ -1,4 +1,4 @@
-import { forwardRef, useCallback, useImperativeHandle, useRef } from "react";
+import { forwardRef, useCallback, useImperativeHandle, useMemo, useRef } from "react";
 import { StyleSheet } from "react-native";
 import { WebView, type WebViewMessageEvent } from "react-native-webview";
 
@@ -68,7 +68,7 @@ function generateHTML(videoId: string, startTime: number, endTime: number): stri
                 player.pauseVideo();
                 clearInterval(timeInterval);
               }
-            }, 100);
+            }, 250);
           } else {
             clearInterval(timeInterval);
           }
@@ -117,7 +117,7 @@ export const YouTubePlayer = forwardRef<YouTubePlayerRef, YouTubePlayerProps>(fu
     [onStateChange, onTimeUpdate]
   );
 
-  const html = generateHTML(videoId, startTime, endTime);
+  const html = useMemo(() => generateHTML(videoId, startTime, endTime), [videoId, startTime, endTime]);
 
   return (
     <WebView

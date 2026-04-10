@@ -12,12 +12,13 @@ interface ClipTranslation {
   sequence: number;
 }
 
-export function useSubtitles(clipId: string) {
+export function useSubtitles(clipId: string, enabled = true) {
   const [subtitles, setSubtitles] = useState<ClipSubtitle[]>([]);
   const [translations, setTranslations] = useState<ClipTranslation[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    if (!enabled) return;
     Promise.all([
       supabase.from("clip_subtitles").select("*").eq("clip_id", clipId).order("sequence"),
       supabase.from("clip_translations").select("*").eq("clip_id", clipId).order("sequence"),
@@ -26,7 +27,7 @@ export function useSubtitles(clipId: string) {
       setTranslations((transResult.data ?? []) as ClipTranslation[]);
       setLoading(false);
     });
-  }, [clipId]);
+  }, [clipId, enabled]);
 
   return { subtitles, translations, loading };
 }

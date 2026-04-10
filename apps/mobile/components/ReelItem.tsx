@@ -18,7 +18,7 @@ export function ReelItem({ clip, isActive, hasVoted, onVote }: ReelItemProps) {
   const { height } = useWindowDimensions();
   const playerRef = useRef<YouTubePlayerRef>(null);
   const [currentTime, setCurrentTime] = useState(0);
-  const { subtitles, translations } = useSubtitles(clip.id);
+  const { subtitles, translations } = useSubtitles(clip.id, isActive);
 
   useEffect(() => {
     if (isActive) {
