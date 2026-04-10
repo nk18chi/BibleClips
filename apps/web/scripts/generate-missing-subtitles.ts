@@ -2,7 +2,7 @@
  * Generate subtitles and translations for all clips that don't have them yet.
  * This script should be run locally as it requires yt-dlp.
  *
- * Usage: pnpm --filter @bibleclips/web generate-subtitles
+ * Usage: pnpm --filter @bibleclips/web generate-subtitles [-- --limit N]
  */
 import { config } from "dotenv";
 
@@ -177,8 +177,22 @@ async function processClip(clip: Clip): Promise<boolean> {
   }
 }
 
+function parseLimit(): number | undefined {
+  const limitIndex = process.argv.indexOf("--limit");
+  if (limitIndex !== -1 && process.argv[limitIndex + 1]) {
+    const n = Number.parseInt(process.argv[limitIndex + 1], 10);
+    if (Number.isNaN(n) || n <= 0) {
+      console.error("--limit must be a positive number");
+      process.exit(1);
+    }
+    return n;
+  }
+  return 1;
+}
+
 async function main() {
-  console.log("Finding clips without subtitles...\n");
+  const limit = parseLimit();
+  console.log(`Finding clips without subtitles...${limit ? ` (limit: ${limit})` : ""}\n`);
 
   // Find all approved clips that don't have subtitles yet
   const { data: clips, error } = await supabase
@@ -217,15 +231,22 @@ async function main() {
   }
 
   console.log(`Found ${clipsWithoutSubtitles.length} clips without subtitles:\n`);
-  clipsWithoutSubtitles.forEach((clip, i) => {
+
+  const clipsToProcess = limit ? clipsWithoutSubtitles.slice(0, limit) : clipsWithoutSubtitles;
+
+  clipsToProcess.forEach((clip, i) => {
     console.log(`  ${i + 1}. ${clip.title}`);
   });
+
+  if (limit && clipsWithoutSubtitles.length > limit) {
+    console.log(`  ... and ${clipsWithoutSubtitles.length - limit} more (limited to ${limit})`);
+  }
 
   // Process each clip
   let success = 0;
   let failed = 0;
 
-  for (const clip of clipsWithoutSubtitles) {
+  for (const clip of clipsToProcess) {
     const result = await processClip(clip);
     if (result) {
       success++;
