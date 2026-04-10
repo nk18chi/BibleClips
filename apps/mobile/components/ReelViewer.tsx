@@ -1,6 +1,7 @@
 import { useRef, useCallback, useState } from "react";
 import { FlatList, useWindowDimensions, type ViewToken } from "react-native";
 import { ReelItem } from "./ReelItem";
+import { useVotes } from "@/hooks/useVotes";
 import type { Clip, ClipVerse } from "@bibleclips/database";
 
 type ClipWithVerse = Clip & { clip_verses: ClipVerse[] };
@@ -12,6 +13,7 @@ interface ReelViewerProps {
 export function ReelViewer({ clips }: ReelViewerProps) {
   const { height } = useWindowDimensions();
   const [activeIndex, setActiveIndex] = useState(0);
+  const { votedClipIds, toggleVote } = useVotes();
 
   const onViewableItemsChanged = useRef(
     ({ viewableItems }: { viewableItems: ViewToken[] }) => {
@@ -27,9 +29,14 @@ export function ReelViewer({ clips }: ReelViewerProps) {
 
   const renderItem = useCallback(
     ({ item, index }: { item: ClipWithVerse; index: number }) => (
-      <ReelItem clip={item} isActive={index === activeIndex} />
+      <ReelItem
+        clip={item}
+        isActive={index === activeIndex}
+        hasVoted={votedClipIds.has(item.id)}
+        onVote={() => toggleVote(item.id)}
+      />
     ),
-    [activeIndex]
+    [activeIndex, votedClipIds, toggleVote]
   );
 
   return (
