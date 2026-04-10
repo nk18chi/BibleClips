@@ -13,14 +13,39 @@
     },
     "ios": {
       "bundleIdentifier": "com.bibleclips.app",
-      "supportsTablet": true
+      "supportsTablet": true,
+      "associatedDomains": ["applinks:bibleclips.com"]
     },
     "android": {
       "package": "com.bibleclips.app",
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
-      }
+      },
+      "intentFilters": [
+        {
+          "action": "VIEW",
+          "autoVerify": true,
+          "data": [
+            {
+              "scheme": "https",
+              "host": "bibleclips.com",
+              "pathPrefix": "/clip"
+            },
+            {
+              "scheme": "https",
+              "host": "bibleclips.com",
+              "pathPrefix": "/verse"
+            },
+            {
+              "scheme": "https",
+              "host": "bibleclips.com",
+              "pathPrefix": "/category"
+            }
+          ],
+          "category": ["BROWSABLE", "DEFAULT"]
+        }
+      ]
     },
     "web": {
       "bundler": "metro",
