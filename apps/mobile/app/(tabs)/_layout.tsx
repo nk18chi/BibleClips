@@ -45,7 +45,7 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
-        name="browse"
+        name="(browse)"
         options={{
           title: "Browse",
           tabBarIcon: ({ color }) => <Ionicons name="search" size={28} color={color} />,
@@ -70,36 +70,6 @@ export default function TabLayout() {
         options={{
           title: "Profile",
           tabBarIcon: ({ color }) => <Ionicons name="person-circle" size={28} color={color} />,
-        }}
-      />
-      <Tabs.Screen
-        name="verse/[ref]"
-        options={{
-          href: null,
-          headerShown: true,
-          headerTitle: "Verse",
-          headerStyle: { backgroundColor: "#000" },
-          headerTintColor: "#fff",
-        }}
-      />
-      <Tabs.Screen
-        name="category/[slug]"
-        options={{
-          href: null,
-          headerShown: true,
-          headerTitle: "Category",
-          headerStyle: { backgroundColor: "#000" },
-          headerTintColor: "#fff",
-        }}
-      />
-      <Tabs.Screen
-        name="clip/[id]"
-        options={{
-          href: null,
-          headerShown: true,
-          headerTitle: "Clip",
-          headerStyle: { backgroundColor: "#000" },
-          headerTintColor: "#fff",
         }}
       />
     </Tabs>
