@@ -1,7 +1,28 @@
 import { Ionicons } from "@expo/vector-icons";
 import { Tabs } from "expo-router";
+import { useEffect, useState } from "react";
+import { useSupabase } from "@/hooks/useSupabase";
+import { supabase } from "@/lib/supabase";
 
 export default function TabLayout() {
+  const { user } = useSupabase();
+  const [isAdmin, setIsAdmin] = useState(false);
+
+  useEffect(() => {
+    if (!user) {
+      setIsAdmin(false);
+      return;
+    }
+    supabase
+      .from("users")
+      .select("role")
+      .eq("id", user.id)
+      .single()
+      .then(({ data }) => {
+        setIsAdmin(data?.role === "ADMIN");
+      });
+  }, [user]);
+
   return (
     <Tabs
       screenOptions={{
@@ -41,6 +62,7 @@ export default function TabLayout() {
         name="admin"
         options={{
           title: "Admin",
+          href: isAdmin ? "/admin" : null,
           tabBarIcon: ({ color }) => <Ionicons name="shield-checkmark" size={28} color={color} />,
         }}
       />
