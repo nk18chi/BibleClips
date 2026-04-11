@@ -54,8 +54,7 @@ export default function TabLayout() {
       <Tabs.Screen
         name="submit"
         options={{
-          title: "Submit",
-          tabBarIcon: ({ color }) => <Ionicons name="add-circle" size={28} color={color} />,
+          href: null,
         }}
       />
       <Tabs.Screen
