@@ -1,5 +1,4 @@
-import type { ClipSubtitle } from "@bibleclips/database";
-import { groupIntoSentences } from "@bibleclips/database/src/subtitle-utils";
+import { type ClipSubtitle, groupIntoSentences } from "@bibleclips/database";
 import { useMemo } from "react";
 import { StyleSheet, Text, View } from "react-native";
 
