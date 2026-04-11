@@ -6,37 +6,42 @@ export default function TabLayout() {
     <Tabs
       screenOptions={{
         headerShown: false,
-        tabBarActiveTintColor: "#8B5CF6",
-        tabBarStyle: { backgroundColor: "#000" },
+        tabBarActiveTintColor: "#fff",
         tabBarInactiveTintColor: "#888",
+        tabBarShowLabel: false,
+        tabBarStyle: {
+          backgroundColor: "#000",
+          borderTopColor: "#262626",
+          borderTopWidth: 0.5,
+        },
       }}
     >
       <Tabs.Screen
         name="index"
         options={{
           title: "Home",
-          tabBarIcon: ({ color, size }) => <Ionicons name="play-circle" size={size} color={color} />,
+          tabBarIcon: ({ color }) => <Ionicons name="home" size={28} color={color} />,
         }}
       />
       <Tabs.Screen
         name="browse"
         options={{
           title: "Browse",
-          tabBarIcon: ({ color, size }) => <Ionicons name="search" size={size} color={color} />,
+          tabBarIcon: ({ color }) => <Ionicons name="search" size={28} color={color} />,
         }}
       />
       <Tabs.Screen
         name="submit"
         options={{
           title: "Submit",
-          tabBarIcon: ({ color, size }) => <Ionicons name="add-circle" size={size} color={color} />,
+          tabBarIcon: ({ color }) => <Ionicons name="add-circle" size={28} color={color} />,
         }}
       />
       <Tabs.Screen
         name="profile"
         options={{
           title: "Profile",
-          tabBarIcon: ({ color, size }) => <Ionicons name="person" size={size} color={color} />,
+          tabBarIcon: ({ color }) => <Ionicons name="person-circle" size={28} color={color} />,
         }}
       />
     </Tabs>

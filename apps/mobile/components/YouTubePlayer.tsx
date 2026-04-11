@@ -1,6 +1,5 @@
-import { forwardRef, useCallback, useImperativeHandle, useMemo, useRef } from "react";
-import { StyleSheet } from "react-native";
-import { WebView, type WebViewMessageEvent } from "react-native-webview";
+import { forwardRef, useCallback, useEffect, useImperativeHandle, useMemo, useRef } from "react";
+import { Platform, StyleSheet } from "react-native";
 
 export interface YouTubePlayerRef {
   play: () => void;
@@ -87,11 +86,97 @@ function generateHTML(videoId: string, startTime: number, endTime: number): stri
 </body></html>`;
 }
 
-export const YouTubePlayer = forwardRef<YouTubePlayerRef, YouTubePlayerProps>(function YouTubePlayer(
+// Web: use iframe + YouTube IFrame API directly
+const YouTubePlayerWeb = forwardRef<YouTubePlayerRef, YouTubePlayerProps>(function YouTubePlayerWeb(
   { videoId, startTime, endTime, onStateChange, onTimeUpdate },
   ref
 ) {
-  const webViewRef = useRef<WebView>(null);
+  const iframeRef = useRef<HTMLIFrameElement>(null);
+  const playerRef = useRef<YT.Player | null>(null);
+  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  const clearTimeInterval = useCallback(() => {
+    if (intervalRef.current) {
+      clearInterval(intervalRef.current);
+      intervalRef.current = null;
+    }
+  }, []);
+
+  useImperativeHandle(ref, () => ({
+    play: () => playerRef.current?.playVideo(),
+    pause: () => playerRef.current?.pauseVideo(),
+    seekTo: (seconds: number) => playerRef.current?.seekTo(seconds, true),
+  }));
+
+  useEffect(() => {
+    const tag = document.createElement("script");
+    tag.src = "https://www.youtube.com/iframe_api";
+    document.head.appendChild(tag);
+
+    (window as any).onYouTubeIframeAPIReady = () => {
+      playerRef.current = new YT.Player("yt-player", {
+        videoId,
+        playerVars: {
+          autoplay: 0,
+          controls: 0,
+          modestbranding: 1,
+          rel: 0,
+          start: Math.floor(startTime),
+          playsinline: 1,
+          fs: 0,
+        },
+        events: {
+          onReady: (e: YT.PlayerEvent) => {
+            e.target.seekTo(startTime, true);
+          },
+          onStateChange: (e: YT.OnStateChangeEvent) => {
+            const stateMap: Record<number, "playing" | "paused" | "ended"> = {
+              1: "playing",
+              2: "paused",
+              0: "ended",
+            };
+            const state = stateMap[e.data];
+            if (state) onStateChange?.(state);
+
+            if (e.data === 1) {
+              clearTimeInterval();
+              intervalRef.current = setInterval(() => {
+                const t = playerRef.current?.getCurrentTime?.() ?? 0;
+                onTimeUpdate?.(t);
+                if (t >= endTime) {
+                  playerRef.current?.pauseVideo();
+                  clearTimeInterval();
+                }
+              }, 250);
+            } else {
+              clearTimeInterval();
+            }
+          },
+        },
+      });
+    };
+
+    return () => {
+      clearTimeInterval();
+      playerRef.current?.destroy();
+    };
+  }, [videoId, startTime, endTime, onStateChange, onTimeUpdate, clearTimeInterval]);
+
+  return (
+    <div style={{ flex: 1, backgroundColor: "#000", width: "100%", height: "100%" }}>
+      <div id="yt-player" style={{ width: "100%", height: "100%" }} />
+    </div>
+  );
+});
+
+// Native: use WebView
+const YouTubePlayerNative = forwardRef<YouTubePlayerRef, YouTubePlayerProps>(function YouTubePlayerNative(
+  { videoId, startTime, endTime, onStateChange, onTimeUpdate },
+  ref
+) {
+  // Lazy require to avoid web bundle crash
+  const { WebView } = require("react-native-webview");
+  const webViewRef = useRef<any>(null);
 
   const sendMessage = useCallback((msg: object) => {
     const js = `window.dispatchEvent(new MessageEvent('message', { data: '${JSON.stringify(msg).replace(/'/g, "\\'")}' })); true;`;
@@ -105,7 +190,7 @@ export const YouTubePlayer = forwardRef<YouTubePlayerRef, YouTubePlayerProps>(fu
   }));
 
   const handleMessage = useCallback(
-    (event: WebViewMessageEvent) => {
+    (event: any) => {
       const data = JSON.parse(event.nativeEvent.data);
       if (data.type === "state" && onStateChange) {
         onStateChange(data.state);
@@ -133,6 +218,8 @@ export const YouTubePlayer = forwardRef<YouTubePlayerRef, YouTubePlayerProps>(fu
     />
   );
 });
+
+export const YouTubePlayer = Platform.OS === "web" ? YouTubePlayerWeb : YouTubePlayerNative;
 
 const styles = StyleSheet.create({
   webview: { flex: 1, backgroundColor: "#000" },

@@ -48,7 +48,7 @@ export function MyClipsList() {
             <Text style={styles.clipTitle} numberOfLines={1}>
               {item.title}
             </Text>
-            <Text style={[styles.status, { color: statusColors[item.status] ?? "#888" }]}>{item.status}</Text>
+            <Text style={[styles.status, { color: statusColors[item.status] ?? "#888" }]}>{item.status.toUpperCase()}</Text>
           </View>
         </View>
       )}
@@ -62,5 +62,5 @@ const styles = StyleSheet.create({
   clipRow: { paddingVertical: 12, paddingHorizontal: 16, borderBottomWidth: 1, borderBottomColor: "#222" },
   clipInfo: { flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
   clipTitle: { color: "#fff", fontSize: 14, flex: 1, marginRight: 8 },
-  status: { fontSize: 12, fontWeight: "600", textTransform: "uppercase" },
+  status: { fontSize: 12, fontWeight: "600" },
 });
