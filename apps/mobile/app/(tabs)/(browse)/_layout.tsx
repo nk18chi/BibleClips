@@ -9,7 +9,7 @@ export default function BrowseLayout() {
         headerShadowVisible: false,
       }}
     >
-      <Stack.Screen name="index" options={{ headerShown: false }} />
+      <Stack.Screen name="index" options={{ headerShown: false, title: "Browse" }} />
       <Stack.Screen name="verse/[ref]" options={{ headerTitle: "Verse" }} />
       <Stack.Screen name="category/[slug]" options={{ headerTitle: "Category" }} />
       <Stack.Screen name="clip/[id]" options={{ headerTitle: "Clip" }} />
