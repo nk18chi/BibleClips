@@ -42,3 +42,11 @@ temp/
 # Claude Code
 .claude/
 .beads/
+
+# Playwright MCP
+.playwright-mcp/
+
+# Screenshots (debug artifacts)
+*.png
+!apps/**/assets/*.png
+!apps/**/public/*.png
