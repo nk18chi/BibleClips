@@ -35,3 +35,6 @@ supabase/.temp
 # Scratch/temporary files
 temp/
 .vercel
+
+# Worktrees
+.worktrees/

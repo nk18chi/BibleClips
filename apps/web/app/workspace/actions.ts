@@ -6,81 +6,13 @@ import OpenAI from "openai";
 import { checkRateLimit } from "@/lib/auth/rate-limit";
 import { requireWorkspaceAccess } from "@/lib/auth/workspace-auth";
 import { transcribeClipWithWhisper, type WordTiming } from "@/lib/whisper-transcribe";
+import { BOOK_JA_MAP } from "@/lib/bible-books";
 import type { ClipWithVerse, SaveClipInput, WorkQueueVideo } from "@/types/workspace";
 
 // Use service role for workspace actions (admin tool)
 function createAdminClient() {
   return createClient(process.env.NEXT_PUBLIC_SUPABASE_URL ?? "", process.env.SUPABASE_SECRET_KEY ?? "");
 }
-
-const BOOK_JA_MAP: Record<string, string> = {
-  Genesis: "創世記",
-  Exodus: "出エジプト記",
-  Leviticus: "レビ記",
-  Numbers: "民数記",
-  Deuteronomy: "申命記",
-  Joshua: "ヨシュア記",
-  Judges: "士師記",
-  Ruth: "ルツ記",
-  "1 Samuel": "サムエル記上",
-  "2 Samuel": "サムエル記下",
-  "1 Kings": "列王記上",
-  "2 Kings": "列王記下",
-  "1 Chronicles": "歴代誌上",
-  "2 Chronicles": "歴代誌下",
-  Ezra: "エズラ記",
-  Nehemiah: "ネヘミヤ記",
-  Esther: "エステル記",
-  Job: "ヨブ記",
-  Psalms: "詩篇",
-  Proverbs: "箴言",
-  Ecclesiastes: "伝道者の書",
-  "Song of Solomon": "雅歌",
-  Isaiah: "イザヤ書",
-  Jeremiah: "エレミヤ書",
-  Lamentations: "哀歌",
-  Ezekiel: "エゼキエル書",
-  Daniel: "ダニエル書",
-  Hosea: "ホセア書",
-  Joel: "ヨエル書",
-  Amos: "アモス書",
-  Obadiah: "オバデヤ書",
-  Jonah: "ヨナ書",
-  Micah: "ミカ書",
-  Nahum: "ナホム書",
-  Habakkuk: "ハバクク書",
-  Zephaniah: "ゼパニヤ書",
-  Haggai: "ハガイ書",
-  Zechariah: "ゼカリヤ書",
-  Malachi: "マラキ書",
-  Matthew: "マタイ",
-  Mark: "マルコ",
-  Luke: "ルカ",
-  John: "ヨハネ",
-  Acts: "使徒",
-  Romans: "ローマ",
-  "1 Corinthians": "コリント第一",
-  "2 Corinthians": "コリント第二",
-  Galatians: "ガラテヤ",
-  Ephesians: "エペソ",
-  Philippians: "ピリピ",
-  Colossians: "コロサイ",
-  "1 Thessalonians": "テサロニケ第一",
-  "2 Thessalonians": "テサロニケ第二",
-  "1 Timothy": "テモテ第一",
-  "2 Timothy": "テモテ第二",
-  Titus: "テトス",
-  Philemon: "ピレモン",
-  Hebrews: "ヘブル",
-  James: "ヤコブ",
-  "1 Peter": "ペテロ第一",
-  "2 Peter": "ペテロ第二",
-  "1 John": "ヨハネ第一",
-  "2 John": "ヨハネ第二",
-  "3 John": "ヨハネ第三",
-  Jude: "ユダ",
-  Revelation: "黙示録",
-};
 
 export type VideoStatus = "pending" | "completed" | "skipped";
 
