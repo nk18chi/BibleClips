@@ -1,10 +1,32 @@
-import { useCallback, useEffect, useState } from "react";
-import { ActivityIndicator, Alert, FlatList, Pressable, Text, View } from "react-native";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { ActivityIndicator, Alert, FlatList, Linking, Pressable, Text, View } from "react-native";
 import type { Clip, ClipVerse } from "@bibleclips/database";
 import { useSupabase } from "@/hooks/useSupabase";
 import { supabase } from "@/lib/supabase";
 
-type PendingClip = Clip & { clip_verses: ClipVerse[]; users: { email: string } | null };
+type PendingClip = Clip & { clip_verses: ClipVerse[] };
+
+type VideoGroup = {
+  videoId: string;
+  title: string;
+  clips: PendingClip[];
+};
+
+function formatTime(seconds: number): string {
+  const mins = Math.floor(seconds / 60);
+  const secs = Math.round(seconds % 60);
+  return `${mins}:${secs.toString().padStart(2, "0")}`;
+}
+
+function formatDuration(start: number, end: number): string {
+  const dur = Math.round(end - start);
+  if (dur >= 60) {
+    const m = Math.floor(dur / 60);
+    const s = dur % 60;
+    return s > 0 ? `${m}m ${s}s` : `${m}m`;
+  }
+  return `${dur}s`;
+}
 
 export default function AdminScreen() {
   const { user } = useSupabase();
@@ -28,9 +50,9 @@ export default function AdminScreen() {
     setLoading(true);
     const { data } = await supabase
       .from("clips")
-      .select("*, clip_verses(*), users(email)")
+      .select("*, clip_verses(*)")
       .eq("status", "PENDING")
-      .order("created_at", { ascending: false });
+      .order("start_time", { ascending: true });
     setClips((data ?? []) as PendingClip[]);
     setLoading(false);
   }, []);
@@ -39,6 +61,19 @@ export default function AdminScreen() {
     if (userRole === "ADMIN") fetchPending();
   }, [userRole, fetchPending]);
 
+  const groups = useMemo((): VideoGroup[] => {
+    const map = new Map<string, VideoGroup>();
+    for (const clip of clips) {
+      let group = map.get(clip.youtube_video_id);
+      if (!group) {
+        group = { videoId: clip.youtube_video_id, title: clip.title, clips: [] };
+        map.set(clip.youtube_video_id, group);
+      }
+      group.clips.push(clip);
+    }
+    return [...map.values()];
+  }, [clips]);
+
   const handleAction = async (clipId: string, status: "APPROVED" | "REJECTED") => {
     const { error } = await supabase.from("clips").update({ status }).eq("id", clipId);
     if (error) {
@@ -46,6 +81,11 @@ export default function AdminScreen() {
       return;
     }
     setClips((prev) => prev.filter((c) => c.id !== clipId));
+  };
+
+  const handlePlay = (videoId: string, startTime: number) => {
+    const url = `https://youtube.com/watch?v=${videoId}&t=${Math.floor(startTime)}`;
+    Linking.openURL(url);
   };
 
   if (!user) {
@@ -72,66 +112,96 @@ export default function AdminScreen() {
     );
   }
 
+  const totalClips = clips.length;
+
   return (
     <View style={{ flex: 1, backgroundColor: "#000", paddingTop: 60 }}>
-      <Text style={{ color: "#fff", fontSize: 22, fontWeight: "700", padding: 16 }}>
-        Pending Clips ({clips.length})
-      </Text>
-      {clips.length === 0 ? (
+      <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", padding: 16 }}>
+        <Text style={{ color: "#fff", fontSize: 22, fontWeight: "700" }}>Pending Clips</Text>
+        <View style={{ backgroundColor: "#fef3c7", paddingHorizontal: 10, paddingVertical: 4, borderRadius: 12 }}>
+          <Text style={{ color: "#92400e", fontSize: 13, fontWeight: "600" }}>
+            {totalClips} across {groups.length} video{groups.length !== 1 ? "s" : ""}
+          </Text>
+        </View>
+      </View>
+
+      {totalClips === 0 ? (
         <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
           <Text style={{ color: "#888", fontSize: 16 }}>No pending clips</Text>
         </View>
       ) : (
         <FlatList
-          data={clips}
-          keyExtractor={(item) => item.id}
-          renderItem={({ item }) => {
-            const verse = item.clip_verses?.[0];
-            return (
-              <View style={{ padding: 16, borderBottomWidth: 1, borderBottomColor: "#222" }}>
-                <Text style={{ color: "#fff", fontSize: 16, fontWeight: "600", marginBottom: 4 }}>
-                  {item.title}
+          data={groups}
+          keyExtractor={(item) => item.videoId}
+          renderItem={({ item: group }) => (
+            <View style={{ marginBottom: 24 }}>
+              <View style={{ paddingHorizontal: 16, paddingVertical: 12, backgroundColor: "#111" }}>
+                <Text style={{ color: "#fff", fontSize: 16, fontWeight: "700" }}>{group.title}</Text>
+                <Text style={{ color: "#888", fontSize: 12, marginTop: 2 }}>
+                  {group.clips.length} clip{group.clips.length !== 1 ? "s" : ""}
                 </Text>
-                {verse && (
-                  <Text style={{ color: "#aaa", fontSize: 13, marginBottom: 4 }}>
-                    {verse.book} {verse.chapter}:{verse.verse_start}
-                  </Text>
-                )}
-                <Text style={{ color: "#666", fontSize: 12, marginBottom: 8 }}>
-                  {item.clip_type} | {(item as any).users?.email ?? "unknown"}
-                </Text>
-                <Text style={{ color: "#888", fontSize: 12, marginBottom: 12 }}>
-                  {item.youtube_video_id} ({item.start_time}s - {item.end_time}s)
-                </Text>
-                <View style={{ flexDirection: "row", gap: 8 }}>
-                  <Pressable
-                    onPress={() => handleAction(item.id, "APPROVED")}
-                    style={{
-                      flex: 1,
-                      backgroundColor: "#22c55e",
-                      padding: 10,
-                      borderRadius: 8,
-                      alignItems: "center",
-                    }}
-                  >
-                    <Text style={{ color: "#fff", fontWeight: "600" }}>Approve</Text>
-                  </Pressable>
-                  <Pressable
-                    onPress={() => handleAction(item.id, "REJECTED")}
-                    style={{
-                      flex: 1,
-                      backgroundColor: "#ef4444",
-                      padding: 10,
-                      borderRadius: 8,
-                      alignItems: "center",
-                    }}
-                  >
-                    <Text style={{ color: "#fff", fontWeight: "600" }}>Reject</Text>
-                  </Pressable>
-                </View>
               </View>
-            );
-          }}
+
+              {group.clips.map((clip) => {
+                const verse = clip.clip_verses?.[0];
+                const verseRef = verse
+                  ? `${verse.book} ${verse.chapter}:${verse.verse_start}${verse.verse_end ? `-${verse.verse_end}` : ""}`
+                  : null;
+
+                return (
+                  <View
+                    key={clip.id}
+                    style={{
+                      paddingHorizontal: 16,
+                      paddingVertical: 12,
+                      borderBottomWidth: 1,
+                      borderBottomColor: "#1a1a1a",
+                    }}
+                  >
+                    <View style={{ flexDirection: "row", alignItems: "center", marginBottom: 6 }}>
+                      <Pressable onPress={() => handlePlay(clip.youtube_video_id, clip.start_time)}>
+                        <Text style={{ color: "#8B5CF6", fontSize: 18, marginRight: 8 }}>▶</Text>
+                      </Pressable>
+                      <View style={{ flex: 1 }}>
+                        <Text style={{ color: "#fff", fontSize: 15, fontWeight: "600" }}>{clip.title}</Text>
+                        <Text style={{ color: "#888", fontSize: 13, marginTop: 2 }}>
+                          {verseRef ? `${verseRef}   ` : ""}
+                          {formatTime(clip.start_time)} - {formatTime(clip.end_time)}   ({formatDuration(clip.start_time, clip.end_time)})
+                        </Text>
+                      </View>
+                    </View>
+
+                    <View style={{ flexDirection: "row", gap: 8, marginTop: 4 }}>
+                      <Pressable
+                        onPress={() => handleAction(clip.id, "APPROVED")}
+                        style={{
+                          flex: 1,
+                          backgroundColor: "#22c55e",
+                          paddingVertical: 8,
+                          borderRadius: 6,
+                          alignItems: "center",
+                        }}
+                      >
+                        <Text style={{ color: "#fff", fontSize: 14, fontWeight: "600" }}>Approve</Text>
+                      </Pressable>
+                      <Pressable
+                        onPress={() => handleAction(clip.id, "REJECTED")}
+                        style={{
+                          flex: 1,
+                          backgroundColor: "#ef4444",
+                          paddingVertical: 8,
+                          borderRadius: 6,
+                          alignItems: "center",
+                        }}
+                      >
+                        <Text style={{ color: "#fff", fontSize: 14, fontWeight: "600" }}>Reject</Text>
+                      </Pressable>
+                    </View>
+                  </View>
+                );
+              })}
+            </View>
+          )}
         />
       )}
     </View>
