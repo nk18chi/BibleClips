@@ -2,6 +2,7 @@ import { Link } from "expo-router";
 import { useCallback, useEffect, useState } from "react";
 import { ActivityIndicator, FlatList, Image, Pressable, Text, View } from "react-native";
 import type { Clip, ClipVerse } from "@bibleclips/database";
+import { useLanguage } from "@/components/providers/LanguageProvider";
 import { useSupabase } from "@/hooks/useSupabase";
 import { supabase } from "@/lib/supabase";
 
@@ -59,6 +60,7 @@ function ClipCard({ clip }: { clip: ClipWithVerse }) {
 
 export default function ProfileScreen() {
   const { user, isLoading } = useSupabase();
+  const { language, setLanguage, t: tr } = useLanguage();
   const userId = user?.id;
   const [tab, setTab] = useState<Tab>("submitted");
   const [clips, setClips] = useState<ClipWithVerse[]>([]);
@@ -160,19 +162,27 @@ export default function ProfileScreen() {
   }
 
   const tabs: { key: Tab; label: string; count: number }[] = [
-    { key: "submitted", label: "Submitted", count: counts.submitted },
-    { key: "liked", label: "Liked", count: counts.liked },
-    { key: "commented", label: "Commented", count: counts.commented },
+    { key: "submitted", label: tr("profile.submitted"), count: counts.submitted },
+    { key: "liked", label: tr("profile.liked"), count: counts.liked },
+    { key: "commented", label: tr("profile.commented"), count: counts.commented },
   ];
 
   return (
     <View style={{ flex: 1, backgroundColor: "#000", paddingTop: 60 }}>
       {/* Header */}
-      <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", paddingHorizontal: 16, paddingBottom: 12 }}>
-        <Text style={{ color: "#fff", fontSize: 22, fontWeight: "700" }}>My Clips</Text>
-        <Pressable onPress={() => supabase.auth.signOut()} style={{ paddingVertical: 6, paddingHorizontal: 14, borderRadius: 6, borderWidth: 1, borderColor: "#333" }}>
-          <Text style={{ color: "#888", fontSize: 13 }}>Sign Out</Text>
-        </Pressable>
+      <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", paddingHorizontal: 16, paddingBottom: 8 }}>
+        <Text style={{ color: "#fff", fontSize: 22, fontWeight: "700" }}>{tr("profile.myClips")}</Text>
+        <View style={{ flexDirection: "row", gap: 8, alignItems: "center" }}>
+          <Pressable
+            onPress={() => setLanguage(language === "en" ? "ja" : "en")}
+            style={{ paddingVertical: 6, paddingHorizontal: 10, borderRadius: 6, borderWidth: 1, borderColor: "#333" }}
+          >
+            <Text style={{ color: "#888", fontSize: 13 }}>{language === "en" ? "🇺🇸 EN" : "🇯🇵 JP"}</Text>
+          </Pressable>
+          <Pressable onPress={() => supabase.auth.signOut()} style={{ paddingVertical: 6, paddingHorizontal: 14, borderRadius: 6, borderWidth: 1, borderColor: "#333" }}>
+            <Text style={{ color: "#888", fontSize: 13 }}>{tr("profile.signOut")}</Text>
+          </Pressable>
+        </View>
       </View>
 
       {/* Tabs */}
@@ -204,7 +214,7 @@ export default function ProfileScreen() {
       ) : clips.length === 0 ? (
         <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
           <Text style={{ color: "#888", fontSize: 16 }}>
-            {tab === "submitted" ? "No clips submitted yet" : tab === "liked" ? "No liked clips" : "No commented clips"}
+            {tab === "submitted" ? tr("profile.noSubmitted") : tab === "liked" ? tr("profile.noLiked") : tr("profile.noCommented")}
           </Text>
         </View>
       ) : (

@@ -11,6 +11,7 @@ interface ClipQueryResult extends Clip {
 export interface UseClipsOptions {
   verse?: string;
   categorySlug?: string;
+  clipType?: "sermon" | "song" | "testimony";
 }
 
 export function useClips(options?: UseClipsOptions) {
@@ -46,6 +47,10 @@ export function useClips(options?: UseClipsOptions) {
         query = query.eq("clip_categories.categories.slug", options.categorySlug);
       }
 
+      if (options?.clipType) {
+        query = query.eq("clip_type", options.clipType);
+      }
+
       const { data, error: fetchError } = await query;
 
       if (fetchError) {
@@ -63,7 +68,7 @@ export function useClips(options?: UseClipsOptions) {
     }
 
     fetchClips();
-  }, [options?.verse, options?.categorySlug]);
+  }, [options?.verse, options?.categorySlug, options?.clipType]);
 
   return { clips, loading, error };
 }
