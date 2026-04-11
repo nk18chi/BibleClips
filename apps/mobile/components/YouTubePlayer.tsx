@@ -15,83 +15,11 @@ interface YouTubePlayerProps {
   onTimeUpdate?: (currentTime: number) => void;
 }
 
-function generateHTML(videoId: string, startTime: number, endTime: number): string {
-  return `
-<!DOCTYPE html>
-<html><head>
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-<style>
-  * { margin: 0; padding: 0; }
-  body { background: #000; overflow: hidden; }
-  #player { width: 100vw; height: 100vh; }
-</style>
-</head><body>
-<div id="player"></div>
-<script>
-  var tag = document.createElement('script');
-  tag.src = 'https://www.youtube.com/iframe_api';
-  document.head.appendChild(tag);
-
-  var player;
-  var timeInterval;
-
-  function onYouTubeIframeAPIReady() {
-    player = new YT.Player('player', {
-      videoId: '${videoId}',
-      playerVars: {
-        autoplay: 0,
-        controls: 0,
-        modestbranding: 1,
-        rel: 0,
-        start: Math.floor(${startTime}),
-        playsinline: 1,
-        fs: 0,
-      },
-      events: {
-        onReady: function(e) {
-          e.target.seekTo(${startTime}, true);
-          window.ReactNativeWebView.postMessage(JSON.stringify({ type: 'ready' }));
-        },
-        onStateChange: function(e) {
-          var stateMap = { 1: 'playing', 2: 'paused', 0: 'ended' };
-          var state = stateMap[e.data];
-          if (state) {
-            window.ReactNativeWebView.postMessage(JSON.stringify({ type: 'state', state: state }));
-          }
-          if (e.data === 1) {
-            clearInterval(timeInterval);
-            timeInterval = setInterval(function() {
-              var t = player.getCurrentTime();
-              window.ReactNativeWebView.postMessage(JSON.stringify({ type: 'time', currentTime: t }));
-              if (t >= ${endTime}) {
-                player.pauseVideo();
-                clearInterval(timeInterval);
-              }
-            }, 250);
-          } else {
-            clearInterval(timeInterval);
-          }
-        }
-      }
-    });
-  }
-
-  window.addEventListener('message', function(e) {
-    var msg = JSON.parse(e.data);
-    if (msg.action === 'play') player.playVideo();
-    if (msg.action === 'pause') player.pauseVideo();
-    if (msg.action === 'seekTo') player.seekTo(msg.time, true);
-  });
-</script>
-</body></html>`;
-}
-
 // Web: use iframe + YouTube IFrame API directly
 const YouTubePlayerWeb = forwardRef<YouTubePlayerRef, YouTubePlayerProps>(function YouTubePlayerWeb(
   { videoId, startTime, endTime, onStateChange, onTimeUpdate },
   ref
 ) {
-  const iframeRef = useRef<HTMLIFrameElement>(null);
   const playerRef = useRef<YT.Player | null>(null);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
@@ -117,8 +45,8 @@ const YouTubePlayerWeb = forwardRef<YouTubePlayerRef, YouTubePlayerProps>(functi
       playerRef.current = new YT.Player("yt-player", {
         videoId,
         playerVars: {
-          autoplay: 0,
-          controls: 0,
+          autoplay: 1,
+          controls: 1,
           modestbranding: 1,
           rel: 0,
           start: Math.floor(startTime),
@@ -128,6 +56,7 @@ const YouTubePlayerWeb = forwardRef<YouTubePlayerRef, YouTubePlayerProps>(functi
         events: {
           onReady: (e: YT.PlayerEvent) => {
             e.target.seekTo(startTime, true);
+            e.target.playVideo();
           },
           onStateChange: (e: YT.OnStateChangeEvent) => {
             const stateMap: Record<number, "playing" | "paused" | "ended"> = {
@@ -169,50 +98,79 @@ const YouTubePlayerWeb = forwardRef<YouTubePlayerRef, YouTubePlayerProps>(functi
   );
 });
 
-// Native: use WebView
+// Native: load YouTube embed URL with Referer header to avoid error 153
 const YouTubePlayerNative = forwardRef<YouTubePlayerRef, YouTubePlayerProps>(function YouTubePlayerNative(
-  { videoId, startTime, endTime, onStateChange, onTimeUpdate },
+  { videoId, startTime, endTime, onTimeUpdate },
   ref
 ) {
-  // Lazy require to avoid web bundle crash
   const { WebView } = require("react-native-webview");
   const webViewRef = useRef<any>(null);
 
-  const sendMessage = useCallback((msg: object) => {
-    const js = `window.dispatchEvent(new MessageEvent('message', { data: '${JSON.stringify(msg).replace(/'/g, "\\'")}' })); true;`;
-    webViewRef.current?.injectJavaScript(js);
-  }, []);
+  const start = Math.floor(startTime);
+  const embedUrl = `https://www.youtube-nocookie.com/embed/${videoId}?start=${start}&autoplay=1&playsinline=1&rel=0&modestbranding=1&controls=1`;
 
   useImperativeHandle(ref, () => ({
-    play: () => sendMessage({ action: "play" }),
-    pause: () => sendMessage({ action: "pause" }),
-    seekTo: (seconds: number) => sendMessage({ action: "seekTo", time: seconds }),
+    play: () => {
+      webViewRef.current?.injectJavaScript("document.querySelector('video')?.play(); true;");
+    },
+    pause: () => {
+      webViewRef.current?.injectJavaScript("document.querySelector('video')?.pause(); true;");
+    },
+    seekTo: (seconds: number) => {
+      webViewRef.current?.injectJavaScript(
+        `document.querySelector('video').currentTime = ${seconds}; true;`
+      );
+    },
   }));
 
   const handleMessage = useCallback(
     (event: any) => {
-      const data = JSON.parse(event.nativeEvent.data);
-      if (data.type === "state" && onStateChange) {
-        onStateChange(data.state);
-      }
-      if (data.type === "time" && onTimeUpdate) {
-        onTimeUpdate(data.currentTime);
-      }
+      try {
+        const data = JSON.parse(event.nativeEvent.data);
+        if (data.type === "time" && onTimeUpdate) {
+          onTimeUpdate(data.currentTime);
+        }
+      } catch {}
     },
-    [onStateChange, onTimeUpdate]
+    [onTimeUpdate]
   );
 
-  const html = useMemo(() => generateHTML(videoId, startTime, endTime), [videoId, startTime, endTime]);
+  const timeTrackerScript = `
+    (function() {
+      var iv = setInterval(function() {
+        var video = document.querySelector('video');
+        if (video) {
+          clearInterval(iv);
+          setInterval(function() {
+            if (!video.paused) {
+              window.ReactNativeWebView.postMessage(JSON.stringify({
+                type: 'time', currentTime: video.currentTime
+              }));
+              if (video.currentTime >= ${Math.floor(endTime)}) {
+                video.pause();
+              }
+            }
+          }, 250);
+        }
+      }, 500);
+    })(); true;
+  `;
 
   return (
     <WebView
       ref={webViewRef}
-      source={{ html }}
+      source={{
+        uri: embedUrl,
+        headers: { Referer: "https://bibleclips.com" },
+      }}
       style={styles.webview}
       allowsInlineMediaPlayback
       mediaPlaybackRequiresUserAction={false}
+      allowsFullscreenVideo
       javaScriptEnabled
+      domStorageEnabled
       onMessage={handleMessage}
+      injectedJavaScript={timeTrackerScript}
       scrollEnabled={false}
       bounces={false}
     />
