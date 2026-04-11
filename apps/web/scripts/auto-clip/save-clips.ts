@@ -25,8 +25,8 @@ async function saveSegmentAsClip(
     .from("clips")
     .insert({
       youtube_video_id: youtubeVideoId,
-      start_time: Math.round(segment.start_time * 100) / 100,
-      end_time: Math.round(segment.end_time * 100) / 100,
+      start_time: Number(segment.start_time.toFixed(2)),
+      end_time: Number(segment.end_time.toFixed(2)),
       title: segment.title,
       status: "PENDING",
       clip_type: segment.type,

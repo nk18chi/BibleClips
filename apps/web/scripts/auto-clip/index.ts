@@ -80,6 +80,17 @@ async function fetchPendingVideos(limit: number, channelHandle?: string): Promis
   }));
 }
 
+async function updateVideoStatus(videoId: string, status: "completed" | "skipped") {
+  const supabase = createAdminClient();
+  const { error } = await supabase
+    .from("work_queue_videos")
+    .update({ status })
+    .eq("youtube_video_id", videoId);
+  if (error) {
+    console.error(`  Failed to update status to '${status}': ${error.message}`);
+  }
+}
+
 async function processVideo(
   video: VideoRow,
   dryRun: boolean,
@@ -92,6 +103,7 @@ async function processVideo(
   if (video.duration_seconds && video.duration_seconds > 7200) {
     const reason = `Video too long (${Math.round(video.duration_seconds / 60)} min)`;
     console.log(`  SKIP: ${reason}`);
+    if (!dryRun) await updateVideoStatus(videoId, "skipped");
     return { saved: [], errors: [], skipped: reason };
   }
 
@@ -100,6 +112,7 @@ async function processVideo(
 
   if (!subtitleResult.ok) {
     console.log(`  SKIP: ${subtitleResult.reason}`);
+    if (!dryRun) await updateVideoStatus(videoId, "skipped");
     return { saved: [], errors: [], skipped: subtitleResult.reason };
   }
 
@@ -111,6 +124,7 @@ async function processVideo(
   if (analysis.segments.length === 0) {
     const reason = analysis.skipped_reason || "No segments detected";
     console.log(`  SKIP: ${reason}`);
+    if (!dryRun) await updateVideoStatus(videoId, "skipped");
     return { saved: [], errors: [], skipped: reason };
   }
 
@@ -130,7 +144,11 @@ async function processVideo(
   }
 
   console.log("  Saving to database...");
-  return saveAllSegments(analysis.segments, videoId);
+  const result = await saveAllSegments(analysis.segments, videoId);
+
+  await updateVideoStatus(videoId, result.saved.length > 0 ? "completed" : "skipped");
+
+  return result;
 }
 
 function formatTime(seconds: number): string {
