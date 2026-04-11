@@ -1,7 +1,14 @@
-import { useLocalSearchParams } from "expo-router";
+import { Stack, useLocalSearchParams } from "expo-router";
 import { FilteredReelScreen } from "@/components/FilteredReelScreen";
 
 export default function CategoryReelScreen() {
   const { slug } = useLocalSearchParams<{ slug: string }>();
-  return <FilteredReelScreen options={{ categorySlug: slug }} emptyMessage="No clips in this category" />;
+  const title = slug ? slug.charAt(0).toUpperCase() + slug.slice(1) : "Category";
+
+  return (
+    <>
+      <Stack.Screen options={{ headerTitle: title }} />
+      <FilteredReelScreen options={{ categorySlug: slug }} emptyMessage="No clips in this category" />
+    </>
+  );
 }

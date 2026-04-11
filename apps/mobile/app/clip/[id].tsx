@@ -1,5 +1,5 @@
 import type { Clip, ClipVerse } from "@bibleclips/database";
-import { useLocalSearchParams } from "expo-router";
+import { Stack, useLocalSearchParams } from "expo-router";
 import { useEffect, useState } from "react";
 import { ActivityIndicator, ScrollView, StyleSheet, View } from "react-native";
 import { ClipInfo } from "@/components/ClipInfo";
@@ -27,6 +27,8 @@ export default function ClipDetailScreen() {
   }
 
   return (
+    <>
+    <Stack.Screen options={{ headerTitle: clip.title }} />
     <ScrollView style={styles.container}>
       <View style={styles.playerContainer}>
         <YouTubePlayer videoId={clip.youtube_video_id} startTime={clip.start_time} endTime={clip.end_time} />
@@ -36,6 +38,7 @@ export default function ClipDetailScreen() {
       </View>
       <CommentSection clipId={clip.id} />
     </ScrollView>
+    </>
   );
 }
 
