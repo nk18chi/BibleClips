@@ -12,16 +12,19 @@ interface ReelItemProps {
   isActive: boolean;
   hasVoted: boolean;
   onVote: () => void;
+  onEnded?: () => void;
 }
 
-export function ReelItem({ clip, isActive, hasVoted, onVote }: ReelItemProps) {
+export function ReelItem({ clip, isActive, hasVoted, onVote, onEnded }: ReelItemProps) {
   const { height } = useWindowDimensions();
   const playerRef = useRef<YouTubePlayerRef>(null);
   const [currentTime, setCurrentTime] = useState(0);
+  const hasEndedRef = useRef(false);
   const { subtitles, translations } = useSubtitles(clip.id, isActive);
 
   useEffect(() => {
     if (isActive) {
+      hasEndedRef.current = false;
       playerRef.current?.play();
     } else {
       playerRef.current?.pause();
@@ -30,7 +33,11 @@ export function ReelItem({ clip, isActive, hasVoted, onVote }: ReelItemProps) {
 
   const handleTimeUpdate = useCallback((time: number) => {
     setCurrentTime(time);
-  }, []);
+    if (time >= clip.end_time && !hasEndedRef.current) {
+      hasEndedRef.current = true;
+      onEnded?.();
+    }
+  }, [clip.end_time, onEnded]);
 
   return (
     <View style={[styles.container, { height }]}>

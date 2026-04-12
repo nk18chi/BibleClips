@@ -14,6 +14,16 @@ export function ReelViewer({ clips }: ReelViewerProps) {
   const { height } = useWindowDimensions();
   const [activeIndex, setActiveIndex] = useState(0);
   const { votedClipIds, toggleVote } = useVotes();
+  const flatListRef = useRef<FlatList>(null);
+
+  const scrollToNext = useCallback(
+    (index: number) => {
+      if (index < clips.length - 1) {
+        flatListRef.current?.scrollToIndex({ index: index + 1, animated: true });
+      }
+    },
+    [clips.length]
+  );
 
   const onViewableItemsChanged = useRef(({ viewableItems }: { viewableItems: ViewToken[] }) => {
     if (viewableItems.length > 0 && viewableItems[0].index != null) {
@@ -32,13 +42,15 @@ export function ReelViewer({ clips }: ReelViewerProps) {
         isActive={index === activeIndex}
         hasVoted={votedClipIds.has(item.id)}
         onVote={() => toggleVote(item.id)}
+        onEnded={() => scrollToNext(index)}
       />
     ),
-    [activeIndex, votedClipIds, toggleVote]
+    [activeIndex, votedClipIds, toggleVote, scrollToNext]
   );
 
   return (
     <FlatList
+      ref={flatListRef}
       data={clips}
       renderItem={renderItem}
       extraData={activeIndex}
