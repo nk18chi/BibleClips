@@ -26,6 +26,7 @@ type PendingClip = {
   youtube_video_id: string;
   start_time: number;
   end_time: number;
+  status: string;
   clip_type: "sermon" | "song" | "testimony";
   created_at: string;
   clip_verses: {
@@ -40,6 +41,9 @@ type PendingClip = {
   }[];
   clip_categories: {
     category_id: string;
+  }[];
+  comments: {
+    content: string;
   }[];
 };
 
@@ -468,25 +472,37 @@ export function PendingReview({ groups, categories }: { groups: VideoGroup[]; ca
                         </div>
                       </div>
                     ) : (
-                      <div className="flex items-center gap-3">
-                        <button type="button" onClick={() => seekTo(clip)} disabled={!isReady} className="flex-1 text-left group">
-                          <div className="flex items-center gap-2">
-                            <span className="text-blue-600 group-hover:text-blue-800 text-sm">▶</span>
-                            <span className="font-medium text-sm">{clip.title}</span>
-                          </div>
-                          <div className="flex items-center gap-3 mt-1 text-xs text-gray-500">
-                            <span>{formatClipRef(clip)}</span>
-                            <span>{formatTime(clip.start_time)} - {formatTime(clip.end_time)}</span>
-                            <span>({clipDuration(clip)})</span>
-                          </div>
-                        </button>
-                        <div className="flex gap-1 flex-shrink-0">
-                          <button type="button" onClick={() => startEdit(clip)} className="px-2 py-1.5 text-gray-400 hover:text-blue-600 transition-colors" title="Edit clip">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z" /><path d="m15 5 4 4" /></svg>
+                      <div>
+                        <div className="flex items-center gap-3">
+                          <button type="button" onClick={() => seekTo(clip)} disabled={!isReady} className="flex-1 text-left group">
+                            <div className="flex items-center gap-2">
+                              <span className="text-blue-600 group-hover:text-blue-800 text-sm">▶</span>
+                              <span className="font-medium text-sm">{clip.title}</span>
+                              {clip.status === "NEEDS_EDIT" && (
+                                <span className="px-1.5 py-0.5 bg-amber-100 text-amber-700 text-[10px] font-semibold rounded">NEEDS EDIT</span>
+                              )}
+                            </div>
+                            <div className="flex items-center gap-3 mt-1 text-xs text-gray-500">
+                              <span>{formatClipRef(clip)}</span>
+                              <span>{formatTime(clip.start_time)} - {formatTime(clip.end_time)}</span>
+                              <span>({clipDuration(clip)})</span>
+                            </div>
                           </button>
-                          <button type="button" onClick={() => handleAction(clip.id, "APPROVED")} disabled={actionLoading === clip.id} className="px-3 py-1.5 bg-green-600 text-white text-xs rounded hover:bg-green-700 disabled:opacity-50">Approve</button>
-                          <button type="button" onClick={() => handleAction(clip.id, "REJECTED")} disabled={actionLoading === clip.id} className="px-3 py-1.5 bg-red-600 text-white text-xs rounded hover:bg-red-700 disabled:opacity-50">Reject</button>
+                          <div className="flex gap-1 flex-shrink-0">
+                            <button type="button" onClick={() => startEdit(clip)} className="px-2 py-1.5 text-gray-400 hover:text-blue-600 transition-colors" title="Edit clip">
+                              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z" /><path d="m15 5 4 4" /></svg>
+                            </button>
+                            <button type="button" onClick={() => handleAction(clip.id, "APPROVED")} disabled={actionLoading === clip.id} className="px-3 py-1.5 bg-green-600 text-white text-xs rounded hover:bg-green-700 disabled:opacity-50">Approve</button>
+                            <button type="button" onClick={() => handleAction(clip.id, "REJECTED")} disabled={actionLoading === clip.id} className="px-3 py-1.5 bg-red-600 text-white text-xs rounded hover:bg-red-700 disabled:opacity-50">Reject</button>
+                          </div>
                         </div>
+                        {clip.comments?.filter(c => c.content.startsWith("[EDIT NOTE]")).length > 0 && (
+                          <div className="mt-2 ml-6 p-2 bg-amber-50 border-l-3 border-amber-400 rounded text-xs text-amber-800">
+                            {clip.comments.filter(c => c.content.startsWith("[EDIT NOTE]")).map((c, i) => (
+                              <p key={i}>{c.content.replace("[EDIT NOTE] ", "")}</p>
+                            ))}
+                          </div>
+                        )}
                       </div>
                     )}
                   </div>

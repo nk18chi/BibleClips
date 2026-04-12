@@ -9,6 +9,7 @@ type PendingClip = {
   youtube_video_id: string;
   start_time: number;
   end_time: number;
+  status: string;
   clip_type: "sermon" | "song" | "testimony";
   created_at: string;
   clip_verses: {
@@ -23,6 +24,9 @@ type PendingClip = {
   }[];
   clip_categories: {
     category_id: string;
+  }[];
+  comments: {
+    content: string;
   }[];
 };
 
@@ -43,11 +47,13 @@ async function getPendingGroups(): Promise<VideoGroup[]> {
       youtube_video_id,
       start_time,
       end_time,
+      status,
       clip_type,
       created_at,
       clip_songs (artist_name, song_name),
       clip_verses (book, chapter, verse_start, verse_end),
-      clip_categories (category_id)
+      clip_categories (category_id),
+      comments (content)
     `)
     .in("status", ["PENDING", "NEEDS_EDIT"])
     .order("start_time", { ascending: true });
