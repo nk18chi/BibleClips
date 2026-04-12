@@ -49,7 +49,7 @@ async function getPendingGroups(): Promise<VideoGroup[]> {
       clip_verses (book, chapter, verse_start, verse_end),
       clip_categories (category_id)
     `)
-    .eq("status", "PENDING")
+    .in("status", ["PENDING", "NEEDS_EDIT"])
     .order("start_time", { ascending: true });
 
   if (!data || data.length === 0) return [];
