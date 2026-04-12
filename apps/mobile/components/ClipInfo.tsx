@@ -117,7 +117,7 @@ export function ClipInfo({ clip, verses }: ClipInfoProps) {
 }
 
 const styles = StyleSheet.create({
-  container: { position: "absolute", bottom: 80, left: 16, right: 80, zIndex: 10 },
+  container: { position: "absolute", bottom: 100, left: 16, right: 80, zIndex: 10 },
   title: {
     color: "#fff",
     fontSize: 16,
