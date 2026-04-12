@@ -98,7 +98,7 @@ const YouTubePlayerWeb = forwardRef<YouTubePlayerRef, YouTubePlayerProps>(functi
   );
 });
 
-// Native: load YouTube embed URL with Referer header to avoid error 153
+// Native: use HTML page with YouTube IFrame API + Referer via baseUrl
 const YouTubePlayerNative = forwardRef<YouTubePlayerRef, YouTubePlayerProps>(function YouTubePlayerNative(
   { videoId, startTime, endTime, onTimeUpdate },
   ref
@@ -107,20 +107,63 @@ const YouTubePlayerNative = forwardRef<YouTubePlayerRef, YouTubePlayerProps>(fun
   const webViewRef = useRef<any>(null);
 
   const start = Math.floor(startTime);
-  const embedUrl = `https://www.youtube-nocookie.com/embed/${videoId}?start=${start}&autoplay=1&playsinline=1&rel=0&modestbranding=1&controls=1`;
+  const end = Math.floor(endTime);
+
+  const html = `
+<!DOCTYPE html>
+<html><head>
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
+<style>*{margin:0;padding:0}body{background:#000;overflow:hidden}#player{width:100vw;height:100vh}</style>
+</head><body>
+<div id="player"></div>
+<script>
+var tag=document.createElement('script');
+tag.src='https://www.youtube.com/iframe_api';
+document.head.appendChild(tag);
+var player,timeIv;
+function onYouTubeIframeAPIReady(){
+  player=new YT.Player('player',{
+    videoId:'${videoId}',
+    playerVars:{autoplay:1,controls:1,modestbranding:1,rel:0,start:${start},playsinline:1,fs:0},
+    events:{
+      onReady:function(e){
+        e.target.seekTo(${start},true);
+        window.ReactNativeWebView.postMessage(JSON.stringify({type:'ready'}));
+      },
+      onStateChange:function(e){
+        if(e.data===1){
+          clearInterval(timeIv);
+          timeIv=setInterval(function(){
+            var t=player.getCurrentTime();
+            window.ReactNativeWebView.postMessage(JSON.stringify({type:'time',currentTime:t}));
+            if(t>=${end}){player.pauseVideo();clearInterval(timeIv);}
+          },250);
+        }else{clearInterval(timeIv);}
+        if(e.data===0){window.ReactNativeWebView.postMessage(JSON.stringify({type:'ended'}));}
+      }
+    }
+  });
+}
+window.addEventListener('message',function(e){
+  try{
+    var msg=JSON.parse(e.data);
+    if(msg.action==='play')player.playVideo();
+    if(msg.action==='pause')player.pauseVideo();
+    if(msg.action==='seekTo')player.seekTo(msg.time,true);
+  }catch(err){}
+});
+</script>
+</body></html>`;
+
+  const sendMessage = useCallback((msg: object) => {
+    const js = `window.dispatchEvent(new MessageEvent('message',{data:'${JSON.stringify(msg).replace(/'/g, "\\'")}'}));true;`;
+    webViewRef.current?.injectJavaScript(js);
+  }, []);
 
   useImperativeHandle(ref, () => ({
-    play: () => {
-      webViewRef.current?.injectJavaScript("document.querySelector('video')?.play(); true;");
-    },
-    pause: () => {
-      webViewRef.current?.injectJavaScript("document.querySelector('video')?.pause(); true;");
-    },
-    seekTo: (seconds: number) => {
-      webViewRef.current?.injectJavaScript(
-        `document.querySelector('video').currentTime = ${seconds}; true;`
-      );
-    },
+    play: () => sendMessage({ action: "play" }),
+    pause: () => sendMessage({ action: "pause" }),
+    seekTo: (seconds: number) => sendMessage({ action: "seekTo", time: seconds }),
   }));
 
   const handleMessage = useCallback(
@@ -135,42 +178,18 @@ const YouTubePlayerNative = forwardRef<YouTubePlayerRef, YouTubePlayerProps>(fun
     [onTimeUpdate]
   );
 
-  const timeTrackerScript = `
-    (function() {
-      var iv = setInterval(function() {
-        var video = document.querySelector('video');
-        if (video) {
-          clearInterval(iv);
-          setInterval(function() {
-            if (!video.paused) {
-              window.ReactNativeWebView.postMessage(JSON.stringify({
-                type: 'time', currentTime: video.currentTime
-              }));
-              if (video.currentTime >= ${Math.floor(endTime)}) {
-                video.pause();
-              }
-            }
-          }, 250);
-        }
-      }, 500);
-    })(); true;
-  `;
-
   return (
     <WebView
       ref={webViewRef}
-      source={{
-        uri: embedUrl,
-        headers: { Referer: "https://bibleclips.com" },
-      }}
+      source={{ html, baseUrl: "https://bibleclips.com" }}
       style={styles.webview}
       allowsInlineMediaPlayback
       mediaPlaybackRequiresUserAction={false}
       allowsFullscreenVideo
       javaScriptEnabled
       domStorageEnabled
+      originWhitelist={["*"]}
       onMessage={handleMessage}
-      injectedJavaScript={timeTrackerScript}
       scrollEnabled={false}
       bounces={false}
     />
