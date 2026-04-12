@@ -1,7 +1,7 @@
+import type { Clip, ClipVerse } from "@bibleclips/database";
 import { Link } from "expo-router";
 import { useCallback, useEffect, useState } from "react";
 import { ActivityIndicator, FlatList, Image, Pressable, Text, View } from "react-native";
-import type { Clip, ClipVerse } from "@bibleclips/database";
 import { useLanguage } from "@/components/providers/LanguageProvider";
 import { useSupabase } from "@/hooks/useSupabase";
 import { supabase } from "@/lib/supabase";
@@ -25,24 +25,23 @@ function ClipCard({ clip }: { clip: ClipWithVerse }) {
 
   return (
     <View style={{ flexDirection: "row", padding: 12, borderBottomWidth: 1, borderBottomColor: "#1a1a1a" }}>
-      <Image
-        source={{ uri: thumb }}
-        style={{ width: 120, height: 68, borderRadius: 6, backgroundColor: "#222" }}
-      />
+      <Image source={{ uri: thumb }} style={{ width: 120, height: 68, borderRadius: 6, backgroundColor: "#222" }} />
       <View style={{ flex: 1, marginLeft: 12, justifyContent: "center" }}>
         <View style={{ flexDirection: "row", alignItems: "center", gap: 8, marginBottom: 4 }}>
           <Text style={{ color: "#fff", fontSize: 14, fontWeight: "600", flex: 1 }} numberOfLines={2}>
             {clip.title}
           </Text>
           {clip.status && (
-            <View style={{
-              backgroundColor: `${statusColors[clip.status] ?? "#888"}20`,
-              paddingHorizontal: 8,
-              paddingVertical: 2,
-              borderRadius: 10,
-              borderWidth: 1,
-              borderColor: statusColors[clip.status] ?? "#888",
-            }}>
+            <View
+              style={{
+                backgroundColor: `${statusColors[clip.status] ?? "#888"}20`,
+                paddingHorizontal: 8,
+                paddingVertical: 2,
+                borderRadius: 10,
+                borderWidth: 1,
+                borderColor: statusColors[clip.status] ?? "#888",
+              }}
+            >
               <Text style={{ color: statusColors[clip.status] ?? "#888", fontSize: 11, fontWeight: "600" }}>
                 {clip.status.charAt(0) + clip.status.slice(1).toLowerCase()}
               </Text>
@@ -68,53 +67,50 @@ export default function ProfileScreen() {
   const [loading, setLoading] = useState(false);
   const [counts, setCounts] = useState({ submitted: 0, liked: 0, commented: 0 });
 
-  const fetchClips = useCallback(async (activeTab: Tab) => {
-    if (!userId) return;
-    setLoading(true);
+  const fetchClips = useCallback(
+    async (activeTab: Tab) => {
+      if (!userId) return;
+      setLoading(true);
 
-    if (activeTab === "submitted") {
-      const { data } = await supabase
-        .from("clips")
-        .select("*, clip_verses(*)")
-        .eq("submitted_by", userId)
-        .order("created_at", { ascending: false });
-      setClips((data ?? []) as ClipWithVerse[]);
-    } else if (activeTab === "liked") {
-      const { data: votes } = await supabase
-        .from("votes")
-        .select("clip_id")
-        .eq("user_id", userId);
-      if (votes && votes.length > 0) {
-        const ids = votes.map((v) => v.clip_id);
+      if (activeTab === "submitted") {
         const { data } = await supabase
           .from("clips")
           .select("*, clip_verses(*)")
-          .in("id", ids)
+          .eq("submitted_by", userId)
           .order("created_at", { ascending: false });
         setClips((data ?? []) as ClipWithVerse[]);
-      } else {
-        setClips([]);
+      } else if (activeTab === "liked") {
+        const { data: votes } = await supabase.from("votes").select("clip_id").eq("user_id", userId);
+        if (votes && votes.length > 0) {
+          const ids = votes.map((v) => v.clip_id);
+          const { data } = await supabase
+            .from("clips")
+            .select("*, clip_verses(*)")
+            .in("id", ids)
+            .order("created_at", { ascending: false });
+          setClips((data ?? []) as ClipWithVerse[]);
+        } else {
+          setClips([]);
+        }
+      } else if (activeTab === "commented") {
+        const { data: comments } = await supabase.from("comments").select("clip_id").eq("user_id", userId);
+        if (comments && comments.length > 0) {
+          const uniqueIds = [...new Set(comments.map((c) => c.clip_id))];
+          const { data } = await supabase
+            .from("clips")
+            .select("*, clip_verses(*)")
+            .in("id", uniqueIds)
+            .order("created_at", { ascending: false });
+          setClips((data ?? []) as ClipWithVerse[]);
+        } else {
+          setClips([]);
+        }
       }
-    } else if (activeTab === "commented") {
-      const { data: comments } = await supabase
-        .from("comments")
-        .select("clip_id")
-        .eq("user_id", userId);
-      if (comments && comments.length > 0) {
-        const uniqueIds = [...new Set(comments.map((c) => c.clip_id))];
-        const { data } = await supabase
-          .from("clips")
-          .select("*, clip_verses(*)")
-          .in("id", uniqueIds)
-          .order("created_at", { ascending: false });
-        setClips((data ?? []) as ClipWithVerse[]);
-      } else {
-        setClips([]);
-      }
-    }
 
-    setLoading(false);
-  }, [userId]);
+      setLoading(false);
+    },
+    [userId]
+  );
 
   // Fetch counts
   useEffect(() => {
@@ -149,12 +145,30 @@ export default function ProfileScreen() {
       <View style={{ flex: 1, justifyContent: "center", alignItems: "center", padding: 24, backgroundColor: "#000" }}>
         <Text style={{ color: "#fff", fontSize: 24, fontWeight: "700", marginBottom: 16 }}>Welcome to BibleClips</Text>
         <Link href="/(auth)/login" asChild>
-          <Pressable style={{ backgroundColor: "#8B5CF6", padding: 14, borderRadius: 8, marginBottom: 12, width: "100%", alignItems: "center" }}>
+          <Pressable
+            style={{
+              backgroundColor: "#8B5CF6",
+              padding: 14,
+              borderRadius: 8,
+              marginBottom: 12,
+              width: "100%",
+              alignItems: "center",
+            }}
+          >
             <Text style={{ color: "#fff", fontSize: 16, fontWeight: "600" }}>Sign In</Text>
           </Pressable>
         </Link>
         <Link href="/(auth)/register" asChild>
-          <Pressable style={{ backgroundColor: "#333", padding: 14, borderRadius: 8, marginBottom: 12, width: "100%", alignItems: "center" }}>
+          <Pressable
+            style={{
+              backgroundColor: "#333",
+              padding: 14,
+              borderRadius: 8,
+              marginBottom: 12,
+              width: "100%",
+              alignItems: "center",
+            }}
+          >
             <Text style={{ color: "#fff", fontSize: 16, fontWeight: "600" }}>Create Account</Text>
           </Pressable>
         </Link>
@@ -171,7 +185,15 @@ export default function ProfileScreen() {
   return (
     <View style={{ flex: 1, backgroundColor: "#000", paddingTop: 60 }}>
       {/* Header */}
-      <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", paddingHorizontal: 16, paddingBottom: 8 }}>
+      <View
+        style={{
+          flexDirection: "row",
+          justifyContent: "space-between",
+          alignItems: "center",
+          paddingHorizontal: 16,
+          paddingBottom: 8,
+        }}
+      >
         <Text style={{ color: "#fff", fontSize: 22, fontWeight: "700" }}>{tr("profile.myClips")}</Text>
         <View style={{ flexDirection: "row", gap: 8, alignItems: "center" }}>
           <Pressable
@@ -180,7 +202,10 @@ export default function ProfileScreen() {
           >
             <Text style={{ color: "#888", fontSize: 13 }}>{language === "en" ? "🇺🇸 EN" : "🇯🇵 JP"}</Text>
           </Pressable>
-          <Pressable onPress={() => supabase.auth.signOut()} style={{ paddingVertical: 6, paddingHorizontal: 14, borderRadius: 6, borderWidth: 1, borderColor: "#333" }}>
+          <Pressable
+            onPress={() => supabase.auth.signOut()}
+            style={{ paddingVertical: 6, paddingHorizontal: 14, borderRadius: 6, borderWidth: 1, borderColor: "#333" }}
+          >
             <Text style={{ color: "#888", fontSize: 13 }}>{tr("profile.signOut")}</Text>
           </Pressable>
         </View>
@@ -201,7 +226,8 @@ export default function ProfileScreen() {
             }}
           >
             <Text style={{ color: tab === t.key ? "#fff" : "#888", fontSize: 14, fontWeight: "600" }}>
-              {t.label}{t.count > 0 ? ` (${t.count})` : ""}
+              {t.label}
+              {t.count > 0 ? ` (${t.count})` : ""}
             </Text>
           </Pressable>
         ))}
@@ -215,15 +241,15 @@ export default function ProfileScreen() {
       ) : clips.length === 0 ? (
         <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
           <Text style={{ color: "#888", fontSize: 16 }}>
-            {tab === "submitted" ? tr("profile.noSubmitted") : tab === "liked" ? tr("profile.noLiked") : tr("profile.noCommented")}
+            {tab === "submitted"
+              ? tr("profile.noSubmitted")
+              : tab === "liked"
+                ? tr("profile.noLiked")
+                : tr("profile.noCommented")}
           </Text>
         </View>
       ) : (
-        <FlatList
-          data={clips}
-          keyExtractor={(item) => item.id}
-          renderItem={({ item }) => <ClipCard clip={item} />}
-        />
+        <FlatList data={clips} keyExtractor={(item) => item.id} renderItem={({ item }) => <ClipCard clip={item} />} />
       )}
     </View>
   );

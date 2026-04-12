@@ -23,9 +23,14 @@ export function ReelViewer({ clips, refreshing, onRefresh }: ReelViewerProps) {
 
   useEffect(() => {
     if (!user) return;
-    supabase.from("users").select("role").eq("id", user.id).single().then(({ data }) => {
-      setIsAdmin(data?.role === "ADMIN");
-    });
+    supabase
+      .from("users")
+      .select("role")
+      .eq("id", user.id)
+      .single()
+      .then(({ data }) => {
+        setIsAdmin(data?.role === "ADMIN");
+      });
   }, [user]);
   const flatListRef = useRef<FlatList>(null);
 
@@ -60,7 +65,7 @@ export function ReelViewer({ clips, refreshing, onRefresh }: ReelViewerProps) {
         isAdmin={isAdmin}
       />
     ),
-    [activeIndex, votedClipIds, toggleVote, scrollToNext]
+    [activeIndex, votedClipIds, toggleVote, scrollToNext, isAdmin]
   );
 
   return (

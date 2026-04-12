@@ -48,7 +48,9 @@ export function MyClipsList() {
             <Text style={styles.clipTitle} numberOfLines={1}>
               {item.title}
             </Text>
-            <Text style={[styles.status, { color: statusColors[item.status] ?? "#888" }]}>{item.status.toUpperCase()}</Text>
+            <Text style={[styles.status, { color: statusColors[item.status] ?? "#888" }]}>
+              {item.status.toUpperCase()}
+            </Text>
           </View>
         </View>
       )}

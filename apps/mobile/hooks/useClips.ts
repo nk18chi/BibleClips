@@ -20,53 +20,56 @@ export function useClips(options?: UseClipsOptions) {
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchClips = useCallback(async (isRefresh = false) => {
-    if (isRefresh) setRefreshing(true);
-    else setLoading(true);
+  const fetchClips = useCallback(
+    async (isRefresh = false) => {
+      if (isRefresh) setRefreshing(true);
+      else setLoading(true);
 
-    const verseJoin = options?.verse ? "clip_verses!inner(*)" : "clip_verses(*)";
-    const catJoin = options?.categorySlug
-      ? "clip_categories!inner(*, categories!inner(*))"
-      : "clip_categories(*, categories(*))";
+      const verseJoin = options?.verse ? "clip_verses!inner(*)" : "clip_verses(*)";
+      const catJoin = options?.categorySlug
+        ? "clip_categories!inner(*, categories!inner(*))"
+        : "clip_categories(*, categories(*))";
 
-    let query = supabase
-      .from("clips")
-      .select(`*, ${verseJoin}, ${catJoin}, clip_songs(*)`)
-      .eq("status", "APPROVED")
-      .order("created_at", { ascending: false });
+      let query = supabase
+        .from("clips")
+        .select(`*, ${verseJoin}, ${catJoin}, clip_songs(*)`)
+        .eq("status", "APPROVED")
+        .order("created_at", { ascending: false });
 
-    if (options?.verse) {
-      const [book, chapterVerse] = options.verse.split("-");
-      const [chapter, verse] = (chapterVerse ?? "").split(":");
-      query = query.eq("clip_verses.book", book?.replace(/-/g, " ")).eq("clip_verses.chapter", Number(chapter));
-      if (verse) {
-        query = query.eq("clip_verses.verse_start", Number(verse));
+      if (options?.verse) {
+        const [book, chapterVerse] = options.verse.split("-");
+        const [chapter, verse] = (chapterVerse ?? "").split(":");
+        query = query.eq("clip_verses.book", book?.replace(/-/g, " ")).eq("clip_verses.chapter", Number(chapter));
+        if (verse) {
+          query = query.eq("clip_verses.verse_start", Number(verse));
+        }
       }
-    }
 
-    if (options?.categorySlug) {
-      query = query.eq("clip_categories.categories.slug", options.categorySlug);
-    }
-
-    if (options?.clipType) {
-      query = query.eq("clip_type", options.clipType);
-    }
-
-    const { data, error: fetchError } = await query;
-
-    if (fetchError) {
-      setError(fetchError.message);
-    } else {
-      const results = (data ?? []) as ClipQueryResult[];
-      for (let i = results.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [results[i], results[j]] = [results[j], results[i]];
+      if (options?.categorySlug) {
+        query = query.eq("clip_categories.categories.slug", options.categorySlug);
       }
-      setClips(results);
-    }
-    setLoading(false);
-    setRefreshing(false);
-  }, [options?.verse, options?.categorySlug, options?.clipType]);
+
+      if (options?.clipType) {
+        query = query.eq("clip_type", options.clipType);
+      }
+
+      const { data, error: fetchError } = await query;
+
+      if (fetchError) {
+        setError(fetchError.message);
+      } else {
+        const results = (data ?? []) as ClipQueryResult[];
+        for (let i = results.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [results[i], results[j]] = [results[j], results[i]];
+        }
+        setClips(results);
+      }
+      setLoading(false);
+      setRefreshing(false);
+    },
+    [options?.verse, options?.categorySlug, options?.clipType]
+  );
 
   useEffect(() => {
     fetchClips();

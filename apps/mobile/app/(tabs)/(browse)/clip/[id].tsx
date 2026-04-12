@@ -28,16 +28,16 @@ export default function ClipDetailScreen() {
 
   return (
     <>
-    <Stack.Screen options={{ headerTitle: clip.title }} />
-    <ScrollView style={styles.container}>
-      <View style={styles.playerContainer}>
-        <YouTubePlayer videoId={clip.youtube_video_id} startTime={clip.start_time} endTime={clip.end_time} />
-      </View>
-      <View style={styles.infoContainer}>
-        <ClipInfo clip={clip} verses={clip.clip_verses} />
-      </View>
-      <CommentSection clipId={clip.id} />
-    </ScrollView>
+      <Stack.Screen options={{ headerTitle: clip.title }} />
+      <ScrollView style={styles.container}>
+        <View style={styles.playerContainer}>
+          <YouTubePlayer videoId={clip.youtube_video_id} startTime={clip.start_time} endTime={clip.end_time} />
+        </View>
+        <View style={styles.infoContainer}>
+          <ClipInfo clip={clip} verses={clip.clip_verses} />
+        </View>
+        <CommentSection clipId={clip.id} />
+      </ScrollView>
     </>
   );
 }

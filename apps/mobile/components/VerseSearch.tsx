@@ -53,7 +53,11 @@ export function VerseSearch() {
       if (bookJa.startsWith(query.trim())) {
         const bookEn = getBookByJapaneseName(bookJa);
         if (bookEn) {
-          results.push({ type: "verse", label: `${bookJa} (${bookEn.en})`, route: `/verse/${bookEn.en.replace(/ /g, "-")}` });
+          results.push({
+            type: "verse",
+            label: `${bookJa} (${bookEn.en})`,
+            route: `/verse/${bookEn.en.replace(/ /g, "-")}`,
+          });
         }
       }
     }
@@ -112,7 +116,11 @@ export function VerseSearch() {
         returnKeyType="search"
       />
       {suggestions.map((s) => (
-        <Pressable key={s.route} onPress={() => handleSelect(s)} style={{ padding: 12, borderBottomWidth: 1, borderBottomColor: "#222" }}>
+        <Pressable
+          key={s.route}
+          onPress={() => handleSelect(s)}
+          style={{ padding: 12, borderBottomWidth: 1, borderBottomColor: "#222" }}
+        >
           <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
             <Text style={{ color: s.type === "category" ? "#8B5CF6" : "#3b82f6", fontSize: 12 }}>
               {s.type === "category" ? "CATEGORY" : "VERSE"}

@@ -1,4 +1,4 @@
-import { forwardRef, useCallback, useEffect, useImperativeHandle, useMemo, useRef } from "react";
+import { forwardRef, useCallback, useEffect, useImperativeHandle, useRef } from "react";
 import { Platform, StyleSheet } from "react-native";
 
 export interface YouTubePlayerRef {
@@ -179,7 +179,7 @@ window.addEventListener('message',function(e){
         }
       } catch {}
     },
-    [onTimeUpdate]
+    [onTimeUpdate, onReady]
   );
 
   return (

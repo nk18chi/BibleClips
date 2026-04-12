@@ -1,7 +1,7 @@
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
-import { Alert, Platform, Pressable, Share, StyleSheet, Text, TextInput, View } from "react-native";
 import { useState } from "react";
+import { Alert, Platform, Pressable, Share, StyleSheet, Text, TextInput, View } from "react-native";
 import { supabase } from "@/lib/supabase";
 
 interface ActionButtonsProps {
@@ -116,7 +116,11 @@ export function ActionButtons({ clipId, voteCount, hasVoted, onVote, isAdmin }: 
             <Pressable onPress={() => setShowFlagInput(false)} style={styles.flagCancel}>
               <Text style={{ color: "#888" }}>Cancel</Text>
             </Pressable>
-            <Pressable onPress={submitFlag} disabled={flagging} style={[styles.flagSubmit, flagging && { opacity: 0.5 }]}>
+            <Pressable
+              onPress={submitFlag}
+              disabled={flagging}
+              style={[styles.flagSubmit, flagging && { opacity: 0.5 }]}
+            >
               <Text style={{ color: "#fff", fontWeight: "600" }}>{flagging ? "..." : "Flag"}</Text>
             </Pressable>
           </View>

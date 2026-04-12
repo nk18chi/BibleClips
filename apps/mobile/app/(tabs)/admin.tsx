@@ -1,39 +1,101 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import {
-  ActivityIndicator,
-  Alert,
-  FlatList,
-  Pressable,
-  ScrollView,
-  Text,
-  TextInput,
-  View,
-} from "react-native";
 import type { Clip, ClipVerse } from "@bibleclips/database";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { ActivityIndicator, Alert, Pressable, ScrollView, Text, TextInput, View } from "react-native";
+import { YouTubePlayer, type YouTubePlayerRef } from "@/components/YouTubePlayer";
 import { useSupabase } from "@/hooks/useSupabase";
 import { supabase } from "@/lib/supabase";
-import { YouTubePlayer, type YouTubePlayerRef } from "@/components/YouTubePlayer";
 
-type PendingClip = Clip & { clip_verses: ClipVerse[]; clip_categories: { category_id: string }[]; comments?: { content: string }[] };
+type PendingClip = Clip & {
+  clip_verses: ClipVerse[];
+  clip_categories: { category_id: string }[];
+  comments?: { content: string }[];
+};
 type Category = { id: string; slug: string; name_en: string };
 type VideoGroup = { videoId: string; title: string; clips: PendingClip[] };
 
 const BIBLE_BOOKS = [
-  "Genesis","Exodus","Leviticus","Numbers","Deuteronomy","Joshua","Judges","Ruth",
-  "1 Samuel","2 Samuel","1 Kings","2 Kings","1 Chronicles","2 Chronicles","Ezra",
-  "Nehemiah","Esther","Job","Psalms","Proverbs","Ecclesiastes","Song of Solomon",
-  "Isaiah","Jeremiah","Lamentations","Ezekiel","Daniel","Hosea","Joel","Amos",
-  "Obadiah","Jonah","Micah","Nahum","Habakkuk","Zephaniah","Haggai","Zechariah",
-  "Malachi","Matthew","Mark","Luke","John","Acts","Romans","1 Corinthians",
-  "2 Corinthians","Galatians","Ephesians","Philippians","Colossians",
-  "1 Thessalonians","2 Thessalonians","1 Timothy","2 Timothy","Titus","Philemon",
-  "Hebrews","James","1 Peter","2 Peter","1 John","2 John","3 John","Jude","Revelation",
+  "Genesis",
+  "Exodus",
+  "Leviticus",
+  "Numbers",
+  "Deuteronomy",
+  "Joshua",
+  "Judges",
+  "Ruth",
+  "1 Samuel",
+  "2 Samuel",
+  "1 Kings",
+  "2 Kings",
+  "1 Chronicles",
+  "2 Chronicles",
+  "Ezra",
+  "Nehemiah",
+  "Esther",
+  "Job",
+  "Psalms",
+  "Proverbs",
+  "Ecclesiastes",
+  "Song of Solomon",
+  "Isaiah",
+  "Jeremiah",
+  "Lamentations",
+  "Ezekiel",
+  "Daniel",
+  "Hosea",
+  "Joel",
+  "Amos",
+  "Obadiah",
+  "Jonah",
+  "Micah",
+  "Nahum",
+  "Habakkuk",
+  "Zephaniah",
+  "Haggai",
+  "Zechariah",
+  "Malachi",
+  "Matthew",
+  "Mark",
+  "Luke",
+  "John",
+  "Acts",
+  "Romans",
+  "1 Corinthians",
+  "2 Corinthians",
+  "Galatians",
+  "Ephesians",
+  "Philippians",
+  "Colossians",
+  "1 Thessalonians",
+  "2 Thessalonians",
+  "1 Timothy",
+  "2 Timothy",
+  "Titus",
+  "Philemon",
+  "Hebrews",
+  "James",
+  "1 Peter",
+  "2 Peter",
+  "1 John",
+  "2 John",
+  "3 John",
+  "Jude",
+  "Revelation",
 ];
 
 const bookJaMap: Record<string, string> = {
-  Genesis:"創世記",Exodus:"出エジプト記",Matthew:"マタイ",Mark:"マルコ",Luke:"ルカ",
-  John:"ヨハネ",Acts:"使徒",Romans:"ローマ",Philippians:"ピリピ",Psalms:"詩篇",
-  Proverbs:"箴言",Isaiah:"イザヤ",Revelation:"黙示録",
+  Genesis: "創世記",
+  Exodus: "出エジプト記",
+  Matthew: "マタイ",
+  Mark: "マルコ",
+  Luke: "ルカ",
+  John: "ヨハネ",
+  Acts: "使徒",
+  Romans: "ローマ",
+  Philippians: "ピリピ",
+  Psalms: "詩篇",
+  Proverbs: "箴言",
+  Isaiah: "イザヤ",
+  Revelation: "黙示録",
 };
 
 function fmtTime(s: number) {
@@ -66,9 +128,7 @@ function EditForm({
   const [chapter, setChapter] = useState(verse?.chapter?.toString() ?? "");
   const [verseStart, setVerseStart] = useState(verse?.verse_start?.toString() ?? "");
   const [verseEnd, setVerseEnd] = useState(verse?.verse_end?.toString() ?? "");
-  const [selectedCats, setSelectedCats] = useState<string[]>(
-    clip.clip_categories?.map((c) => c.category_id) ?? []
-  );
+  const [selectedCats, setSelectedCats] = useState<string[]>(clip.clip_categories?.map((c) => c.category_id) ?? []);
   const [saving, setSaving] = useState(false);
 
   const parseTime = (str: string): number | null => {
@@ -90,10 +150,7 @@ function EditForm({
 
     setSaving(true);
     try {
-      const { error } = await supabase
-        .from("clips")
-        .update({ title, start_time: st, end_time: et })
-        .eq("id", clip.id);
+      const { error } = await supabase.from("clips").update({ title, start_time: st, end_time: et }).eq("id", clip.id);
       if (error) throw error;
 
       // Update verse
@@ -112,9 +169,9 @@ function EditForm({
       // Update categories
       await supabase.from("clip_categories").delete().eq("clip_id", clip.id);
       if (selectedCats.length > 0) {
-        await supabase.from("clip_categories").insert(
-          selectedCats.map((catId) => ({ clip_id: clip.id, category_id: catId }))
-        );
+        await supabase
+          .from("clip_categories")
+          .insert(selectedCats.map((catId) => ({ clip_id: clip.id, category_id: catId })));
       }
 
       onSave();
@@ -145,8 +202,20 @@ function EditForm({
 
       <Text style={{ color: "#aaa", fontSize: 12, marginTop: 12, marginBottom: 4 }}>Time (m:ss)</Text>
       <View style={{ flexDirection: "row", gap: 8 }}>
-        <TextInput style={[inputStyle, { flex: 1 }]} value={startTime} onChangeText={setStartTime} placeholder="Start" placeholderTextColor="#555" />
-        <TextInput style={[inputStyle, { flex: 1 }]} value={endTime} onChangeText={setEndTime} placeholder="End" placeholderTextColor="#555" />
+        <TextInput
+          style={[inputStyle, { flex: 1 }]}
+          value={startTime}
+          onChangeText={setStartTime}
+          placeholder="Start"
+          placeholderTextColor="#555"
+        />
+        <TextInput
+          style={[inputStyle, { flex: 1 }]}
+          value={endTime}
+          onChangeText={setEndTime}
+          placeholder="End"
+          placeholderTextColor="#555"
+        />
       </View>
 
       <Text style={{ color: "#aaa", fontSize: 12, marginTop: 12, marginBottom: 4 }}>Verse</Text>
@@ -169,9 +238,30 @@ function EditForm({
         </View>
       </ScrollView>
       <View style={{ flexDirection: "row", gap: 8 }}>
-        <TextInput style={[inputStyle, { flex: 1 }]} value={chapter} onChangeText={setChapter} placeholder="Ch" keyboardType="number-pad" placeholderTextColor="#555" />
-        <TextInput style={[inputStyle, { flex: 1 }]} value={verseStart} onChangeText={setVerseStart} placeholder="V start" keyboardType="number-pad" placeholderTextColor="#555" />
-        <TextInput style={[inputStyle, { flex: 1 }]} value={verseEnd} onChangeText={setVerseEnd} placeholder="V end" keyboardType="number-pad" placeholderTextColor="#555" />
+        <TextInput
+          style={[inputStyle, { flex: 1 }]}
+          value={chapter}
+          onChangeText={setChapter}
+          placeholder="Ch"
+          keyboardType="number-pad"
+          placeholderTextColor="#555"
+        />
+        <TextInput
+          style={[inputStyle, { flex: 1 }]}
+          value={verseStart}
+          onChangeText={setVerseStart}
+          placeholder="V start"
+          keyboardType="number-pad"
+          placeholderTextColor="#555"
+        />
+        <TextInput
+          style={[inputStyle, { flex: 1 }]}
+          value={verseEnd}
+          onChangeText={setVerseEnd}
+          placeholder="V end"
+          keyboardType="number-pad"
+          placeholderTextColor="#555"
+        />
       </View>
 
       <Text style={{ color: "#aaa", fontSize: 12, marginTop: 12, marginBottom: 4 }}>Categories</Text>
@@ -201,7 +291,14 @@ function EditForm({
         <Pressable
           onPress={handleSave}
           disabled={saving}
-          style={{ flex: 1, backgroundColor: "#3b82f6", padding: 10, borderRadius: 6, alignItems: "center", opacity: saving ? 0.5 : 1 }}
+          style={{
+            flex: 1,
+            backgroundColor: "#3b82f6",
+            padding: 10,
+            borderRadius: 6,
+            alignItems: "center",
+            opacity: saving ? 0.5 : 1,
+          }}
         >
           <Text style={{ color: "#fff", fontWeight: "600", fontSize: 14 }}>{saving ? "Saving..." : "Save"}</Text>
         </Pressable>
@@ -228,15 +325,24 @@ export default function AdminScreen() {
 
   useEffect(() => {
     if (!user) return;
-    supabase.from("users").select("role").eq("id", user.id).single().then(({ data }) => {
-      setUserRole(data?.role ?? "USER");
-    });
+    supabase
+      .from("users")
+      .select("role")
+      .eq("id", user.id)
+      .single()
+      .then(({ data }) => {
+        setUserRole(data?.role ?? "USER");
+      });
   }, [user]);
 
   const fetchPending = useCallback(async () => {
     setLoading(true);
     const [clipsRes, catsRes] = await Promise.all([
-      supabase.from("clips").select("*, clip_verses(*), clip_categories(category_id), comments(content)").in("status", ["PENDING", "NEEDS_EDIT"]).order("start_time", { ascending: true }),
+      supabase
+        .from("clips")
+        .select("*, clip_verses(*), clip_categories(category_id), comments(content)")
+        .in("status", ["PENDING", "NEEDS_EDIT"])
+        .order("start_time", { ascending: true }),
       supabase.from("categories").select("id, slug, name_en").order("name_en"),
     ]);
     const fetchedClips = (clipsRes.data ?? []) as PendingClip[];
@@ -318,11 +424,16 @@ export default function AdminScreen() {
       </View>
 
       {/* Video selector */}
-      <Text style={{ color: "#888", fontSize: 12, fontWeight: "600", paddingHorizontal: 16, marginBottom: 6 }}>VIDEOS</Text>
+      <Text style={{ color: "#888", fontSize: 12, fontWeight: "600", paddingHorizontal: 16, marginBottom: 6 }}>
+        VIDEOS
+      </Text>
       {groups.map((g) => (
         <Pressable
           key={g.videoId}
-          onPress={() => { setSelectedVideoId(g.videoId); setEditingId(null); }}
+          onPress={() => {
+            setSelectedVideoId(g.videoId);
+            setEditingId(null);
+          }}
           style={{
             marginHorizontal: 16,
             marginBottom: 6,
@@ -333,7 +444,9 @@ export default function AdminScreen() {
             backgroundColor: selectedVideoId === g.videoId ? "#1e3a5f" : "#111",
           }}
         >
-          <Text style={{ color: "#fff", fontSize: 14, fontWeight: "600" }} numberOfLines={2}>{g.title}</Text>
+          <Text style={{ color: "#fff", fontSize: 14, fontWeight: "600" }} numberOfLines={2}>
+            {g.title}
+          </Text>
           <Text style={{ color: "#888", fontSize: 12, marginTop: 2 }}>{g.clips.length} clips</Text>
         </Pressable>
       ))}
@@ -341,16 +454,13 @@ export default function AdminScreen() {
       {/* Selected video content */}
       {selectedGroup && (
         <View style={{ padding: 16 }}>
-          <Text style={{ color: "#fff", fontSize: 18, fontWeight: "700", marginBottom: 12 }}>{selectedGroup.title}</Text>
+          <Text style={{ color: "#fff", fontSize: 18, fontWeight: "700", marginBottom: 12 }}>
+            {selectedGroup.title}
+          </Text>
 
           {/* Player */}
           <View style={{ height: 220, borderRadius: 8, overflow: "hidden", marginBottom: 8 }}>
-            <YouTubePlayer
-              ref={playerRef}
-              videoId={selectedGroup.videoId}
-              startTime={0}
-              endTime={99999}
-            />
+            <YouTubePlayer ref={playerRef} videoId={selectedGroup.videoId} startTime={0} endTime={99999} />
           </View>
 
           {/* Clips list */}
@@ -374,7 +484,10 @@ export default function AdminScreen() {
                   <EditForm
                     clip={clip}
                     categories={categories}
-                    onSave={() => { setEditingId(null); fetchPending(); }}
+                    onSave={() => {
+                      setEditingId(null);
+                      fetchPending();
+                    }}
                     onCancel={() => setEditingId(null)}
                   />
                 </View>
@@ -399,18 +512,27 @@ export default function AdminScreen() {
                   </Pressable>
                   <View style={{ flex: 1 }}>
                     <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
-                      <Text style={{ color: "#fff", fontSize: 15, fontWeight: "600", flex: 1 }} numberOfLines={1}>{clip.title}</Text>
-                      <View style={{
-                        paddingHorizontal: 6, paddingVertical: 2, borderRadius: 4,
-                        backgroundColor: isNeedsEdit ? "#f59e0b20" : "#3b82f620",
-                      }}>
+                      <Text style={{ color: "#fff", fontSize: 15, fontWeight: "600", flex: 1 }} numberOfLines={1}>
+                        {clip.title}
+                      </Text>
+                      <View
+                        style={{
+                          paddingHorizontal: 6,
+                          paddingVertical: 2,
+                          borderRadius: 4,
+                          backgroundColor: isNeedsEdit ? "#f59e0b20" : "#3b82f620",
+                        }}
+                      >
                         <Text style={{ color: isNeedsEdit ? "#f59e0b" : "#3b82f6", fontSize: 10, fontWeight: "600" }}>
                           {isNeedsEdit ? "NEEDS EDIT" : "PENDING"}
                         </Text>
                       </View>
                     </View>
                     <Text style={{ color: "#888", fontSize: 13, marginTop: 2 }}>
-                      {verseRef}{"   "}{fmtTime(clip.start_time)} - {fmtTime(clip.end_time)}{"   "}({fmtDur(clip.start_time, clip.end_time)})
+                      {verseRef}
+                      {"   "}
+                      {fmtTime(clip.start_time)} - {fmtTime(clip.end_time)}
+                      {"   "}({fmtDur(clip.start_time, clip.end_time)})
                     </Text>
                   </View>
                   <Pressable onPress={() => setEditingId(clip.id)} style={{ padding: 8 }}>
@@ -419,9 +541,20 @@ export default function AdminScreen() {
                 </View>
 
                 {editNotes.length > 0 && (
-                  <View style={{ marginTop: 8, padding: 8, backgroundColor: "#1a1a0a", borderRadius: 6, borderLeftWidth: 3, borderLeftColor: "#f59e0b" }}>
+                  <View
+                    style={{
+                      marginTop: 8,
+                      padding: 8,
+                      backgroundColor: "#1a1a0a",
+                      borderRadius: 6,
+                      borderLeftWidth: 3,
+                      borderLeftColor: "#f59e0b",
+                    }}
+                  >
                     {editNotes.map((note, i) => (
-                      <Text key={i} style={{ color: "#f59e0b", fontSize: 12 }}>{note}</Text>
+                      <Text key={i} style={{ color: "#f59e0b", fontSize: 12 }}>
+                        {note}
+                      </Text>
                     ))}
                   </View>
                 )}
@@ -429,13 +562,25 @@ export default function AdminScreen() {
                 <View style={{ flexDirection: "row", gap: 8, marginTop: 10 }}>
                   <Pressable
                     onPress={() => handleAction(clip.id, "APPROVED")}
-                    style={{ flex: 1, backgroundColor: "#22c55e", paddingVertical: 8, borderRadius: 6, alignItems: "center" }}
+                    style={{
+                      flex: 1,
+                      backgroundColor: "#22c55e",
+                      paddingVertical: 8,
+                      borderRadius: 6,
+                      alignItems: "center",
+                    }}
                   >
                     <Text style={{ color: "#fff", fontSize: 14, fontWeight: "600" }}>Approve</Text>
                   </Pressable>
                   <Pressable
                     onPress={() => handleAction(clip.id, "REJECTED")}
-                    style={{ flex: 1, backgroundColor: "#ef4444", paddingVertical: 8, borderRadius: 6, alignItems: "center" }}
+                    style={{
+                      flex: 1,
+                      backgroundColor: "#ef4444",
+                      paddingVertical: 8,
+                      borderRadius: 6,
+                      alignItems: "center",
+                    }}
                   >
                     <Text style={{ color: "#fff", fontSize: 14, fontWeight: "600" }}>Reject</Text>
                   </Pressable>

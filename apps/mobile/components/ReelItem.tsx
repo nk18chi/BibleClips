@@ -1,5 +1,5 @@
-import { Ionicons } from "@expo/vector-icons";
 import type { Clip, ClipVerse } from "@bibleclips/database";
+import { Ionicons } from "@expo/vector-icons";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { ActivityIndicator, Animated, Image, Pressable, StyleSheet, useWindowDimensions, View } from "react-native";
 import { useSubtitles } from "@/hooks/useSubtitles";
@@ -39,13 +39,16 @@ export function ReelItem({ clip, isActive, shouldPreload, hasVoted, onVote, onEn
     }
   }, [isActive]);
 
-  const handleTimeUpdate = useCallback((time: number) => {
-    setCurrentTime(time);
-    if (time >= clip.end_time && !hasEndedRef.current) {
-      hasEndedRef.current = true;
-      onEnded?.();
-    }
-  }, [clip.end_time, onEnded]);
+  const handleTimeUpdate = useCallback(
+    (time: number) => {
+      setCurrentTime(time);
+      if (time >= clip.end_time && !hasEndedRef.current) {
+        hasEndedRef.current = true;
+        onEnded?.();
+      }
+    },
+    [clip.end_time, onEnded]
+  );
 
   const handleDoubleTap = () => {
     const now = Date.now();
@@ -91,12 +94,7 @@ export function ReelItem({ clip, isActive, shouldPreload, hasVoted, onVote, onEn
 
       {/* Double-tap heart animation */}
       {showHeart && (
-        <Animated.View
-          style={[
-            styles.heartOverlay,
-            { opacity: heartOpacity, transform: [{ scale: heartScale }] },
-          ]}
-        >
+        <Animated.View style={[styles.heartOverlay, { opacity: heartOpacity, transform: [{ scale: heartScale }] }]}>
           <Ionicons name="heart" size={100} color="#ef4444" />
         </Animated.View>
       )}
@@ -105,7 +103,13 @@ export function ReelItem({ clip, isActive, shouldPreload, hasVoted, onVote, onEn
         <SubtitleOverlay subtitles={subtitles} currentTime={currentTime} translations={translations} />
       )}
       <ClipInfo clip={clip} verses={clip.clip_verses} />
-      <ActionButtons clipId={clip.id} voteCount={clip.vote_count} hasVoted={hasVoted} onVote={onVote} isAdmin={isAdmin} />
+      <ActionButtons
+        clipId={clip.id}
+        voteCount={clip.vote_count}
+        hasVoted={hasVoted}
+        onVote={onVote}
+        isAdmin={isAdmin}
+      />
 
       {/* Progress bar */}
       {isActive && progress > 0 && (
