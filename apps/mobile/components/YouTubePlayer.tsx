@@ -76,6 +76,7 @@ const YouTubePlayerWeb = forwardRef<YouTubePlayerRef, YouTubePlayerProps>(functi
                 if (t >= endTime) {
                   playerRef.current?.pauseVideo();
                   clearTimeInterval();
+                  onTimeUpdate?.(endTime + 1);
                 }
               }, 250);
             } else {
@@ -137,7 +138,7 @@ function onYouTubeIframeAPIReady(){
           timeIv=setInterval(function(){
             var t=player.getCurrentTime();
             window.ReactNativeWebView.postMessage(JSON.stringify({type:'time',currentTime:t}));
-            if(t>=${end}){player.pauseVideo();clearInterval(timeIv);}
+            if(t>=${end}){player.pauseVideo();clearInterval(timeIv);window.ReactNativeWebView.postMessage(JSON.stringify({type:'time',currentTime:${end}+1}));}
           },250);
         }else{clearInterval(timeIv);}
         if(e.data===0){window.ReactNativeWebView.postMessage(JSON.stringify({type:'ended'}));}
