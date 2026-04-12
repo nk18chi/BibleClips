@@ -52,13 +52,27 @@ async function getPendingGroups(): Promise<VideoGroup[]> {
       created_at,
       clip_songs (artist_name, song_name),
       clip_verses (book, chapter, verse_start, verse_end),
-      clip_categories (category_id),
-      comments (content)
+      clip_categories (category_id)
     `)
     .in("status", ["PENDING", "NEEDS_EDIT"])
     .order("start_time", { ascending: true });
 
   if (!data || data.length === 0) return [];
+
+  // Fetch edit note comments separately (RLS may block join)
+  const clipIds = data.map((c: any) => c.id);
+  const { data: allComments } = await supabase
+    .from("comments")
+    .select("clip_id, content")
+    .in("clip_id", clipIds)
+    .like("content", "[EDIT NOTE]%");
+
+  // Attach comments to clips
+  for (const clip of data as any[]) {
+    clip.comments = (allComments ?? [])
+      .filter((c: any) => c.clip_id === clip.id)
+      .map((c: any) => ({ content: c.content }));
+  }
 
   // Group by video
   const map = new Map<string, VideoGroup>();

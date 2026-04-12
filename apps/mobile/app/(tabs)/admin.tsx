@@ -340,12 +340,30 @@ export default function AdminScreen() {
     const [clipsRes, catsRes] = await Promise.all([
       supabase
         .from("clips")
-        .select("*, clip_verses(*), clip_categories(category_id), comments(content)")
+        .select("*, clip_verses(*), clip_categories(category_id)")
         .in("status", ["PENDING", "NEEDS_EDIT"])
         .order("start_time", { ascending: true }),
       supabase.from("categories").select("id, slug, name_en").order("name_en"),
     ]);
     const fetchedClips = (clipsRes.data ?? []) as PendingClip[];
+
+    // Fetch edit note comments separately (RLS blocks join)
+    if (fetchedClips.length > 0) {
+      const clipIds = fetchedClips.map((c) => c.id);
+      const { data: allComments } = await supabase
+        .from("comments")
+        .select("clip_id, content")
+        .in("clip_id", clipIds)
+        .like("content", "[EDIT NOTE]%");
+      if (allComments) {
+        for (const clip of fetchedClips) {
+          clip.comments = allComments
+            .filter((c) => c.clip_id === clip.id)
+            .map((c) => ({ content: c.content }));
+        }
+      }
+    }
+
     setClips(fetchedClips);
     setCategories(catsRes.data ?? []);
     if (!selectedVideoId && fetchedClips.length > 0) {
