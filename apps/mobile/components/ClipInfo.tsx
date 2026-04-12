@@ -107,7 +107,9 @@ export function ClipInfo({ clip, verses }: ClipInfoProps) {
           <Text style={styles.verse}>{verseText} →</Text>
         </Pressable>
       )}
-      <Text style={styles.type}>{clip.clip_type}</Text>
+      <Pressable onPress={() => Linking.openURL(`https://youtube.com/watch?v=${clip.youtube_video_id}`)}>
+        <Text style={styles.youtubeLink}>Watch full video on YouTube</Text>
+      </Pressable>
 
       {selectedVerse && (
         <VerseModal verse={selectedVerse} onClose={() => setSelectedVerse(null)} />
@@ -135,7 +137,7 @@ const styles = StyleSheet.create({
     textShadowRadius: 4,
     textDecorationLine: "underline",
   },
-  type: { color: "#8B5CF6", fontSize: 12, marginTop: 4 },
+  youtubeLink: { color: "#888", fontSize: 11, marginTop: 4, textDecorationLine: "underline" },
   modalOverlay: {
     flex: 1,
     backgroundColor: "rgba(0,0,0,0.6)",
