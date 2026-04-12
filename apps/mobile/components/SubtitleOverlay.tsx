@@ -37,9 +37,9 @@ export function SubtitleOverlay({ subtitles, currentTime, translations }: Subtit
 const styles = StyleSheet.create({
   container: {
     position: "absolute",
-    bottom: 160,
+    bottom: 180,
     left: 16,
-    right: 16,
+    right: 60,
     alignItems: "center",
     zIndex: 20,
   },
