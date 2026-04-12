@@ -51,6 +51,7 @@ export function ReelViewer({ clips }: ReelViewerProps) {
       <ReelItem
         clip={item}
         isActive={index === activeIndex}
+        shouldPreload={index >= activeIndex && index <= activeIndex + 2}
         hasVoted={votedClipIds.has(item.id)}
         onVote={() => toggleVote(item.id)}
         onEnded={() => scrollToNext(index)}
@@ -71,7 +72,7 @@ export function ReelViewer({ clips }: ReelViewerProps) {
       showsVerticalScrollIndicator={false}
       snapToInterval={height}
       decelerationRate="fast"
-      windowSize={2}
+      windowSize={5}
       removeClippedSubviews
       onViewableItemsChanged={onViewableItemsChanged}
       viewabilityConfig={viewabilityConfig}

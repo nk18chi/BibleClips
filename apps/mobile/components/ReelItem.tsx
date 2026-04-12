@@ -10,23 +10,22 @@ import { YouTubePlayer, type YouTubePlayerRef } from "./YouTubePlayer";
 interface ReelItemProps {
   clip: Clip & { clip_verses: ClipVerse[] };
   isActive: boolean;
+  shouldPreload: boolean;
   hasVoted: boolean;
   onVote: () => void;
   onEnded?: () => void;
   isAdmin?: boolean;
 }
 
-export function ReelItem({ clip, isActive, hasVoted, onVote, onEnded, isAdmin }: ReelItemProps) {
+export function ReelItem({ clip, isActive, shouldPreload, hasVoted, onVote, onEnded, isAdmin }: ReelItemProps) {
   const { height } = useWindowDimensions();
   const playerRef = useRef<YouTubePlayerRef>(null);
   const [currentTime, setCurrentTime] = useState(0);
-  const [hasBeenActive, setHasBeenActive] = useState(false);
   const hasEndedRef = useRef(false);
   const { subtitles, translations } = useSubtitles(clip.id, isActive);
 
   useEffect(() => {
     if (isActive) {
-      setHasBeenActive(true);
       hasEndedRef.current = false;
       playerRef.current?.play();
     } else {
@@ -46,7 +45,7 @@ export function ReelItem({ clip, isActive, hasVoted, onVote, onEnded, isAdmin }:
 
   return (
     <View style={[styles.container, { height }]}>
-      {hasBeenActive ? (
+      {shouldPreload ? (
         <YouTubePlayer
           ref={playerRef}
           videoId={clip.youtube_video_id}
