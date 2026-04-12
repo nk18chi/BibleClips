@@ -3,7 +3,7 @@
 
 export type UserRole = "USER" | "ADMIN";
 export type PreferredLanguage = "en" | "ja";
-export type ClipStatus = "PENDING" | "APPROVED" | "REJECTED";
+export type ClipStatus = "PENDING" | "APPROVED" | "REJECTED" | "NEEDS_EDIT";
 export type ClipType = "sermon" | "song" | "testimony";
 
 export interface User {

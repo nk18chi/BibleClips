@@ -13,6 +13,7 @@ const statusColors: Record<string, string> = {
   PENDING: "#f59e0b",
   APPROVED: "#22c55e",
   REJECTED: "#ef4444",
+  NEEDS_EDIT: "#f59e0b",
 };
 
 function ClipCard({ clip }: { clip: ClipWithVerse }) {

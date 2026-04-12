@@ -1,7 +1,9 @@
 import type { Clip, ClipVerse } from "@bibleclips/database";
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { FlatList, useWindowDimensions, type ViewToken } from "react-native";
+import { useSupabase } from "@/hooks/useSupabase";
 import { useVotes } from "@/hooks/useVotes";
+import { supabase } from "@/lib/supabase";
 import { ReelItem } from "./ReelItem";
 
 type ClipWithVerse = Clip & { clip_verses: ClipVerse[] };
@@ -14,6 +16,15 @@ export function ReelViewer({ clips }: ReelViewerProps) {
   const { height } = useWindowDimensions();
   const [activeIndex, setActiveIndex] = useState(0);
   const { votedClipIds, toggleVote } = useVotes();
+  const { user } = useSupabase();
+  const [isAdmin, setIsAdmin] = useState(false);
+
+  useEffect(() => {
+    if (!user) return;
+    supabase.from("users").select("role").eq("id", user.id).single().then(({ data }) => {
+      setIsAdmin(data?.role === "ADMIN");
+    });
+  }, [user]);
   const flatListRef = useRef<FlatList>(null);
 
   const scrollToNext = useCallback(
@@ -43,6 +54,7 @@ export function ReelViewer({ clips }: ReelViewerProps) {
         hasVoted={votedClipIds.has(item.id)}
         onVote={() => toggleVote(item.id)}
         onEnded={() => scrollToNext(index)}
+        isAdmin={isAdmin}
       />
     ),
     [activeIndex, votedClipIds, toggleVote, scrollToNext]

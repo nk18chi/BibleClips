@@ -14,7 +14,7 @@ import { useSupabase } from "@/hooks/useSupabase";
 import { supabase } from "@/lib/supabase";
 import { YouTubePlayer, type YouTubePlayerRef } from "@/components/YouTubePlayer";
 
-type PendingClip = Clip & { clip_verses: ClipVerse[]; clip_categories: { category_id: string }[] };
+type PendingClip = Clip & { clip_verses: ClipVerse[]; clip_categories: { category_id: string }[]; comments?: { content: string }[] };
 type Category = { id: string; slug: string; name_en: string };
 type VideoGroup = { videoId: string; title: string; clips: PendingClip[] };
 
@@ -236,7 +236,7 @@ export default function AdminScreen() {
   const fetchPending = useCallback(async () => {
     setLoading(true);
     const [clipsRes, catsRes] = await Promise.all([
-      supabase.from("clips").select("*, clip_verses(*), clip_categories(category_id)").eq("status", "PENDING").order("start_time", { ascending: true }),
+      supabase.from("clips").select("*, clip_verses(*), clip_categories(category_id), comments(content)").in("status", ["PENDING", "NEEDS_EDIT"]).order("start_time", { ascending: true }),
       supabase.from("categories").select("id, slug, name_en").order("name_en"),
     ]);
     const fetchedClips = (clipsRes.data ?? []) as PendingClip[];
@@ -355,7 +355,7 @@ export default function AdminScreen() {
 
           {/* Clips list */}
           <Text style={{ color: "#888", fontSize: 12, fontWeight: "600", marginTop: 12, marginBottom: 8 }}>
-            PENDING CLIPS ({selectedGroup.clips.length})
+            REVIEW CLIPS ({selectedGroup.clips.length})
           </Text>
 
           {selectedGroup.clips.map((clip) => {
@@ -363,6 +363,10 @@ export default function AdminScreen() {
             const verseRef = verse
               ? `${verse.book} ${verse.chapter}:${verse.verse_start}${verse.verse_end ? `-${verse.verse_end}` : ""}`
               : null;
+            const editNotes = (clip.comments ?? [])
+              .filter((c) => c.content.startsWith("[EDIT NOTE]"))
+              .map((c) => c.content.replace("[EDIT NOTE] ", ""));
+            const isNeedsEdit = clip.status === "NEEDS_EDIT";
 
             if (editingId === clip.id) {
               return (
@@ -386,7 +390,7 @@ export default function AdminScreen() {
                   padding: 12,
                   marginBottom: 8,
                   borderWidth: 1,
-                  borderColor: "#222",
+                  borderColor: isNeedsEdit ? "#f59e0b" : "#222",
                 }}
               >
                 <View style={{ flexDirection: "row", alignItems: "center" }}>
@@ -394,7 +398,17 @@ export default function AdminScreen() {
                     <Text style={{ color: "#3b82f6", fontSize: 18 }}>▶</Text>
                   </Pressable>
                   <View style={{ flex: 1 }}>
-                    <Text style={{ color: "#fff", fontSize: 15, fontWeight: "600" }}>{clip.title}</Text>
+                    <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
+                      <Text style={{ color: "#fff", fontSize: 15, fontWeight: "600", flex: 1 }} numberOfLines={1}>{clip.title}</Text>
+                      <View style={{
+                        paddingHorizontal: 6, paddingVertical: 2, borderRadius: 4,
+                        backgroundColor: isNeedsEdit ? "#f59e0b20" : "#3b82f620",
+                      }}>
+                        <Text style={{ color: isNeedsEdit ? "#f59e0b" : "#3b82f6", fontSize: 10, fontWeight: "600" }}>
+                          {isNeedsEdit ? "NEEDS EDIT" : "PENDING"}
+                        </Text>
+                      </View>
+                    </View>
                     <Text style={{ color: "#888", fontSize: 13, marginTop: 2 }}>
                       {verseRef}{"   "}{fmtTime(clip.start_time)} - {fmtTime(clip.end_time)}{"   "}({fmtDur(clip.start_time, clip.end_time)})
                     </Text>
@@ -403,6 +417,15 @@ export default function AdminScreen() {
                     <Text style={{ color: "#888", fontSize: 16 }}>✏️</Text>
                   </Pressable>
                 </View>
+
+                {editNotes.length > 0 && (
+                  <View style={{ marginTop: 8, padding: 8, backgroundColor: "#1a1a0a", borderRadius: 6, borderLeftWidth: 3, borderLeftColor: "#f59e0b" }}>
+                    {editNotes.map((note, i) => (
+                      <Text key={i} style={{ color: "#f59e0b", fontSize: 12 }}>{note}</Text>
+                    ))}
+                  </View>
+                )}
+
                 <View style={{ flexDirection: "row", gap: 8, marginTop: 10 }}>
                   <Pressable
                     onPress={() => handleAction(clip.id, "APPROVED")}

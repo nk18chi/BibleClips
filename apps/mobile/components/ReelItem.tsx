@@ -13,9 +13,10 @@ interface ReelItemProps {
   hasVoted: boolean;
   onVote: () => void;
   onEnded?: () => void;
+  isAdmin?: boolean;
 }
 
-export function ReelItem({ clip, isActive, hasVoted, onVote, onEnded }: ReelItemProps) {
+export function ReelItem({ clip, isActive, hasVoted, onVote, onEnded, isAdmin }: ReelItemProps) {
   const { height } = useWindowDimensions();
   const playerRef = useRef<YouTubePlayerRef>(null);
   const [currentTime, setCurrentTime] = useState(0);
@@ -52,7 +53,7 @@ export function ReelItem({ clip, isActive, hasVoted, onVote, onEnded }: ReelItem
         <SubtitleOverlay subtitles={subtitles} currentTime={currentTime} translations={translations} />
       )}
       <ClipInfo clip={clip} verses={clip.clip_verses} />
-      <ActionButtons clipId={clip.id} voteCount={clip.vote_count} hasVoted={hasVoted} onVote={onVote} />
+      <ActionButtons clipId={clip.id} voteCount={clip.vote_count} hasVoted={hasVoted} onVote={onVote} isAdmin={isAdmin} />
     </View>
   );
 }
