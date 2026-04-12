@@ -44,6 +44,7 @@ export async function transcribeClipWithWhisper(
       "yt-dlp",
       "-x",
       "--audio-format mp3",
+      "--remote-components ejs:github",
       `--postprocessor-args "ffmpeg:-ss ${startTime.toFixed(2)} -t ${duration.toFixed(2)}"`,
       "-o", `"${audioPath}"`,
       "--cookies-from-browser chrome",
