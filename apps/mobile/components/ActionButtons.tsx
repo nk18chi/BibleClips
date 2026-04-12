@@ -22,6 +22,10 @@ export function ActionButtons({ clipId, voteCount, hasVoted, onVote, isAdmin }: 
   };
 
   const submitFlag = async () => {
+    if (!flagNote.trim()) {
+      Alert.alert("Error", "Please enter a note describing what needs to be fixed.");
+      return;
+    }
     setFlagging(true);
     const { error } = await supabase.from("clips").update({ status: "NEEDS_EDIT" }).eq("id", clipId);
     if (error) {
@@ -29,49 +33,55 @@ export function ActionButtons({ clipId, voteCount, hasVoted, onVote, isAdmin }: 
       setFlagging(false);
       return;
     }
-    if (flagNote.trim()) {
-      const userId = (await supabase.auth.getUser()).data.user?.id;
-      if (userId) {
-        await supabase.from("comments").insert({
-          clip_id: clipId,
-          user_id: userId,
-          content: `[EDIT NOTE] ${flagNote.trim()}`,
-        });
+    const userId = (await supabase.auth.getUser()).data.user?.id;
+    if (userId) {
+      const { error: commentError } = await supabase.from("comments").insert({
+        clip_id: clipId,
+        user_id: userId,
+        content: `[EDIT NOTE] ${flagNote.trim()}`,
+      });
+      if (commentError) {
+        Alert.alert("Warning", `Clip flagged but note failed: ${commentError.message}`);
       }
     }
     setFlagging(false);
     setShowFlagInput(false);
     setFlagNote("");
-    Alert.alert("Flagged", "Clip marked for editing. It will appear in admin review.");
+    Alert.alert("Flagged", "Clip marked for editing with your note.");
   };
 
   const handleFlag = () => {
     if (Platform.OS === "ios") {
       Alert.prompt(
         "Flag for Edit",
-        "What needs to be fixed?",
+        "What needs to be fixed? (required)",
         [
           { text: "Cancel", style: "cancel" },
           {
             text: "Flag",
             onPress: async (note?: string) => {
-              setFlagNote(note ?? "");
+              if (!note?.trim()) {
+                Alert.alert("Error", "Please enter a note describing what needs to be fixed.");
+                return;
+              }
               const { error } = await supabase.from("clips").update({ status: "NEEDS_EDIT" }).eq("id", clipId);
               if (error) {
                 Alert.alert("Error", `Failed to flag: ${error.message}`);
                 return;
               }
-              if (note?.trim()) {
-                const userId = (await supabase.auth.getUser()).data.user?.id;
-                if (userId) {
-                  await supabase.from("comments").insert({
-                    clip_id: clipId,
-                    user_id: userId,
-                    content: `[EDIT NOTE] ${note.trim()}`,
-                  });
+              const userId = (await supabase.auth.getUser()).data.user?.id;
+              if (userId) {
+                const { error: commentError } = await supabase.from("comments").insert({
+                  clip_id: clipId,
+                  user_id: userId,
+                  content: `[EDIT NOTE] ${note.trim()}`,
+                });
+                if (commentError) {
+                  Alert.alert("Warning", `Clip flagged but note failed to save: ${commentError.message}`);
+                  return;
                 }
               }
-              Alert.alert("Flagged", "Clip marked for editing");
+              Alert.alert("Flagged", "Clip marked for editing with your note.");
             },
           },
         ],
