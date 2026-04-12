@@ -71,7 +71,7 @@ export function ReelViewer({ clips }: ReelViewerProps) {
       showsVerticalScrollIndicator={false}
       snapToInterval={height}
       decelerationRate="fast"
-      windowSize={3}
+      windowSize={2}
       removeClippedSubviews
       onViewableItemsChanged={onViewableItemsChanged}
       viewabilityConfig={viewabilityConfig}

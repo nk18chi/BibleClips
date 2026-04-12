@@ -1,6 +1,6 @@
 import type { Clip, ClipVerse } from "@bibleclips/database";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { StyleSheet, useWindowDimensions, View } from "react-native";
+import { Image, StyleSheet, useWindowDimensions, View } from "react-native";
 import { useSubtitles } from "@/hooks/useSubtitles";
 import { ActionButtons } from "./ActionButtons";
 import { ClipInfo } from "./ClipInfo";
@@ -20,11 +20,13 @@ export function ReelItem({ clip, isActive, hasVoted, onVote, onEnded, isAdmin }:
   const { height } = useWindowDimensions();
   const playerRef = useRef<YouTubePlayerRef>(null);
   const [currentTime, setCurrentTime] = useState(0);
+  const [hasBeenActive, setHasBeenActive] = useState(false);
   const hasEndedRef = useRef(false);
   const { subtitles, translations } = useSubtitles(clip.id, isActive);
 
   useEffect(() => {
     if (isActive) {
+      setHasBeenActive(true);
       hasEndedRef.current = false;
       playerRef.current?.play();
     } else {
@@ -40,15 +42,25 @@ export function ReelItem({ clip, isActive, hasVoted, onVote, onEnded, isAdmin }:
     }
   }, [clip.end_time, onEnded]);
 
+  const thumbnail = `https://img.youtube.com/vi/${clip.youtube_video_id}/hqdefault.jpg`;
+
   return (
     <View style={[styles.container, { height }]}>
-      <YouTubePlayer
-        ref={playerRef}
-        videoId={clip.youtube_video_id}
-        startTime={clip.start_time}
-        endTime={clip.end_time}
-        onTimeUpdate={handleTimeUpdate}
-      />
+      {hasBeenActive ? (
+        <YouTubePlayer
+          ref={playerRef}
+          videoId={clip.youtube_video_id}
+          startTime={clip.start_time}
+          endTime={clip.end_time}
+          onTimeUpdate={handleTimeUpdate}
+        />
+      ) : (
+        <Image
+          source={{ uri: thumbnail }}
+          style={StyleSheet.absoluteFill}
+          resizeMode="cover"
+        />
+      )}
       {subtitles.length > 0 && (
         <SubtitleOverlay subtitles={subtitles} currentTime={currentTime} translations={translations} />
       )}
