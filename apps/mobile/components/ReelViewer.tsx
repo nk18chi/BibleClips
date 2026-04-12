@@ -1,6 +1,6 @@
 import type { Clip, ClipVerse } from "@bibleclips/database";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { FlatList, useWindowDimensions, type ViewToken } from "react-native";
+import { FlatList, RefreshControl, useWindowDimensions, type ViewToken } from "react-native";
 import { useSupabase } from "@/hooks/useSupabase";
 import { useVotes } from "@/hooks/useVotes";
 import { supabase } from "@/lib/supabase";
@@ -10,9 +10,11 @@ type ClipWithVerse = Clip & { clip_verses: ClipVerse[] };
 
 interface ReelViewerProps {
   clips: ClipWithVerse[];
+  refreshing?: boolean;
+  onRefresh?: () => void;
 }
 
-export function ReelViewer({ clips }: ReelViewerProps) {
+export function ReelViewer({ clips, refreshing, onRefresh }: ReelViewerProps) {
   const { height } = useWindowDimensions();
   const [activeIndex, setActiveIndex] = useState(0);
   const { votedClipIds, toggleVote } = useVotes();
@@ -76,6 +78,11 @@ export function ReelViewer({ clips }: ReelViewerProps) {
       removeClippedSubviews
       onViewableItemsChanged={onViewableItemsChanged}
       viewabilityConfig={viewabilityConfig}
+      refreshControl={
+        onRefresh ? (
+          <RefreshControl refreshing={refreshing ?? false} onRefresh={onRefresh} tintColor="#8B5CF6" />
+        ) : undefined
+      }
     />
   );
 }

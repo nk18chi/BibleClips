@@ -13,6 +13,7 @@ interface YouTubePlayerProps {
   endTime: number;
   onStateChange?: (state: "playing" | "paused" | "ended") => void;
   onTimeUpdate?: (currentTime: number) => void;
+  onReady?: () => void;
 }
 
 // Web: use iframe + YouTube IFrame API directly
@@ -100,7 +101,7 @@ const YouTubePlayerWeb = forwardRef<YouTubePlayerRef, YouTubePlayerProps>(functi
 
 // Native: use HTML page with YouTube IFrame API + Referer via baseUrl
 const YouTubePlayerNative = forwardRef<YouTubePlayerRef, YouTubePlayerProps>(function YouTubePlayerNative(
-  { videoId, startTime, endTime, onTimeUpdate },
+  { videoId, startTime, endTime, onTimeUpdate, onReady },
   ref
 ) {
   const { WebView } = require("react-native-webview");
@@ -170,6 +171,9 @@ window.addEventListener('message',function(e){
     (event: any) => {
       try {
         const data = JSON.parse(event.nativeEvent.data);
+        if (data.type === "ready" && onReady) {
+          onReady();
+        }
         if (data.type === "time" && onTimeUpdate) {
           onTimeUpdate(data.currentTime);
         }

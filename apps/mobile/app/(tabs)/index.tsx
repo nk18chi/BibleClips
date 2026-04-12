@@ -17,7 +17,7 @@ export default function HomeScreen() {
     () => (filter === "all" ? undefined : { clipType: filter as "sermon" | "song" | "testimony" }),
     [filter]
   );
-  const { clips, loading, error } = useClips(options);
+  const { clips, loading, refreshing, error, refetch } = useClips(options);
 
   return (
     <View style={{ flex: 1, backgroundColor: "#000" }}>
@@ -72,7 +72,7 @@ export default function HomeScreen() {
           <Text style={{ color: "#888", fontSize: 16 }}>No {filter === "all" ? "" : filter} clips yet</Text>
         </View>
       ) : (
-        <ReelViewer clips={clips} />
+        <ReelViewer clips={clips} refreshing={refreshing} onRefresh={refetch} />
       )}
     </View>
   );
